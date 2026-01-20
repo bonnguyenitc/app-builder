@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <!--
+    Export Method Options:
+    - development: For testing on registered devices
+    - ad-hoc: For distribution outside App Store to registered devices
+    - app-store: For App Store submission
+    - enterprise: For enterprise distribution (requires enterprise account)
+    -->
+        <key>method</key>
+        <string>development</string>
+
+        <!--
+    Your Team ID from Apple Developer Account
+    Find it at: https://developer.apple.com/account/#/membership
+    -->
+        <key>teamID</key>
+        <string>YOUR_TEAM_ID_HERE</string>
+
+        <!-- Upload symbols for crash reporting (recommended) -->
+        <key>uploadSymbols</key>
+        <true/>
+
+        <!-- Compile bitcode (deprecated in Xcode 14+, set to false) -->
+        <key>compileBitcode</key>
+        <false/>
+
+        <!--
+    Signing Style:
+    - automatic: Let Xcode manage signing (recommended)
+    - manual: Use specific provisioning profiles
+    -->
+        <key>signingStyle</key>
+        <string>automatic</string>
+
+        <!--
+    For manual signing, specify provisioning profiles:
+    Uncomment and configure if using manual signing
+    -->
+        <!--
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.yourcompany.yourapp</key>
+        <string>Your Provisioning Profile Name</string>
+    </dict>
+    -->
+
+        <!--
+    Signing Certificate:
+    Uncomment if you need to specify a specific certificate
+    -->
+        <!--
+    <key>signingCertificate</key>
+    <string>iPhone Distribution</string>
+    -->
+
+        <!-- Strip Swift symbols (reduces app size) -->
+        <key>stripSwiftSymbols</key>
+        <true/>
+
+        <!-- Thinning options for App Store builds -->
+        <!--
+    <key>thinning</key>
+    <string>&lt;thin-for-all-variants&gt;</string>
+    -->
+    </dict>
+</plist>

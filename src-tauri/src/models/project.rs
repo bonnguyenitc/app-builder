@@ -26,6 +26,8 @@ pub struct BuildNumberInfo {
 pub struct IosConfig {
     pub scheme: String,
     pub configuration: String,
+    pub team_id: Option<String>,
+    pub export_method: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

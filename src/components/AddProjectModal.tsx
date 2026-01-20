@@ -42,6 +42,10 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [iosConfiguration, setIosConfiguration] = useState(
     initialData?.iosConfig?.configuration || 'Release',
   );
+  const [iosTeamId, setIosTeamId] = useState(initialData?.iosConfig?.teamId || '');
+  const [iosExportMethod, setIosExportMethod] = useState<
+    'development' | 'ad-hoc' | 'app-store' | 'enterprise'
+  >(initialData?.iosConfig?.exportMethod || 'development');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -56,6 +60,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
 
       setIosScheme(initialData?.iosConfig?.scheme || initialData?.name || '');
       setIosConfiguration(initialData?.iosConfig?.configuration || 'Release');
+      setIosTeamId(initialData?.iosConfig?.teamId || '');
+      setIosExportMethod(initialData?.iosConfig?.exportMethod || 'development');
     }
   }, [isOpen, initialData]);
 
@@ -121,6 +127,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       iosConfig: {
         scheme: iosScheme || name, // Fallback to project name if empty
         configuration: iosConfiguration || 'Release',
+        teamId: iosTeamId || undefined,
+        exportMethod: iosExportMethod,
       },
     });
     onClose();
@@ -406,6 +414,79 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                   placeholder="Release"
                 />
               </div>
+            </div>
+
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 'var(--spacing-xs)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                Apple Team ID
+                <span
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    fontWeight: 400,
+                    marginLeft: '4px',
+                  }}
+                >
+                  (optional - auto-generates ExportOptions.plist)
+                </span>
+              </label>
+              <input
+                className="btn btn-secondary"
+                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
+                value={iosTeamId}
+                onChange={(e) => setIosTeamId(e.target.value)}
+                placeholder="ABC123XYZ - Find at developer.apple.com/account"
+              />
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--color-text-secondary)',
+                  marginTop: 'var(--spacing-xs)',
+                  lineHeight: '1.4',
+                }}
+              >
+                If provided, ExportOptions.plist will be generated automatically during build.
+              </p>
+            </div>
+
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 'var(--spacing-xs)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                Export Method
+              </label>
+              <select
+                className="btn btn-secondary"
+                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
+                value={iosExportMethod}
+                onChange={(e) => setIosExportMethod(e.target.value as any)}
+              >
+                <option value="development">Development - For testing on registered devices</option>
+                <option value="ad-hoc">Ad-Hoc - For distribution outside App Store</option>
+                <option value="app-store">App Store - For App Store submission</option>
+                <option value="enterprise">Enterprise - For enterprise distribution</option>
+              </select>
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--color-text-secondary)',
+                  marginTop: 'var(--spacing-xs)',
+                  lineHeight: '1.4',
+                }}
+              >
+                Choose the distribution method for your iOS build.
+              </p>
             </div>
           </div>
 

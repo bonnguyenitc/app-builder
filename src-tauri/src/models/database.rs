@@ -31,6 +31,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     // Attempt migrations for existing users
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_scheme TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_configuration TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_team_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_export_method TEXT", []);
 
     // Create build_history table
     conn.execute(

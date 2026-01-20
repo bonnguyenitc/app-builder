@@ -21,6 +21,8 @@ export interface Project {
   iosConfig?: {
     scheme: string;
     configuration: string;
+    teamId?: string;
+    exportMethod?: 'development' | 'ad-hoc' | 'app-store' | 'enterprise';
   };
   lastBuild?: BuildHistory;
 }
