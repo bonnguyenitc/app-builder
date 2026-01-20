@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Apple, Smartphone, Play, Settings, Loader } from 'lucide-react';
 import { Project } from '../types/project';
 
 interface ProjectCardProps {
   project: Project;
-  onBuild: (platform: 'ios' | 'android') => void;
+  onBuild: (platform: 'ios' | 'android', options?: { uploadToAppStore?: boolean }) => void;
   onSelect: () => void;
   onEdit: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSelect, onEdit }) => {
+  const [uploadToAppStore, setUploadToAppStore] = useState(() => {
+    return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
+  });
+
+  const handleUploadChange = (checked: boolean) => {
+    setUploadToAppStore(checked);
+    localStorage.setItem(`upload_to_appstore_${project.id}`, String(checked));
+  };
+
+  const hasIosCredentials = !!project.iosConfig?.apiKey && !!project.iosConfig?.apiIssuer;
+
   return (
     <div className="card" onClick={onSelect} style={{ cursor: 'pointer' }}>
       <div
@@ -85,12 +96,38 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
         </div>
       </div>
 
+      <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-xs)',
+            fontSize: '12px',
+            cursor: hasIosCredentials ? 'pointer' : 'not-allowed',
+            userSelect: 'none',
+            color: hasIosCredentials ? 'inherit' : 'var(--color-text-secondary)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={uploadToAppStore}
+            onChange={(e) => handleUploadChange(e.target.checked)}
+            disabled={!hasIosCredentials}
+            style={{ cursor: hasIosCredentials ? 'pointer' : 'not-allowed' }}
+          />
+          <span>
+            Upload to App Store {!hasIosCredentials && '(Configure API Key/Issuer to enable)'}
+          </span>
+        </label>
+      </div>
+
       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
         <button
           className="btn btn-primary"
           onClick={(e) => {
             e.stopPropagation();
-            onBuild('ios');
+            onBuild('ios', { uploadToAppStore });
           }}
           disabled={project.lastBuild?.status === 'building'}
           style={{

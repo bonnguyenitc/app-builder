@@ -8,7 +8,11 @@ export const useBuild = () => {
   const { updateBuild, startBuild: startBuildStore, addToHistory, clearActive } = useBuildStore();
 
   const startBuild = useCallback(
-    async (project: Project, platform: 'ios' | 'android') => {
+    async (
+      project: Project,
+      platform: 'ios' | 'android',
+      options?: { uploadToAppStore?: boolean },
+    ) => {
       const buildId = Math.random().toString(36).substr(2, 9);
       const initialBuild: BuildHistory = {
         id: buildId,
@@ -65,7 +69,7 @@ export const useBuild = () => {
       });
 
       try {
-        await invoke('build_project', { project, platform });
+        await invoke('build_project', { project, platform, options });
       } catch (e) {
         console.error('Build command failed', e);
         const currentBuild = useBuildStore.getState().activeBuilds[project.id];

@@ -23,7 +23,11 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
             build_number_ios INTEGER,
             build_number_android INTEGER,
             ios_scheme TEXT,
-            ios_configuration TEXT
+            ios_configuration TEXT,
+            ios_team_id TEXT,
+            ios_export_method TEXT,
+            ios_api_key TEXT,
+            ios_api_issuer TEXT
         )",
         [],
     )?;
@@ -33,6 +37,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_configuration TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_team_id TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_export_method TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_api_key TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_api_issuer TEXT", []);
 
     // Create build_history table
     conn.execute(

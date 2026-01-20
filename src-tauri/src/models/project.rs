@@ -28,6 +28,8 @@ pub struct IosConfig {
     pub configuration: String,
     pub team_id: Option<String>,
     pub export_method: Option<String>,
+    pub api_key: Option<String>,
+    pub api_issuer: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

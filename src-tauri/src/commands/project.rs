@@ -134,7 +134,7 @@ pub async fn read_app_json(project_path: String) -> Result<AppJsonInfo, String> 
 pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method FROM projects")
+        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer FROM projects")
         .map_err(|e| e.to_string())?;
 
     let project_iter = stmt
@@ -143,6 +143,8 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
             let ios_configuration: Option<String> = row.get(10)?;
             let ios_team_id: Option<String> = row.get(11)?;
             let ios_export_method: Option<String> = row.get(12)?;
+            let ios_api_key: Option<String> = row.get(13)?;
+            let ios_api_issuer: Option<String> = row.get(14)?;
 
             let ios_config = if let (Some(scheme), Some(configuration)) = (ios_scheme.clone(), ios_configuration.clone()) {
                 Some(crate::models::project::IosConfig {
@@ -150,6 +152,8 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                     configuration,
                     team_id: ios_team_id,
                     export_method: ios_export_method,
+                    api_key: ios_api_key,
+                    api_issuer: ios_api_issuer,
                 })
             } else {
                 None
@@ -193,9 +197,10 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             bundle_id_ios, bundle_id_android,
             version_ios, version_android,
             build_number_ios, build_number_android,
-            ios_scheme, ios_configuration, ios_team_id, ios_export_method
+            ios_scheme, ios_configuration, ios_team_id, ios_export_method,
+            ios_api_key, ios_api_issuer
         )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
         params![
             project.id,
             project.name,
@@ -210,6 +215,8 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             project.ios_config.as_ref().map(|c| &c.configuration),
             project.ios_config.as_ref().and_then(|c| c.team_id.as_ref()),
             project.ios_config.as_ref().and_then(|c| c.export_method.as_ref()),
+            project.ios_config.as_ref().and_then(|c| c.api_key.as_ref()),
+            project.ios_config.as_ref().and_then(|c| c.api_issuer.as_ref()),
         ],
     )
     .map_err(|e| e.to_string())?;

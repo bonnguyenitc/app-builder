@@ -23,6 +23,8 @@ export interface Project {
     configuration: string;
     teamId?: string;
     exportMethod?: 'development' | 'ad-hoc' | 'app-store' | 'enterprise';
+    apiKey?: string;
+    apiIssuer?: string;
   };
   lastBuild?: BuildHistory;
 }

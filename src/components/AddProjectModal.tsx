@@ -46,6 +46,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [iosExportMethod, setIosExportMethod] = useState<
     'development' | 'ad-hoc' | 'app-store' | 'enterprise'
   >(initialData?.iosConfig?.exportMethod || 'development');
+  const [iosApiKey, setIosApiKey] = useState(initialData?.iosConfig?.apiKey || '');
+  const [iosApiIssuer, setIosApiIssuer] = useState(initialData?.iosConfig?.apiIssuer || '');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -62,6 +64,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       setIosConfiguration(initialData?.iosConfig?.configuration || 'Release');
       setIosTeamId(initialData?.iosConfig?.teamId || '');
       setIosExportMethod(initialData?.iosConfig?.exportMethod || 'development');
+      setIosApiKey(initialData?.iosConfig?.apiKey || '');
+      setIosApiIssuer(initialData?.iosConfig?.apiIssuer || '');
     }
   }, [isOpen, initialData]);
 
@@ -129,6 +133,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
         configuration: iosConfiguration || 'Release',
         teamId: iosTeamId || undefined,
         exportMethod: iosExportMethod,
+        apiKey: iosApiKey || undefined,
+        apiIssuer: iosApiIssuer || undefined,
       },
     });
     onClose();
@@ -487,6 +493,46 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
               >
                 Choose the distribution method for your iOS build.
               </p>
+            </div>
+
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 'var(--spacing-xs)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                App Store Connect API Key
+              </label>
+              <input
+                className="btn btn-secondary"
+                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
+                value={iosApiKey}
+                onChange={(e) => setIosApiKey(e.target.value)}
+                placeholder="Required for auto-upload"
+              />
+            </div>
+
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: 'var(--spacing-xs)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                App Store Connect API Issuer
+              </label>
+              <input
+                className="btn btn-secondary"
+                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
+                value={iosApiIssuer}
+                onChange={(e) => setIosApiIssuer(e.target.value)}
+                placeholder="Required for auto-upload"
+              />
             </div>
           </div>
 

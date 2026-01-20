@@ -48,10 +48,14 @@ export const Dashboard: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleBuild = async (projectId: string, platform: 'ios' | 'android') => {
+  const handleBuild = async (
+    projectId: string,
+    platform: 'ios' | 'android',
+    options?: { uploadToAppStore?: boolean },
+  ) => {
     const project = projects.find((p) => p.id === projectId);
     if (project) {
-      await startBuild(project, platform);
+      await startBuild(project, platform, options);
     }
   };
 
@@ -147,7 +151,7 @@ export const Dashboard: React.FC = () => {
               <ProjectCard
                 key={project.id}
                 project={projectWithStatus}
-                onBuild={(platform) => handleBuild(project.id, platform)}
+                onBuild={(platform, options) => handleBuild(project.id, platform, options)}
                 onSelect={() => console.log('Selected', project.id)}
                 onEdit={() => handleEditProject(project)}
               />
