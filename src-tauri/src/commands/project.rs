@@ -5,6 +5,7 @@ use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use plist::Value;
 
 #[derive(Serialize)]
 pub struct AppJsonInfo {
@@ -39,6 +40,49 @@ struct AppJson {
     name: Option<String>,
     ios: Option<IosConfig>,
     android: Option<AndroidConfig>,
+}
+
+fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) -> Result<(), String> {
+    let ios_dir = Path::new(project_path).join("ios");
+    if !ios_dir.exists() {
+        return Ok(());
+    }
+
+    // Find .xcodeproj to get the project name
+    let entries = fs::read_dir(&ios_dir).map_err(|e| e.to_string())?;
+    let mut project_name = None;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let file_name = entry.file_name();
+        let file_name_str = file_name.to_string_lossy();
+        if file_name_str.ends_with(".xcodeproj") {
+            project_name = Some(file_name_str.trim_end_matches(".xcodeproj").to_string());
+            break;
+        }
+    }
+
+    if let Some(name) = project_name {
+        let plist_path = ios_dir.join(&name).join("Info.plist");
+        if plist_path.exists() {
+            let mut value = Value::from_file(&plist_path).map_err(|e| e.to_string())?;
+
+            if let Some(dict) = value.as_dictionary_mut() {
+                dict.insert(
+                    "CFBundleShortVersionString".to_string(),
+                    Value::String(version.to_string()),
+                );
+                dict.insert(
+                    "CFBundleVersion".to_string(),
+                    Value::String(build_number.to_string()),
+                );
+            }
+
+            value.to_file_xml(&plist_path).map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok(())
 }
 
 #[command]
@@ -147,6 +191,13 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         ],
     )
     .map_err(|e| e.to_string())?;
+
+    // Update Info.plist
+    update_ios_info_plist(
+        &project.path,
+        &project.version.ios,
+        &project.build_number.ios.to_string()
+    )?;
 
     Ok(())
 }
