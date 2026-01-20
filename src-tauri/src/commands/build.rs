@@ -1,10 +1,18 @@
-use tauri::{command, Window, Emitter};
+use tauri::{command, Window, Emitter, State};
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
+use std::sync::Arc;
+use std::fs::File;
 use crate::models::project::Project;
+use crate::BuildProcessState;
 
 #[command]
-pub async fn build_project(window: Window, project: Project, platform: String) -> Result<(), String> {
+pub async fn build_project(
+    window: Window,
+    project: Project,
+    platform: String,
+    process_state: State<'_, BuildProcessState>,
+) -> Result<(), String> {
     println!("Building project {} for platform {}", project.name, platform);
 
     let (program, args, work_dir) = match platform.as_str() {
@@ -20,6 +28,20 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
             if !ios_dir.exists() {
                 return Err(format!("iOS directory not found at {:?}", ios_dir));
             }
+
+            // Create logs directory
+            let logs_dir = ios_dir.join("build/logs");
+            std::fs::create_dir_all(&logs_dir)
+                .map_err(|e| format!("Failed to create logs directory: {}", e))?;
+
+            // Create log file with timestamp
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            let log_file_path = logs_dir.join(format!("{}.log", timestamp));
+            let mut log_file = File::create(&log_file_path)
+                .map_err(|e| format!("Failed to create log file: {}", e))?;
 
             // Uses scheme and configuration from project settings or falls back to defaults
             let scheme = project.ios_config.as_ref().map(|c| c.scheme.as_str()).unwrap_or(&project.name);
@@ -49,8 +71,9 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
             let archive_path_str = archive_path.to_str().ok_or("Invalid archive path")?;
 
             // Step 1: Archive
-            window.emit("build-log", format!("📦 Starting iOS archive for scheme: {}", scheme))
-                .map_err(|e| e.to_string())?;
+            let archive_msg = format!("📦 Starting iOS archive for scheme: {}", scheme);
+            window.emit("build-log", &archive_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", archive_msg).map_err(|e| e.to_string())?;
 
             let mut archive_args = vec![
                 "-scheme", scheme,
@@ -62,12 +85,14 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
 
             // Add workspace or project flag
             let build_file_path = if let Some(ref ws_path) = workspace_path {
-                window.emit("build-log", format!("🔍 Found workspace: {}", ws_path.file_name().unwrap().to_string_lossy()))
-                    .map_err(|e| e.to_string())?;
+                let msg = format!("🔍 Found workspace: {}", ws_path.file_name().unwrap().to_string_lossy());
+                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
                 ws_path.to_str().ok_or("Invalid workspace path")?.to_string()
             } else if let Some(ref proj_path) = project_path {
-                window.emit("build-log", format!("🔍 Found project: {}", proj_path.file_name().unwrap().to_string_lossy()))
-                    .map_err(|e| e.to_string())?;
+                let msg = format!("🔍 Found project: {}", proj_path.file_name().unwrap().to_string_lossy());
+                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
                 proj_path.to_str().ok_or("Invalid project path")?.to_string()
             } else {
                 return Err(format!("No .xcworkspace or .xcodeproj file found in {:?}", ios_dir));
@@ -85,33 +110,68 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
                 .spawn()
                 .map_err(|e| format!("Failed to start archive command: {}", e))?;
 
+            // Take stdout ownership to read logs
             let archive_stdout = archive_child.stdout.take().unwrap();
             let archive_reader = BufReader::new(archive_stdout);
 
+            // Store process for cancellation logic.
+            // We use Arc and Mutex to share ownership.
+            let process_id = project.id.clone();
+            {
+                let mut processes = process_state.0.lock().unwrap();
+                processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(archive_child))));
+            }
+
+            // Write all logs to file, logging blocks here until logs are done (or pipe closed)
             for line in archive_reader.lines() {
                 if let Ok(line_content) = line {
-                    window.emit("build-log", line_content).map_err(|e| e.to_string())?;
+                    writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
                 }
             }
 
-            let archive_status = archive_child.wait().map_err(|e| e.to_string())?;
+            // Retrieve child process to wait for exit status
+            let archive_status = {
+                 let mut processes = process_state.0.lock().unwrap();
+                 if let Some(mutex) = processes.remove(&process_id) {
+                     let mut guard = mutex.lock().unwrap();
+                     if let Some(mut child) = guard.take() {
+                         child.wait().map_err(|e| e.to_string())?
+                     } else {
+                         // Process was already taken (should not happen in normal flow)
+                         return Err("Archive process handle lost".into());
+                     }
+                 } else {
+                     // If process is not in map, it was removed by cancel_build_process
+                     return Err("Build cancelled".into());
+                 }
+            };
+
             if !archive_status.success() {
+                let error_msg = "❌ Archive failed - check log file for details";
+                window.emit("build-log", error_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
                 window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
                 return Err("Archive failed".into());
             }
 
-            window.emit("build-log", "✅ Archive completed successfully").map_err(|e| e.to_string())?;
+            let success_msg = "✅ Archive completed successfully";
+            window.emit("build-log", success_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", success_msg).map_err(|e| e.to_string())?;
 
             // Step 2: Export
-            window.emit("build-log", "📤 Starting export...").map_err(|e| e.to_string())?;
+            let export_msg = "📤 Starting export...";
+            window.emit("build-log", export_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", export_msg).map_err(|e| e.to_string())?;
 
             // Create or find export options plist
             let export_plist_path = ios_dir.join("ExportOptions.plist");
 
             // If team_id is provided, generate ExportOptions.plist automatically
             if let Some(team_id) = project.ios_config.as_ref().and_then(|c| c.team_id.as_ref()) {
-                window.emit("build-log", format!("🔧 Generating ExportOptions.plist with Team ID: {}", team_id))
-                    .map_err(|e| e.to_string())?;
+                let msg = format!("🔧 Generating ExportOptions.plist with Team ID: {}", team_id);
+                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
 
                 // Use export_method from config, or default to "development"
                 let export_method = project.ios_config.as_ref()
@@ -119,8 +179,9 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
                     .map(|s| s.as_str())
                     .unwrap_or("development");
 
-                window.emit("build-log", format!("📦 Export method: {}", export_method))
-                    .map_err(|e| e.to_string())?;
+                let method_msg = format!("📦 Export method: {}", export_method);
+                window.emit("build-log", &method_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", method_msg).map_err(|e| e.to_string())?;
 
                 let plist_content = format!(
                     r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -148,8 +209,9 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
                     .map_err(|e| format!("Failed to write ExportOptions.plist: {}", e))?;
             } else {
                 // Look for existing export options plist
-                window.emit("build-log", "🔍 Looking for existing ExportOptions.plist...")
-                    .map_err(|e| e.to_string())?;
+                let msg = "🔍 Looking for existing ExportOptions.plist...";
+                window.emit("build-log", msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
 
                 let export_plist_names: Vec<String> = vec![
                     format!("{}ExportOptions.plist", configuration),
@@ -187,19 +249,48 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
             let export_stdout = export_child.stdout.take().unwrap();
             let export_reader = BufReader::new(export_stdout);
 
+             // Store process again for cancellation
+            {
+                let mut processes = process_state.0.lock().unwrap();
+                processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(export_child))));
+            }
+
+            // Write all logs to file, don't stream to UI
             for line in export_reader.lines() {
                 if let Ok(line_content) = line {
-                    window.emit("build-log", line_content).map_err(|e| e.to_string())?;
+                    writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
                 }
             }
 
-            let export_status = export_child.wait().map_err(|e| e.to_string())?;
+            let export_status = {
+                 let mut processes = process_state.0.lock().unwrap();
+                 if let Some(mutex) = processes.remove(&process_id) {
+                     let mut guard = mutex.lock().unwrap();
+                     if let Some(mut child) = guard.take() {
+                         child.wait().map_err(|e| e.to_string())?
+                     } else {
+                         return Err("Export process handle lost".into());
+                     }
+                 } else {
+                     return Err("Build cancelled".into());
+                 }
+            };
+
             if !export_status.success() {
+                let error_msg = "❌ Export failed - check log file for details";
+                window.emit("build-log", error_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
                 window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
                 return Err("Export failed".into());
             }
 
-            window.emit("build-log", "✅ Export completed successfully").map_err(|e| e.to_string())?;
+            let final_msg = "✅ Export completed successfully";
+            window.emit("build-log", final_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", final_msg).map_err(|e| e.to_string())?;
+
+            // Emit log file path for frontend to save
+            window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
             window.emit("build-status", "success").map_err(|e| e.to_string())?;
 
             return Ok(());
@@ -215,23 +306,80 @@ pub async fn build_project(window: Window, project: Project, platform: String) -
         .spawn()
         .map_err(|e| format!("Failed to start build command: {}", e))?;
 
-    let stdout = child.stdout.take().unwrap();
-    let reader = BufReader::new(stdout);
-
-    // Stream logs to frontend
-    for line in reader.lines() {
-        if let Ok(line_content) = line {
-            window.emit("build-log", line_content).map_err(|e| e.to_string())?;
-        }
+    // Store process for cancellation
+    let process_id = project.id.clone();
+    {
+        let mut processes = process_state.0.lock().unwrap();
+        processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(child))));
     }
 
-    let status = child.wait().map_err(|e| e.to_string())?;
-    if status.success() {
-        window.emit("build-status", "success").map_err(|e| e.to_string())?;
-        Ok(())
+    // Get process back for monitoring
+    let process_arc = {
+        let processes = process_state.0.lock().unwrap();
+        processes.get(&process_id).cloned()
+    };
+
+    if let Some(process_mutex) = process_arc {
+        let mut child = process_mutex.lock().unwrap().take().unwrap();
+
+        let stdout = child.stdout.take().unwrap();
+        let reader = BufReader::new(stdout);
+
+        // Stream logs to frontend
+        for line in reader.lines() {
+            if let Ok(line_content) = line {
+                window.emit("build-log", line_content).map_err(|e| e.to_string())?;
+            }
+        }
+
+        let status = child.wait().map_err(|e| e.to_string())?;
+
+        // Cleanup process from state
+        {
+            let mut processes = process_state.0.lock().unwrap();
+            processes.remove(&process_id);
+        }
+
+        if status.success() {
+            window.emit("build-status", "success").map_err(|e| e.to_string())?;
+            Ok(())
+        } else {
+            window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+            Err("Build failed".into())
+        }
     } else {
-        window.emit("build-status", "failed").map_err(|e| e.to_string())?;
-        Err("Build failed".into())
+        Err("Failed to store process".into())
+    }
+}
+
+#[command]
+pub async fn cancel_build_process(
+    project_id: String,
+    process_state: State<'_, BuildProcessState>,
+) -> Result<(), String> {
+    let process_arc = {
+        let mut processes = process_state.0.lock().unwrap();
+        processes.remove(&project_id)
+    };
+
+    if let Some(process_mutex) = process_arc {
+        let mut child_opt = process_mutex.lock().unwrap();
+        if let Some(mut child) = child_opt.take() {
+            match child.kill() {
+                Ok(_) => {
+                    println!("Successfully killed build process for project: {}", project_id);
+                    Ok(())
+                }
+                Err(e) => {
+                    eprintln!("Failed to kill process: {}", e);
+                    Err(format!("Failed to kill process: {}", e))
+                }
+            }
+        } else {
+            Err("Process already terminated".into())
+        }
+    } else {
+        Err(format!("No active build found for project: {}", project_id))
     }
 }
 
@@ -271,6 +419,33 @@ pub async fn open_build_folder(project: Project, platform: String) -> Result<(),
     }
 
     // Linux support can be added if needed usually xdg-open
+
+    Ok(())
+}
+
+#[command]
+pub async fn open_log_file(log_file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&log_file_path);
+
+    if !path.exists() {
+        return Err(format!("Log file not found at {:?}", path));
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(path)
+            .spawn()
+            .map_err(|e| format!("Failed to open log file: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("notepad")
+            .arg(path)
+            .spawn()
+            .map_err(|e| format!("Failed to open log file: {}", e))?;
+    }
 
     Ok(())
 }

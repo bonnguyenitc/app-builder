@@ -36,4 +36,5 @@ export interface BuildHistory {
   status: 'success' | 'failed' | 'building';
   timestamp: number;
   logs: string;
+  logFilePath?: string; // Path to log file (especially for iOS builds)
 }

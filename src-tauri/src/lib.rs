@@ -9,10 +9,15 @@ use commands::build::*;
 use commands::history::*;
 use commands::credentials::*;
 use models::database::init_db;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
+use std::collections::HashMap;
+use std::process::Child;
 use rusqlite::Connection;
 
 pub struct DbState(pub Mutex<Connection>);
+
+// Store active build processes for cancellation
+pub struct BuildProcessState(pub Arc<Mutex<HashMap<String, Arc<Mutex<Option<Child>>>>>>);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,6 +27,7 @@ pub fn run() {
         .setup(|app| {
             let conn = init_db(app.handle()).expect("Failed to initialize database");
             app.manage(DbState(Mutex::new(conn)));
+            app.manage(BuildProcessState(Arc::new(Mutex::new(HashMap::new()))));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -30,7 +36,9 @@ pub fn run() {
             delete_project,
             read_app_json,
             build_project,
+            cancel_build_process,
             open_build_folder,
+            open_log_file,
             save_build_history,
             list_build_history,
             save_credential,

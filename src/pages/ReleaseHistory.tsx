@@ -1,7 +1,7 @@
 import React from 'react';
 import { useBuildStore } from '../stores/buildStore';
 import { useProjectStore } from '../stores/projectStore';
-import { CheckCircle2, XCircle, Apple, Smartphone, FolderOpen } from 'lucide-react';
+import { CheckCircle2, XCircle, Apple, Smartphone, FolderOpen, FileText } from 'lucide-react';
 
 export const ReleaseHistory: React.FC = () => {
   const { buildHistory } = useBuildStore();
@@ -36,6 +36,7 @@ export const ReleaseHistory: React.FC = () => {
                 <th style={{ padding: '12px var(--spacing-md)' }}>Platform</th>
                 <th style={{ padding: '12px var(--spacing-md)' }}>Version</th>
                 <th style={{ padding: '12px var(--spacing-md)' }}>Date</th>
+                <th style={{ padding: '12px var(--spacing-md)', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -93,27 +94,43 @@ export const ReleaseHistory: React.FC = () => {
                       {new Date(build.timestamp).toLocaleString()}
                     </td>
                     <td style={{ padding: '12px var(--spacing-md)', textAlign: 'right' }}>
-                      {build.status === 'success' && (
-                        <button
-                          className="btn btn-ghost"
-                          title="Open Build Folder"
-                          onClick={() => {
-                            // Assuming we fetch 'project' here or from a store, which we do above.
-                            // But we need to make sure project is available.
-                            if (project) {
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        {build.status === 'success' && (
+                          <button
+                            className="btn btn-ghost"
+                            title="Open Build Folder"
+                            onClick={() => {
+                              if (project) {
+                                import('@tauri-apps/api/core').then(({ invoke }) => {
+                                  invoke('open_build_folder', {
+                                    project,
+                                    platform: build.platform,
+                                  }).catch((err) => console.error(err));
+                                });
+                              }
+                            }}
+                            style={{ padding: '4px' }}
+                          >
+                            <FolderOpen size={16} />
+                          </button>
+                        )}
+                        {build.logFilePath && (
+                          <button
+                            className="btn btn-ghost"
+                            title="Open Log File"
+                            onClick={() => {
                               import('@tauri-apps/api/core').then(({ invoke }) => {
-                                invoke('open_build_folder', {
-                                  project,
-                                  platform: build.platform,
+                                invoke('open_log_file', {
+                                  logFilePath: build.logFilePath,
                                 }).catch((err) => console.error(err));
                               });
-                            }
-                          }}
-                          style={{ padding: '4px' }}
-                        >
-                          <FolderOpen size={16} />
-                        </button>
-                      )}
+                            }}
+                            style={{ padding: '4px' }}
+                          >
+                            <FileText size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

@@ -11,6 +11,7 @@ interface BuildState {
   startBuild: (projectId: string, build: BuildHistory) => void;
   addToHistory: (build: BuildHistory) => void;
   clearActive: (projectId: string) => void;
+  cancelBuild: (projectId: string) => Promise<void>;
 }
 
 export const useBuildStore = create<BuildState>((set) => ({
@@ -51,4 +52,37 @@ export const useBuildStore = create<BuildState>((set) => ({
       delete newActive[projectId];
       return { activeBuilds: newActive };
     }),
+  cancelBuild: async (projectId) => {
+    try {
+      // Kill the actual process
+      await invoke('cancel_build_process', { projectId });
+
+      // Update UI state ONLY if cancellation succeeds
+      set((state) => {
+        const build = state.activeBuilds[projectId];
+        if (build) {
+          // Add to history with failed status
+          const cancelledBuild: BuildHistory = {
+            ...build,
+            status: 'failed',
+            logs: build.logs + '\n\n❌ Build cancelled by user',
+          };
+
+          // Remove from active builds
+          const newActive = { ...state.activeBuilds };
+          delete newActive[projectId];
+
+          return {
+            activeBuilds: newActive,
+            buildHistory: [cancelledBuild, ...state.buildHistory],
+          };
+        }
+        return state;
+      });
+    } catch (error) {
+      console.error('Failed to cancel build process:', error);
+      // We do not remove it from active builds if cancellation fails
+      // This allows the user to see it's still running (or stuck) and try again
+    }
+  },
 }));

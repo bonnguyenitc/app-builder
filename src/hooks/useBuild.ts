@@ -32,6 +32,13 @@ export const useBuild = () => {
         }));
       });
 
+      const unlistenLogFile = await listen<string>('build-log-file', (event) => {
+        updateBuild(project.id, (prev) => ({
+          ...prev,
+          logFilePath: event.payload,
+        }));
+      });
+
       const unlistenStatus = await listen<'success' | 'failed'>('build-status', async (event) => {
         // Get the current build state from the store to ensure we have all logs
         const currentBuild = useBuildStore.getState().activeBuilds[project.id];
@@ -53,6 +60,7 @@ export const useBuild = () => {
         }
 
         unlistenLogs();
+        unlistenLogFile();
         unlistenStatus();
       });
 
@@ -72,6 +80,7 @@ export const useBuild = () => {
           addToHistory(failedBuild);
         }
         unlistenLogs();
+        unlistenLogFile();
         unlistenStatus();
       }
     },
