@@ -389,7 +389,7 @@ pub async fn open_build_folder(project: Project, platform: String) -> Result<(),
         "android" => {
              // Standard path for React Native / generic Android Gradle builds
              std::path::Path::new(&project.path)
-                .join("android/app/build/outputs/apk/release")
+                .join("android/app/build/outputs/bundle/release")
         },
         "ios" => {
             // iOS builds are now archived and exported to ios/build/

@@ -26,4 +26,5 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 keyring = "3"
 tauri-plugin-dialog = "2"
 plist = "1.8.0"
+regex = "1.12.2"
 

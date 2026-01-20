@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use plist::Value;
+use regex::Regex;
 
 #[derive(Serialize)]
 pub struct AppJsonInfo {
@@ -81,6 +82,27 @@ fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) 
             value.to_file_xml(&plist_path).map_err(|e| e.to_string())?;
         }
     }
+
+    Ok(())
+}
+
+fn update_android_gradle(project_path: &str, version_name: &str, version_code: &str) -> Result<(), String> {
+    let gradle_path = Path::new(project_path).join("android/app/build.gradle");
+    if !gradle_path.exists() {
+        return Ok(());
+    }
+
+    let content = fs::read_to_string(&gradle_path).map_err(|e| e.to_string())?;
+
+    // Update version code
+    let version_code_regex = Regex::new(r"versionCode\s*=?\s*(\d+)").map_err(|e| e.to_string())?;
+    let content = version_code_regex.replace(&content, format!("versionCode {}", version_code));
+
+    // Update version name
+    let version_name_regex = Regex::new(r#"versionName\s*=?\s*["']([^"']+)["']"#).map_err(|e| e.to_string())?;
+    let content = version_name_regex.replace(&content, format!("versionName \"{}\"", version_name));
+
+    fs::write(&gradle_path, content.to_string()).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -197,6 +219,13 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         &project.path,
         &project.version.ios,
         &project.build_number.ios.to_string()
+    )?;
+
+    // Update Android build.gradle
+    update_android_gradle(
+        &project.path,
+        &project.version.android,
+        &project.build_number.android.to_string()
     )?;
 
     Ok(())
