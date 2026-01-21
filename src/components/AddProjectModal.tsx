@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, FolderOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, FolderOpen, Key } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../types/project';
+import { useCredentials } from '../hooks/useCredentials';
 
 interface AppJsonInfo {
   name: string | null;
@@ -27,6 +28,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   onSave,
   initialData,
 }) => {
+  const { credentials } = useCredentials();
   const [name, setName] = useState(initialData?.name || '');
   const [path, setPath] = useState(initialData?.path || '');
   const [iosBundle, setIosBundle] = useState(initialData?.ios.bundleId || '');
@@ -42,14 +44,18 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const [iosConfiguration, setIosConfiguration] = useState(
     initialData?.ios.config?.configuration || 'Release',
   );
-  const [iosTeamId, setIosTeamId] = useState(initialData?.ios.config?.teamId || '');
   const [iosExportMethod, setIosExportMethod] = useState<
     'development' | 'ad-hoc' | 'app-store' | 'enterprise'
   >(initialData?.ios.config?.exportMethod || 'development');
-  const [iosApiKey, setIosApiKey] = useState(initialData?.ios.config?.apiKey || '');
-  const [iosApiIssuer, setIosApiIssuer] = useState(initialData?.ios.config?.apiIssuer || '');
 
-  React.useEffect(() => {
+  // Credential selection
+  const [selectedIosCredentialId, setSelectedIosCredentialId] = useState<string>('');
+  const [selectedAndroidCredentialId, setSelectedAndroidCredentialId] = useState<string>('');
+
+  const iosCredentials = credentials.filter((c) => c.platform === 'ios');
+  const androidCredentials = credentials.filter((c) => c.platform === 'android');
+
+  useEffect(() => {
     if (isOpen) {
       setName(initialData?.name || '');
       setPath(initialData?.path || '');
@@ -62,15 +68,13 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
 
       setIosScheme(initialData?.ios.config?.scheme || initialData?.name || '');
       setIosConfiguration(initialData?.ios.config?.configuration || 'Release');
-      setIosTeamId(initialData?.ios.config?.teamId || '');
       setIosExportMethod(initialData?.ios.config?.exportMethod || 'development');
-      setIosApiKey(initialData?.ios.config?.apiKey || '');
-      setIosApiIssuer(initialData?.ios.config?.apiIssuer || '');
+
+      // Reset credential selections
+      setSelectedIosCredentialId('');
+      setSelectedAndroidCredentialId('');
     }
   }, [isOpen, initialData]);
-
-  // Update default scheme when name changes if user hasn't manually edited it probably?
-  // For simplicity, let's keep it manual or auto-fill only on initial load.
 
   if (!isOpen) return null;
 
@@ -122,16 +126,19 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Only include config if scheme and configuration are provided
+    // Get selected credentials
+    const selectedIosCredential = iosCredentials.find((c) => c.id === selectedIosCredentialId);
+
+    // Build iOS config with credential info
     const iosConfig =
       (iosScheme || name) && (iosConfiguration || 'Release')
         ? {
             scheme: iosScheme || name,
             configuration: iosConfiguration || 'Release',
-            teamId: iosTeamId || undefined,
+            teamId: selectedIosCredential?.ios?.teamId || undefined,
             exportMethod: iosExportMethod,
-            apiKey: iosApiKey || undefined,
-            apiIssuer: iosApiIssuer || undefined,
+            apiKey: selectedIosCredential?.ios?.apiKeyId || undefined,
+            apiIssuer: selectedIosCredential?.ios?.apiIssuerId || undefined,
           }
         : undefined;
 
@@ -445,45 +452,6 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                   fontWeight: 500,
                 }}
               >
-                Apple Team ID
-                <span
-                  style={{
-                    color: 'var(--color-text-secondary)',
-                    fontWeight: 400,
-                    marginLeft: '4px',
-                  }}
-                >
-                  (optional - auto-generates ExportOptions.plist)
-                </span>
-              </label>
-              <input
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosTeamId}
-                onChange={(e) => setIosTeamId(e.target.value)}
-                placeholder="ABC123XYZ - Find at developer.apple.com/account"
-              />
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--color-text-secondary)',
-                  marginTop: 'var(--spacing-xs)',
-                  lineHeight: '1.4',
-                }}
-              >
-                If provided, ExportOptions.plist will be generated automatically during build.
-              </p>
-            </div>
-
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
                 Export Method
               </label>
               <select
@@ -497,16 +465,6 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 <option value="app-store">App Store - For App Store submission</option>
                 <option value="enterprise">Enterprise - For enterprise distribution</option>
               </select>
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--color-text-secondary)',
-                  marginTop: 'var(--spacing-xs)',
-                  lineHeight: '1.4',
-                }}
-              >
-                Choose the distribution method for your iOS build.
-              </p>
             </div>
 
             <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -518,18 +476,56 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                   fontWeight: 500,
                 }}
               >
-                App Store Connect API Key
+                iOS Credential
+                <span
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    fontWeight: 400,
+                    marginLeft: '4px',
+                  }}
+                >
+                  (optional)
+                </span>
               </label>
-              <input
+              <select
                 className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosApiKey}
-                onChange={(e) => setIosApiKey(e.target.value)}
-                placeholder="Required for auto-upload"
-              />
+                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
+                value={selectedIosCredentialId}
+                onChange={(e) => setSelectedIosCredentialId(e.target.value)}
+              >
+                <option value="">None - Manual configuration</option>
+                {iosCredentials.map((cred) => (
+                  <option key={cred.id} value={cred.id}>
+                    {cred.name} ({cred.ios?.teamId})
+                  </option>
+                ))}
+              </select>
+              {iosCredentials.length === 0 && (
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--color-text-secondary)',
+                    marginTop: 'var(--spacing-xs)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Key size={12} />
+                  No iOS credentials configured. Go to Settings to add one.
+                </p>
+              )}
             </div>
+          </div>
 
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
+          <div
+            style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-md)' }}
+          >
+            <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+              Android Configuration
+            </h3>
+
+            <div>
               <label
                 style={{
                   display: 'block',
@@ -538,15 +534,46 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                   fontWeight: 500,
                 }}
               >
-                App Store Connect API Issuer
+                Android Credential
+                <span
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    fontWeight: 400,
+                    marginLeft: '4px',
+                  }}
+                >
+                  (optional)
+                </span>
               </label>
-              <input
+              <select
                 className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosApiIssuer}
-                onChange={(e) => setIosApiIssuer(e.target.value)}
-                placeholder="Required for auto-upload"
-              />
+                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
+                value={selectedAndroidCredentialId}
+                onChange={(e) => setSelectedAndroidCredentialId(e.target.value)}
+              >
+                <option value="">None - Manual configuration</option>
+                {androidCredentials.map((cred) => (
+                  <option key={cred.id} value={cred.id}>
+                    {cred.name}
+                    {cred.android?.serviceAccountEmail && ` (${cred.android.serviceAccountEmail})`}
+                  </option>
+                ))}
+              </select>
+              {androidCredentials.length === 0 && (
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--color-text-secondary)',
+                    marginTop: 'var(--spacing-xs)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Key size={12} />
+                  No Android credentials configured. Go to Settings to add one.
+                </p>
+              )}
             </div>
           </div>
 

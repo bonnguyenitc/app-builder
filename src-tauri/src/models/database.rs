@@ -40,6 +40,22 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_api_key TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_api_issuer TEXT", []);
 
+    // Create credentials table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS credentials (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            ios_team_id TEXT,
+            ios_api_key_id TEXT,
+            ios_api_issuer_id TEXT,
+            android_service_account_email TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )",
+        [],
+    )?;
+
     // Create build_history table
     conn.execute(
         "CREATE TABLE IF NOT EXISTS build_history (

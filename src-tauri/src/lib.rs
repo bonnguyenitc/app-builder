@@ -44,7 +44,12 @@ pub fn run() {
             list_build_history,
             save_credential,
             get_credential,
-            delete_credential
+            delete_credential,
+            create_credential,
+            get_credentials,
+            get_credential_secret,
+            update_credential,
+            delete_credential_by_id
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
