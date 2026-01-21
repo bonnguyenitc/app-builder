@@ -8,10 +8,11 @@ import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
 
 export const Dashboard: React.FC = () => {
-  const { projects, addProject, updateProject } = useProjectStore();
+  const { projects, addProject, updateProject, deleteProject } = useProjectStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
+  const [deletingProject, setDeletingProject] = useState<Project | undefined>(undefined);
   const { startBuild } = useBuild();
 
   const activeBuilds = useBuildStore((state) => state.activeBuilds);
@@ -56,6 +57,17 @@ export const Dashboard: React.FC = () => {
     const project = projects.find((p) => p.id === projectId);
     if (project) {
       await startBuild(project, platform, options);
+    }
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setDeletingProject(project);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingProject) {
+      await deleteProject(deletingProject.id);
+      setDeletingProject(undefined);
     }
   };
 
@@ -155,6 +167,7 @@ export const Dashboard: React.FC = () => {
                 onBuild={(platform, options) => handleBuild(project.id, platform, options)}
                 onSelect={() => console.log('Selected', project.id)}
                 onEdit={() => handleEditProject(project)}
+                onDelete={() => handleDeleteProject(project)}
               />
             );
           })}
@@ -170,6 +183,57 @@ export const Dashboard: React.FC = () => {
         onSave={handleSaveProject}
         initialData={editingProject}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {deletingProject && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setDeletingProject(undefined)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '400px',
+              padding: 'var(--spacing-xl)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+              Delete Project
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
+              Are you sure you want to delete "{deletingProject.name}"? This action cannot be
+              undone.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setDeletingProject(undefined)}>
+                Cancel
+              </button>
+              <button
+                className="btn"
+                onClick={handleConfirmDelete}
+                style={{
+                  backgroundColor: 'var(--color-error)',
+                  color: 'white',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

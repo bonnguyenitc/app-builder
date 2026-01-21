@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, Smartphone, Play, Settings, Loader } from 'lucide-react';
+import { Apple, Smartphone, Play, Settings, Loader, Trash2 } from 'lucide-react';
 import { Project } from '../types/project';
 
 interface ProjectCardProps {
@@ -7,9 +7,16 @@ interface ProjectCardProps {
   onBuild: (platform: 'ios' | 'android', options?: { uploadToAppStore?: boolean }) => void;
   onSelect: () => void;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSelect, onEdit }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({
+  project,
+  onBuild,
+  onSelect,
+  onEdit,
+  onDelete,
+}) => {
   const [uploadToAppStore, setUploadToAppStore] = useState(() => {
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
   });
@@ -54,6 +61,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
             }}
           >
             <Settings size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              color: 'var(--color-error)',
+            }}
+          >
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
