@@ -1,13 +1,14 @@
 {
   "name": "app-builder",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "set-version": "node scripts/update-version.js"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.19",
