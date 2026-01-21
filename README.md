@@ -1,5 +1,9 @@
 # App Builder
 
+<p align="center">
+  <img src="app-icon.png" alt="App Builder Icon" width="128" height="128" style="border-radius: 20px" />
+</p>
+
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-blue?logo=tauri)
 ![React](https://img.shields.io/badge/React-19.1-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)

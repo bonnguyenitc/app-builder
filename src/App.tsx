@@ -22,7 +22,20 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <aside className="sidebar">
-          <div style={{ marginBottom: 'var(--spacing-xl)', paddingLeft: 'var(--spacing-sm)' }}>
+          <div
+            style={{
+              marginBottom: 'var(--spacing-xl)',
+              paddingLeft: 'var(--spacing-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            <img
+              src="/app-icon.png"
+              alt="App Icon"
+              style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+            />
             <h2 style={{ fontSize: '18px', fontWeight: 700 }}>App Builder</h2>
           </div>
 
