@@ -43,8 +43,8 @@ pub async fn list_build_history(state: State<'_, DbState>) -> Result<Vec<BuildHi
                 build_number: row.get(4)?,
                 status: row.get(5)?,
                 timestamp: row.get(6)?,
-                logs: row.get(7)?,
-                release_note: row.get(8)?,
+                logs: row.get::<_, Option<String>>(7)?.unwrap_or_default(),
+                release_note: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
             })
         })
         .map_err(|e| e.to_string())?;

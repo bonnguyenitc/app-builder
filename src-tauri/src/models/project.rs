@@ -49,6 +49,8 @@ pub struct BuildHistory {
     pub build_number: u32,
     pub status: String,
     pub timestamp: u64,
+    #[serde(default)]
     pub logs: String,
+    #[serde(default)]
     pub release_note: String,
 }
