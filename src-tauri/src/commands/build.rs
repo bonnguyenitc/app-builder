@@ -452,6 +452,35 @@ pub async fn build_project(
         }
 
         if status.success() {
+            // For Android builds, rename the AAB file
+            if platform == "android" {
+                let bundle_dir = work_dir.join("app/build/outputs/bundle/release");
+                let original_aab = bundle_dir.join("app-release.aab");
+
+                if original_aab.exists() {
+                    // Create timestamp
+                    let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
+
+                    // Create new filename: appname_version_timestamp.aab
+                    let new_filename = format!(
+                        "{}_{}_{}_{}.aab",
+                        project.name.replace(" ", "_"),
+                        project.android.version,
+                        project.android.version_code,
+                        timestamp
+                    );
+
+                    let new_aab_path = bundle_dir.join(&new_filename);
+
+                    // Rename the file
+                    std::fs::rename(&original_aab, &new_aab_path)
+                        .map_err(|e| format!("Failed to rename AAB file: {}", e))?;
+
+                    let rename_msg = format!("✅ AAB renamed to: {}", new_filename);
+                    window.emit("build-log", &rename_msg).map_err(|e| e.to_string())?;
+                }
+            }
+
             window.emit("build-status", "success").map_err(|e| e.to_string())?;
             Ok(())
         } else {
