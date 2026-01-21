@@ -30,7 +30,10 @@ pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory
 pub async fn list_build_history(state: State<'_, DbState>) -> Result<Vec<BuildHistory>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, project_id, platform, version, build_number, status, timestamp, logs, release_note FROM build_history ORDER BY timestamp DESC")
+        .prepare("SELECT h.id, h.project_id, h.platform, h.version, h.build_number, h.status, h.timestamp, h.logs, h.release_note
+                  FROM build_history h
+                  INNER JOIN projects p ON h.project_id = p.id
+                  ORDER BY h.timestamp DESC")
         .map_err(|e| e.to_string())?;
 
     let history_iter = stmt

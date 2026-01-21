@@ -494,6 +494,12 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
 #[command]
 pub async fn delete_project(state: State<'_, DbState>, id: String) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
+
+    // Delete build history first
+    conn.execute("DELETE FROM build_history WHERE project_id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
+
+    // Delete project
     conn.execute("DELETE FROM projects WHERE id = ?1", params![id])
         .map_err(|e| e.to_string())?;
     Ok(())

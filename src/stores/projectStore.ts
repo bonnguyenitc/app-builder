@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../types/project';
+import { useBuildStore } from './buildStore';
 
 interface ProjectState {
   projects: Project[];
@@ -12,6 +13,7 @@ interface ProjectState {
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   selectProject: (id: string | null) => void;
+  clearError: () => void;
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -19,6 +21,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   selectedProjectId: null,
   isLoading: false,
   error: null,
+  clearError: () => set({ error: null }),
 
   fetchProjects: async () => {
     set({ isLoading: true });
@@ -61,6 +64,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         projects: state.projects.filter((p) => p.id !== id),
         selectedProjectId: state.selectedProjectId === id ? null : state.selectedProjectId,
       }));
+      // Refresh build history to remove entries for the deleted project
+      useBuildStore.getState().fetchHistory();
     } catch (e) {
       set({ error: (e as Error).toString() });
     }

@@ -9,6 +9,7 @@ export const Settings: React.FC = () => {
     useCredentials();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
+  const [deletingCredential, setDeletingCredential] = useState<Credential | null>(null);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleOpenModal = (credential?: Credential) => {
@@ -40,17 +41,21 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const handleDeleteCredential = async (credential: Credential) => {
-    if (!confirm(`Are you sure you want to delete "${credential.name}"?`)) {
-      return;
-    }
+  const handleDeleteCredential = (credential: Credential) => {
+    setDeletingCredential(credential);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingCredential) return;
 
     try {
-      await deleteCredential(credential.id, credential.platform);
+      await deleteCredential(deletingCredential.id, deletingCredential.platform);
       setStatus({ type: 'success', message: 'Credential deleted successfully' });
       setTimeout(() => setStatus(null), 3000);
     } catch (err) {
       setStatus({ type: 'error', message: `Failed to delete credential: ${err}` });
+    } finally {
+      setDeletingCredential(null);
     }
   };
 
@@ -384,13 +389,65 @@ export const Settings: React.FC = () => {
         </section>
       </div>
 
-      {/* Credential Modal */}
       <CredentialModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveCredential}
         editingCredential={editingCredential}
       />
+
+      {/* Delete Confirmation Modal */}
+      {deletingCredential && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setDeletingCredential(null)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '400px',
+              padding: 'var(--spacing-xl)',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+              Delete Credential
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
+              Are you sure you want to delete "{deletingCredential.name}"? This action cannot be
+              undone.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setDeletingCredential(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn"
+                onClick={handleConfirmDelete}
+                style={{
+                  backgroundColor: 'var(--color-error)',
+                  color: 'white',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,7 +8,8 @@ import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
 
 export const Dashboard: React.FC = () => {
-  const { projects, addProject, updateProject, deleteProject } = useProjectStore();
+  const { projects, addProject, updateProject, deleteProject, error, clearError } =
+    useProjectStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
@@ -101,6 +102,36 @@ export const Dashboard: React.FC = () => {
           <span>Add Project</span>
         </button>
       </div>
+
+      {error && (
+        <div
+          style={{
+            padding: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-lg)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid var(--color-error)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-error)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>Error: {error}</span>
+          <button
+            onClick={clearError}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              fontWeight: 600,
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div
         style={{
