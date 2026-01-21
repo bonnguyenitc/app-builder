@@ -1,4 +1,4 @@
-use crate::models::project::{Project, BundleId, VersionInfo, BuildNumberInfo};
+use crate::models::project::{Project, IosPlatform, AndroidPlatform};
 use crate::DbState;
 use tauri::{command, State};
 use rusqlite::params;
@@ -18,6 +18,8 @@ pub struct AppJsonInfo {
     pub ios_build_number: Option<String>,
     pub android_version_code: Option<u32>,
 }
+
+// ... existing structs ...
 
 #[derive(Deserialize)]
 struct IosConfig {
@@ -44,6 +46,7 @@ struct AppJson {
 }
 
 fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) -> Result<(), String> {
+    // ... existing implementation ...
     let ios_dir = Path::new(project_path).join("ios");
     if !ios_dir.exists() {
         return Ok(());
@@ -87,6 +90,7 @@ fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) 
 }
 
 fn update_android_gradle(project_path: &str, version_name: &str, version_code: &str) -> Result<(), String> {
+    // ... existing implementation ...
     let gradle_path = Path::new(project_path).join("android/app/build.gradle");
     if !gradle_path.exists() {
         return Ok(());
@@ -103,6 +107,61 @@ fn update_android_gradle(project_path: &str, version_name: &str, version_code: &
     let content = version_name_regex.replace(&content, format!("versionName \"{}\"", version_name));
 
     fs::write(&gradle_path, content.to_string()).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+fn update_build_json(
+    project_path: &str,
+    ios_version: &str,
+    ios_build_number: u32,
+    android_version: &str,
+    android_version_code: u32,
+) -> Result<(), String> {
+    let build_json_path = Path::new(project_path).join("build.json");
+    if !build_json_path.exists() {
+        return Ok(());
+    }
+
+    let content = fs::read_to_string(&build_json_path)
+        .map_err(|e| format!("Failed to read build.json: {}", e))?;
+
+    let mut json_value: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse build.json: {}", e))?;
+
+    // Update iOS
+    if let Some(ios) = json_value.get_mut("ios") {
+        if let Some(obj) = ios.as_object_mut() {
+            obj.insert(
+                "version".to_string(),
+                serde_json::Value::String(ios_version.to_string()),
+            );
+            obj.insert(
+                "buildNumber".to_string(),
+                serde_json::Value::String(ios_build_number.to_string()),
+            );
+        }
+    }
+
+    // Update Android
+    if let Some(android) = json_value.get_mut("android") {
+        if let Some(obj) = android.as_object_mut() {
+            obj.insert(
+                "version".to_string(),
+                serde_json::Value::String(android_version.to_string()),
+            );
+            obj.insert(
+                "versionCode".to_string(),
+                serde_json::json!(android_version_code),
+            );
+        }
+    }
+
+    let new_content = serde_json::to_string_pretty(&json_value)
+        .map_err(|e| format!("Failed to serialize build.json: {}", e))?;
+
+    fs::write(&build_json_path, new_content)
+        .map_err(|e| format!("Failed to write build.json: {}", e))?;
 
     Ok(())
 }
@@ -163,19 +222,17 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
-                bundle_id: BundleId {
-                    ios: row.get(3)?,
-                    android: row.get(4)?,
+                ios: IosPlatform {
+                    bundle_id: row.get(3)?,
+                    version: row.get(5)?,
+                    build_number: row.get(7)?,
+                    config: ios_config,
                 },
-                version: VersionInfo {
-                    ios: row.get(5)?,
-                    android: row.get(6)?,
+                android: AndroidPlatform {
+                    bundle_id: row.get(4)?,
+                    version: row.get(6)?,
+                    version_code: row.get(8)?,
                 },
-                build_number: BuildNumberInfo {
-                    ios: row.get(7)?,
-                    android: row.get(8)?,
-                },
-                ios_config,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -205,18 +262,18 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             project.id,
             project.name,
             project.path,
-            project.bundle_id.ios,
-            project.bundle_id.android,
-            project.version.ios,
-            project.version.android,
-            project.build_number.ios,
-            project.build_number.android,
-            project.ios_config.as_ref().map(|c| &c.scheme),
-            project.ios_config.as_ref().map(|c| &c.configuration),
-            project.ios_config.as_ref().and_then(|c| c.team_id.as_ref()),
-            project.ios_config.as_ref().and_then(|c| c.export_method.as_ref()),
-            project.ios_config.as_ref().and_then(|c| c.api_key.as_ref()),
-            project.ios_config.as_ref().and_then(|c| c.api_issuer.as_ref()),
+            project.ios.bundle_id,
+            project.android.bundle_id,
+            project.ios.version,
+            project.android.version,
+            project.ios.build_number,
+            project.android.version_code,
+            project.ios.config.as_ref().map(|c| &c.scheme),
+            project.ios.config.as_ref().map(|c| &c.configuration),
+            project.ios.config.as_ref().and_then(|c| c.team_id.as_ref()),
+            project.ios.config.as_ref().and_then(|c| c.export_method.as_ref()),
+            project.ios.config.as_ref().and_then(|c| c.api_key.as_ref()),
+            project.ios.config.as_ref().and_then(|c| c.api_issuer.as_ref()),
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -224,15 +281,24 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
     // Update Info.plist
     update_ios_info_plist(
         &project.path,
-        &project.version.ios,
-        &project.build_number.ios.to_string()
+        &project.ios.version,
+        &project.ios.build_number.to_string()
     )?;
 
     // Update Android build.gradle
     update_android_gradle(
         &project.path,
-        &project.version.android,
-        &project.build_number.android.to_string()
+        &project.android.version,
+        &project.android.version_code.to_string()
+    )?;
+
+    // Update build.json
+    update_build_json(
+        &project.path,
+        &project.ios.version,
+        project.ios.build_number,
+        &project.android.version,
+        project.android.version_code,
     )?;
 
     Ok(())

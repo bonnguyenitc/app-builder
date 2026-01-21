@@ -2,29 +2,27 @@ export interface Project {
   id: string;
   name: string;
   path: string;
-  bundleId: {
-    ios: string;
-    android: string;
+  ios: {
+    bundleId: string;
+    version: string;
+    buildNumber: number;
+    config?: {
+      scheme: string;
+      configuration: string;
+      teamId?: string;
+      exportMethod?: 'development' | 'ad-hoc' | 'app-store' | 'enterprise';
+      apiKey?: string;
+      apiIssuer?: string;
+    };
   };
-  version: {
-    ios: string;
-    android: string;
-  };
-  buildNumber: {
-    ios: number;
-    android: number;
+  android: {
+    bundleId: string;
+    version: string;
+    versionCode: number;
   };
   credentials: {
     appStoreConnectApiKeyId?: string;
     googlePlayServiceAccountPath?: string;
-  };
-  iosConfig?: {
-    scheme: string;
-    configuration: string;
-    teamId?: string;
-    exportMethod?: 'development' | 'ad-hoc' | 'app-store' | 'enterprise';
-    apiKey?: string;
-    apiIssuer?: string;
   };
   lastBuild?: BuildHistory;
 }

@@ -19,7 +19,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
     localStorage.setItem(`upload_to_appstore_${project.id}`, String(checked));
   };
 
-  const hasIosCredentials = !!project.iosConfig?.apiKey && !!project.iosConfig?.apiIssuer;
+  const hasIosCredentials = !!project.ios.config?.apiKey && !!project.ios.config?.apiIssuer;
 
   return (
     <div className="card" onClick={onSelect} style={{ cursor: 'pointer' }}>
@@ -34,7 +34,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
         <div>
           <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '2px' }}>{project.name}</h3>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '12px' }}>
-            {project.bundleId.ios || project.bundleId.android}
+            {project.ios.bundleId || project.android.bundleId}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
@@ -77,7 +77,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
           <Apple size={14} style={{ color: 'var(--color-text-secondary)' }} />
           <span style={{ flex: 1 }}>iOS</span>
           <span style={{ fontWeight: 500 }}>
-            {project.version.ios} ({project.buildNumber.ios})
+            {project.ios.version} ({project.ios.buildNumber})
           </span>
         </div>
         <div
@@ -91,7 +91,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onBuild, onSe
           <Smartphone size={14} style={{ color: 'var(--color-text-secondary)' }} />
           <span style={{ flex: 1 }}>Android</span>
           <span style={{ fontWeight: 500 }}>
-            {project.version.android} ({project.buildNumber.android})
+            {project.android.version} ({project.android.versionCode})
           </span>
         </div>
       </div>

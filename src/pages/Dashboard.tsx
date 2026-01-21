@@ -20,8 +20,8 @@ export const Dashboard: React.FC = () => {
   const filteredProjects = projects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.bundleId.ios.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.bundleId.android.toLowerCase().includes(searchTerm.toLowerCase()),
+      p.ios.bundleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.android.bundleId.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleSaveProject = (projectData: Omit<Project, 'id'>) => {

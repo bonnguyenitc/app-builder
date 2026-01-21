@@ -2,27 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct BundleId {
-    pub ios: String,
-    pub android: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct VersionInfo {
-    pub ios: String,
-    pub android: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct BuildNumberInfo {
-    pub ios: u32,
-    pub android: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct IosConfig {
     pub scheme: String,
     pub configuration: String,
@@ -34,14 +13,29 @@ pub struct IosConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct IosPlatform {
+    pub bundle_id: String,
+    pub version: String,
+    pub build_number: u32,
+    pub config: Option<IosConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AndroidPlatform {
+    pub bundle_id: String,
+    pub version: String,
+    pub version_code: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: String,
     pub name: String,
     pub path: String,
-    pub bundle_id: BundleId,
-    pub version: VersionInfo,
-    pub build_number: BuildNumberInfo,
-    pub ios_config: Option<IosConfig>,
+    pub ios: IosPlatform,
+    pub android: AndroidPlatform,
     // credentials will be handled separately via Keychain
 }
 

@@ -52,8 +52,8 @@ pub async fn build_project(
                 .map_err(|e| format!("Failed to create log file: {}", e))?;
 
             // Uses scheme and configuration from project settings or falls back to defaults
-            let scheme = project.ios_config.as_ref().map(|c| c.scheme.as_str()).unwrap_or(&project.name);
-            let configuration = project.ios_config.as_ref().map(|c| c.configuration.as_str()).unwrap_or("Release");
+            let scheme = project.ios.config.as_ref().map(|c| c.scheme.as_str()).unwrap_or(&project.name);
+            let configuration = project.ios.config.as_ref().map(|c| c.configuration.as_str()).unwrap_or("Release");
 
             // Find workspace or project file in ios directory
             let mut workspace_path = None;
@@ -176,13 +176,13 @@ pub async fn build_project(
             let export_plist_path = ios_dir.join("ExportOptions.plist");
 
             // If team_id is provided, generate ExportOptions.plist automatically
-            if let Some(team_id) = project.ios_config.as_ref().and_then(|c| c.team_id.as_ref()) {
+            if let Some(team_id) = project.ios.config.as_ref().and_then(|c| c.team_id.as_ref()) {
                 let msg = format!("🔧 Generating ExportOptions.plist with Team ID: {}", team_id);
                 window.emit("build-log", &msg).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
 
                 // Use export_method from config, or default to "development"
-                let export_method = project.ios_config.as_ref()
+                let export_method = project.ios.config.as_ref()
                     .and_then(|c| c.export_method.as_ref())
                     .map(|s| s.as_str())
                     .unwrap_or("development");
@@ -300,8 +300,8 @@ pub async fn build_project(
             // Step 3: Upload to App Store (Optional)
             if let Some(true) = options.and_then(|o| o.upload_to_app_store) {
                  if let (Some(api_key), Some(api_issuer)) = (
-                    project.ios_config.as_ref().and_then(|c| c.api_key.as_ref()),
-                    project.ios_config.as_ref().and_then(|c| c.api_issuer.as_ref())
+                    project.ios.config.as_ref().and_then(|c| c.api_key.as_ref()),
+                    project.ios.config.as_ref().and_then(|c| c.api_issuer.as_ref())
                  ) {
                     let upload_msg = "🚀 Starting upload to App Store...";
                     window.emit("build-log", upload_msg).map_err(|e| e.to_string())?;

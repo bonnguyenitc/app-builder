@@ -29,43 +29,43 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
 }) => {
   const [name, setName] = useState(initialData?.name || '');
   const [path, setPath] = useState(initialData?.path || '');
-  const [iosBundle, setIosBundle] = useState(initialData?.bundleId.ios || '');
-  const [androidBundle, setAndroidBundle] = useState(initialData?.bundleId.android || '');
-  const [iosVersion, setIosVersion] = useState(initialData?.version.ios || '1.0.0');
-  const [androidVersion, setAndroidVersion] = useState(initialData?.version.android || '1.0.0');
-  const [iosBuildNumber, setIosBuildNumber] = useState(initialData?.buildNumber.ios || 1);
+  const [iosBundle, setIosBundle] = useState(initialData?.ios.bundleId || '');
+  const [androidBundle, setAndroidBundle] = useState(initialData?.android.bundleId || '');
+  const [iosVersion, setIosVersion] = useState(initialData?.ios.version || '1.0.0');
+  const [androidVersion, setAndroidVersion] = useState(initialData?.android.version || '1.0.0');
+  const [iosBuildNumber, setIosBuildNumber] = useState(initialData?.ios.buildNumber || 1);
   const [androidBuildNumber, setAndroidBuildNumber] = useState(
-    initialData?.buildNumber.android || 1,
+    initialData?.android.versionCode || 1,
   );
 
-  const [iosScheme, setIosScheme] = useState(initialData?.iosConfig?.scheme || '');
+  const [iosScheme, setIosScheme] = useState(initialData?.ios.config?.scheme || '');
   const [iosConfiguration, setIosConfiguration] = useState(
-    initialData?.iosConfig?.configuration || 'Release',
+    initialData?.ios.config?.configuration || 'Release',
   );
-  const [iosTeamId, setIosTeamId] = useState(initialData?.iosConfig?.teamId || '');
+  const [iosTeamId, setIosTeamId] = useState(initialData?.ios.config?.teamId || '');
   const [iosExportMethod, setIosExportMethod] = useState<
     'development' | 'ad-hoc' | 'app-store' | 'enterprise'
-  >(initialData?.iosConfig?.exportMethod || 'development');
-  const [iosApiKey, setIosApiKey] = useState(initialData?.iosConfig?.apiKey || '');
-  const [iosApiIssuer, setIosApiIssuer] = useState(initialData?.iosConfig?.apiIssuer || '');
+  >(initialData?.ios.config?.exportMethod || 'development');
+  const [iosApiKey, setIosApiKey] = useState(initialData?.ios.config?.apiKey || '');
+  const [iosApiIssuer, setIosApiIssuer] = useState(initialData?.ios.config?.apiIssuer || '');
 
   React.useEffect(() => {
     if (isOpen) {
       setName(initialData?.name || '');
       setPath(initialData?.path || '');
-      setIosBundle(initialData?.bundleId.ios || '');
-      setAndroidBundle(initialData?.bundleId.android || '');
-      setIosVersion(initialData?.version.ios || '1.0.0');
-      setAndroidVersion(initialData?.version.android || '1.0.0');
-      setIosBuildNumber(initialData?.buildNumber.ios || 1);
-      setAndroidBuildNumber(initialData?.buildNumber.android || 1);
+      setIosBundle(initialData?.ios.bundleId || '');
+      setAndroidBundle(initialData?.android.bundleId || '');
+      setIosVersion(initialData?.ios.version || '1.0.0');
+      setAndroidVersion(initialData?.android.version || '1.0.0');
+      setIosBuildNumber(initialData?.ios.buildNumber || 1);
+      setAndroidBuildNumber(initialData?.android.versionCode || 1);
 
-      setIosScheme(initialData?.iosConfig?.scheme || initialData?.name || '');
-      setIosConfiguration(initialData?.iosConfig?.configuration || 'Release');
-      setIosTeamId(initialData?.iosConfig?.teamId || '');
-      setIosExportMethod(initialData?.iosConfig?.exportMethod || 'development');
-      setIosApiKey(initialData?.iosConfig?.apiKey || '');
-      setIosApiIssuer(initialData?.iosConfig?.apiIssuer || '');
+      setIosScheme(initialData?.ios.config?.scheme || initialData?.name || '');
+      setIosConfiguration(initialData?.ios.config?.configuration || 'Release');
+      setIosTeamId(initialData?.ios.config?.teamId || '');
+      setIosExportMethod(initialData?.ios.config?.exportMethod || 'development');
+      setIosApiKey(initialData?.ios.config?.apiKey || '');
+      setIosApiIssuer(initialData?.ios.config?.apiIssuer || '');
     }
   }, [isOpen, initialData]);
 
@@ -118,24 +118,35 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Only include config if scheme and configuration are provided
+    const iosConfig =
+      (iosScheme || name) && (iosConfiguration || 'Release')
+        ? {
+            scheme: iosScheme || name,
+            configuration: iosConfiguration || 'Release',
+            teamId: iosTeamId || undefined,
+            exportMethod: iosExportMethod,
+            apiKey: iosApiKey || undefined,
+            apiIssuer: iosApiIssuer || undefined,
+          }
+        : undefined;
+
     onSave({
       name,
       path,
-      bundleId: { ios: iosBundle, android: androidBundle },
-      version: { ios: iosVersion, android: androidVersion },
-      buildNumber: {
-        ios: iosBuildNumber,
-        android: androidBuildNumber,
+      ios: {
+        bundleId: iosBundle,
+        version: iosVersion,
+        buildNumber: iosBuildNumber,
+        config: iosConfig,
+      },
+      android: {
+        bundleId: androidBundle,
+        version: androidVersion,
+        versionCode: androidBuildNumber,
       },
       credentials: initialData?.credentials || {},
-      iosConfig: {
-        scheme: iosScheme || name, // Fallback to project name if empty
-        configuration: iosConfiguration || 'Release',
-        teamId: iosTeamId || undefined,
-        exportMethod: iosExportMethod,
-        apiKey: iosApiKey || undefined,
-        apiIssuer: iosApiIssuer || undefined,
-      },
     });
     onClose();
   };
