@@ -62,7 +62,6 @@
 ### 🤖 Android Automation
 
 - **Build AAB/APK:** Direct Gradle execution management.
-- **Secure Signing:** Manages Keystores and signing configurations.
 
 ### 📊 Monitoring & History
 
