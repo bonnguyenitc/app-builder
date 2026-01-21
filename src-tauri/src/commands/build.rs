@@ -11,6 +11,7 @@ use crate::BuildProcessState;
 pub struct BuildOptions {
     #[serde(rename = "uploadToAppStore")]
     pub upload_to_app_store: Option<bool>,
+    pub release_note: Option<String>,
 }
 
 #[command]

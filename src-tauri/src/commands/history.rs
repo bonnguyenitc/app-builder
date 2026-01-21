@@ -7,8 +7,8 @@ use rusqlite::params;
 pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO build_history (id, project_id, platform, version, build_number, status, timestamp, logs)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        "INSERT INTO build_history (id, project_id, platform, version, build_number, status, timestamp, logs, release_note)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
         params![
             history.id,
             history.project_id,
@@ -18,6 +18,7 @@ pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory
             history.status,
             history.timestamp,
             history.logs,
+            history.release_note,
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -29,7 +30,7 @@ pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory
 pub async fn list_build_history(state: State<'_, DbState>) -> Result<Vec<BuildHistory>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, project_id, platform, version, build_number, status, timestamp, logs FROM build_history ORDER BY timestamp DESC")
+        .prepare("SELECT id, project_id, platform, version, build_number, status, timestamp, logs, release_note FROM build_history ORDER BY timestamp DESC")
         .map_err(|e| e.to_string())?;
 
     let history_iter = stmt
@@ -43,6 +44,7 @@ pub async fn list_build_history(state: State<'_, DbState>) -> Result<Vec<BuildHi
                 status: row.get(5)?,
                 timestamp: row.get(6)?,
                 logs: row.get(7)?,
+                release_note: row.get(8)?,
             })
         })
         .map_err(|e| e.to_string())?;

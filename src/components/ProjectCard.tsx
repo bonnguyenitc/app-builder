@@ -4,7 +4,10 @@ import { Project } from '../types/project';
 
 interface ProjectCardProps {
   project: Project;
-  onBuild: (platform: 'ios' | 'android', options?: { uploadToAppStore?: boolean }) => void;
+  onBuild: (
+    platform: 'ios' | 'android',
+    options?: { uploadToAppStore?: boolean; releaseNote?: string },
+  ) => void;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -21,9 +24,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
   });
 
+  const [releaseNote, setReleaseNote] = useState(() => {
+    return localStorage.getItem(`release_note_${project.id}`) || '';
+  });
+
   const handleUploadChange = (checked: boolean) => {
     setUploadToAppStore(checked);
     localStorage.setItem(`upload_to_appstore_${project.id}`, String(checked));
+  };
+
+  const handleReleaseNoteChange = (value: string) => {
+    setReleaseNote(value);
+    localStorage.setItem(`release_note_${project.id}`, value);
   };
 
   const hasIosCredentials = !!project.ios.config?.apiKey && !!project.ios.config?.apiIssuer;
@@ -120,6 +132,36 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
 
+      <div style={{ marginBottom: 'var(--spacing-sm)' }} onClick={(e) => e.stopPropagation()}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: '12px',
+            marginBottom: '4px',
+            fontWeight: 500,
+          }}
+        >
+          Release Note <span style={{ color: 'var(--color-error)' }}>*</span>
+        </label>
+        <textarea
+          value={releaseNote}
+          onChange={(e) => handleReleaseNoteChange(e.target.value)}
+          placeholder="Enter release notes for this build..."
+          style={{
+            width: '100%',
+            minHeight: '60px',
+            padding: '8px',
+            fontSize: '12px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-sidebar)',
+            color: 'var(--color-text)',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+          }}
+        />
+      </div>
+
       <div style={{ marginBottom: 'var(--spacing-sm)' }}>
         <label
           style={{
@@ -151,15 +193,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           className="btn btn-primary"
           onClick={(e) => {
             e.stopPropagation();
-            onBuild('ios', { uploadToAppStore });
+            if (releaseNote.trim()) {
+              onBuild('ios', { uploadToAppStore, releaseNote: releaseNote.trim() });
+            }
           }}
-          disabled={project.lastBuild?.status === 'building'}
+          disabled={project.lastBuild?.status === 'building' || !releaseNote.trim()}
           style={{
             flex: 1,
             padding: 'var(--spacing-xs) var(--spacing-sm)',
             fontSize: '12px',
-            opacity: project.lastBuild?.status === 'building' ? 0.7 : 1,
-            cursor: project.lastBuild?.status === 'building' ? 'not-allowed' : 'pointer',
+            opacity: project.lastBuild?.status === 'building' || !releaseNote.trim() ? 0.7 : 1,
+            cursor:
+              project.lastBuild?.status === 'building' || !releaseNote.trim()
+                ? 'not-allowed'
+                : 'pointer',
           }}
         >
           {project.lastBuild?.status === 'building' && project.lastBuild.platform === 'ios' ? (
@@ -178,15 +225,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           className="btn btn-secondary"
           onClick={(e) => {
             e.stopPropagation();
-            onBuild('android');
+            if (releaseNote.trim()) {
+              onBuild('android', { releaseNote: releaseNote.trim() });
+            }
           }}
-          disabled={project.lastBuild?.status === 'building'}
+          disabled={project.lastBuild?.status === 'building' || !releaseNote.trim()}
           style={{
             flex: 1,
             padding: 'var(--spacing-xs) var(--spacing-sm)',
             fontSize: '12px',
-            opacity: project.lastBuild?.status === 'building' ? 0.7 : 1,
-            cursor: project.lastBuild?.status === 'building' ? 'not-allowed' : 'pointer',
+            opacity: project.lastBuild?.status === 'building' || !releaseNote.trim() ? 0.7 : 1,
+            cursor:
+              project.lastBuild?.status === 'building' || !releaseNote.trim()
+                ? 'not-allowed'
+                : 'pointer',
           }}
         >
           {project.lastBuild?.status === 'building' && project.lastBuild.platform === 'android' ? (

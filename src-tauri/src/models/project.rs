@@ -50,4 +50,5 @@ pub struct BuildHistory {
     pub status: String,
     pub timestamp: u64,
     pub logs: String,
+    pub release_note: String,
 }

@@ -37,4 +37,5 @@ export interface BuildHistory {
   timestamp: number;
   logs: string;
   logFilePath?: string; // Path to log file (especially for iOS builds)
+  releaseNote: string;
 }

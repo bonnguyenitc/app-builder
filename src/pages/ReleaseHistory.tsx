@@ -35,6 +35,7 @@ export const ReleaseHistory: React.FC = () => {
                 <th style={{ padding: '12px var(--spacing-md)' }}>Project</th>
                 <th style={{ padding: '12px var(--spacing-md)' }}>Platform</th>
                 <th style={{ padding: '12px var(--spacing-md)' }}>Version</th>
+                <th style={{ padding: '12px var(--spacing-md)' }}>Release Note</th>
                 <th style={{ padding: '12px var(--spacing-md)' }}>Date</th>
                 <th style={{ padding: '12px var(--spacing-md)', textAlign: 'right' }}>Actions</th>
               </tr>
@@ -84,6 +85,20 @@ export const ReleaseHistory: React.FC = () => {
                     </td>
                     <td style={{ padding: '12px var(--spacing-md)' }}>
                       v{build.version} ({build.buildNumber})
+                    </td>
+                    <td style={{ padding: '12px var(--spacing-md)', maxWidth: '200px' }}>
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--color-text-secondary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={build.releaseNote}
+                      >
+                        {build.releaseNote || '-'}
+                      </div>
                     </td>
                     <td
                       style={{

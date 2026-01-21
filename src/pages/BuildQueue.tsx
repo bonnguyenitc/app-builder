@@ -145,6 +145,18 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
               {build.platform.toUpperCase()} • v{build.version} ({build.buildNumber})
             </p>
+            {build.releaseNote && (
+              <p
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--color-text-secondary)',
+                  marginTop: '4px',
+                  fontStyle: 'italic',
+                }}
+              >
+                📝 {build.releaseNote}
+              </p>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>

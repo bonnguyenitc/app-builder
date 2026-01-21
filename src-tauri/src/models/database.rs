@@ -67,10 +67,14 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
             status TEXT NOT NULL,
             timestamp INTEGER NOT NULL,
             logs TEXT,
+            release_note TEXT,
             FOREIGN KEY(project_id) REFERENCES projects(id)
         )",
         [],
     )?;
+
+    // Migration for existing databases
+    let _ = conn.execute("ALTER TABLE build_history ADD COLUMN release_note TEXT", []);
 
     Ok(conn)
 }
