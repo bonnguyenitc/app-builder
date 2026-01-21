@@ -35,6 +35,7 @@ pub fn run() {
             save_project,
             delete_project,
             read_app_json,
+            read_native_project_info,
             build_project,
             cancel_build_process,
             open_build_folder,

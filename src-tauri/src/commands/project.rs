@@ -261,6 +261,119 @@ pub async fn read_app_json(project_path: String) -> Result<AppJsonInfo, String> 
 }
 
 #[command]
+pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInfo, String> {
+    // First, try to read from .app-builder/build.json if it exists
+    let app_builder_dir = Path::new(&project_path).join(".app-builder");
+    let build_json_path = app_builder_dir.join("build.json");
+
+    if build_json_path.exists() {
+        // If .app-builder/build.json exists, read from it
+        if let Ok(content) = fs::read_to_string(&build_json_path) {
+            if let Ok(app_json) = serde_json::from_str::<AppJson>(&content) {
+                let info = AppJsonInfo {
+                    name: app_json.name,
+                    ios_bundle_id: app_json.ios.as_ref().and_then(|ios| ios.bundle_identifier.clone()),
+                    ios_version: app_json.ios.as_ref().and_then(|ios| ios.version.clone()),
+                    android_package: app_json.android.as_ref().and_then(|android| android.package.clone()),
+                    android_version: app_json.android.as_ref().and_then(|android| android.version.clone()),
+                    ios_build_number: app_json.ios.as_ref().and_then(|ios| ios.build_number.clone()),
+                    android_version_code: app_json.android.as_ref().and_then(|android| android.version_code),
+                };
+                return Ok(info);
+            }
+        }
+    }
+
+    // If .app-builder/build.json doesn't exist or failed to read, read from native files
+    let mut info = AppJsonInfo {
+        name: None,
+        ios_bundle_id: None,
+        ios_version: None,
+        android_package: None,
+        android_version: None,
+        ios_build_number: None,
+        android_version_code: None,
+    };
+
+    // Try to extract project name from path
+    if let Some(path) = Path::new(&project_path).file_name() {
+        info.name = Some(path.to_string_lossy().to_string());
+    }
+
+    // Read iOS Info.plist
+    let ios_dir = Path::new(&project_path).join("ios");
+    if ios_dir.exists() {
+        if let Ok(entries) = fs::read_dir(&ios_dir) {
+            for entry in entries.flatten() {
+                let file_name = entry.file_name();
+                let file_name_str = file_name.to_string_lossy();
+                if file_name_str.ends_with(".xcodeproj") {
+                    let project_name = file_name_str.trim_end_matches(".xcodeproj");
+                    let plist_path = ios_dir.join(project_name).join("Info.plist");
+
+                    if plist_path.exists() {
+                        if let Ok(value) = Value::from_file(&plist_path) {
+                            if let Some(dict) = value.as_dictionary() {
+                                // Get bundle identifier
+                                if let Some(Value::String(bundle_id)) = dict.get("CFBundleIdentifier") {
+                                    info.ios_bundle_id = Some(bundle_id.clone());
+                                }
+                                // Get version
+                                if let Some(Value::String(version)) = dict.get("CFBundleShortVersionString") {
+                                    info.ios_version = Some(version.clone());
+                                }
+                                // Get build number
+                                if let Some(Value::String(build_number)) = dict.get("CFBundleVersion") {
+                                    info.ios_build_number = Some(build_number.clone());
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // Read Android build.gradle
+    let gradle_path = Path::new(&project_path).join("android/app/build.gradle");
+    if gradle_path.exists() {
+        if let Ok(content) = fs::read_to_string(&gradle_path) {
+            // Extract applicationId
+            if let Ok(app_id_regex) = Regex::new(r#"applicationId\s*=?\s*["']([^"']+)["']"#) {
+                if let Some(captures) = app_id_regex.captures(&content) {
+                    if let Some(app_id) = captures.get(1) {
+                        info.android_package = Some(app_id.as_str().to_string());
+                    }
+                }
+            }
+
+            // Extract versionName
+            if let Ok(version_name_regex) = Regex::new(r#"versionName\s*=?\s*["']([^"']+)["']"#) {
+                if let Some(captures) = version_name_regex.captures(&content) {
+                    if let Some(version) = captures.get(1) {
+                        info.android_version = Some(version.as_str().to_string());
+                    }
+                }
+            }
+
+            // Extract versionCode
+            if let Ok(version_code_regex) = Regex::new(r"versionCode\s*=?\s*(\d+)") {
+                if let Some(captures) = version_code_regex.captures(&content) {
+                    if let Some(code) = captures.get(1) {
+                        if let Ok(code_num) = code.as_str().parse::<u32>() {
+                            info.android_version_code = Some(code_num);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(info)
+}
+
+#[command]
 pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn

@@ -84,9 +84,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       if (selected && typeof selected === 'string') {
         setPath(selected);
 
-        // Try to read app.json and auto-fill fields
+        // Try to read from native files (Info.plist and build.gradle) and auto-fill fields
         try {
-          const appInfo = await invoke<AppJsonInfo>('read_app_json', { projectPath: selected });
+          const appInfo = await invoke<AppJsonInfo>('read_native_project_info', {
+            projectPath: selected,
+          });
           if (appInfo.name) {
             setName(appInfo.name);
             if (!iosScheme) setIosScheme(appInfo.name);
@@ -100,8 +102,9 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
             if (!isNaN(parsed)) setIosBuildNumber(parsed);
           }
           if (appInfo.android_version_code) setAndroidBuildNumber(appInfo.android_version_code);
-        } catch {
-          // app.json not found or invalid - fallback to folder name
+        } catch (error) {
+          console.log('Could not read native project info:', error);
+          // Fallback to folder name
           if (!name) {
             const folderName = selected.split('/').pop();
             if (folderName) {
