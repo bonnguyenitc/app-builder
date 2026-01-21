@@ -46,7 +46,6 @@ struct AppJson {
 }
 
 fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) -> Result<(), String> {
-    // ... existing implementation ...
     let ios_dir = Path::new(project_path).join("ios");
     if !ios_dir.exists() {
         return Ok(());
@@ -90,7 +89,6 @@ fn update_ios_info_plist(project_path: &str, version: &str, build_number: &str) 
 }
 
 fn update_android_gradle(project_path: &str, version_name: &str, version_code: &str) -> Result<(), String> {
-    // ... existing implementation ...
     let gradle_path = Path::new(project_path).join("android/app/build.gradle");
     if !gradle_path.exists() {
         return Ok(());
@@ -113,14 +111,45 @@ fn update_android_gradle(project_path: &str, version_name: &str, version_code: &
 
 fn update_build_json(
     project_path: &str,
+    project_name: &str,
+    ios_bundle_id: &str,
     ios_version: &str,
     ios_build_number: u32,
+    android_package: &str,
     android_version: &str,
     android_version_code: u32,
 ) -> Result<(), String> {
-    let build_json_path = Path::new(project_path).join("build.json");
+    // Use .app-builder/build.json instead of build.json
+    let app_builder_dir = Path::new(project_path).join(".app-builder");
+    let build_json_path = app_builder_dir.join("build.json");
+
+    // Create .app-builder directory if it doesn't exist
+    if !app_builder_dir.exists() {
+        fs::create_dir_all(&app_builder_dir)
+            .map_err(|e| format!("Failed to create .app-builder directory: {}", e))?;
+    }
+
+    // Create template build.json if it doesn't exist
     if !build_json_path.exists() {
-        return Ok(());
+        let template = serde_json::json!({
+            "android": {
+                "package": android_package,
+                "version": android_version,
+                "versionCode": android_version_code
+            },
+            "ios": {
+                "bundleIdentifier": ios_bundle_id,
+                "version": ios_version,
+                "buildNumber": ios_build_number.to_string()
+            },
+            "name": project_name
+        });
+
+        let template_content = serde_json::to_string_pretty(&template)
+            .map_err(|e| format!("Failed to serialize template build.json: {}", e))?;
+
+        fs::write(&build_json_path, template_content)
+            .map_err(|e| format!("Failed to create template build.json: {}", e))?;
     }
 
     let content = fs::read_to_string(&build_json_path)
@@ -129,9 +158,16 @@ fn update_build_json(
     let mut json_value: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse build.json: {}", e))?;
 
+    // Update name
+    json_value["name"] = serde_json::Value::String(project_name.to_string());
+
     // Update iOS
     if let Some(ios) = json_value.get_mut("ios") {
         if let Some(obj) = ios.as_object_mut() {
+            obj.insert(
+                "bundleIdentifier".to_string(),
+                serde_json::Value::String(ios_bundle_id.to_string()),
+            );
             obj.insert(
                 "version".to_string(),
                 serde_json::Value::String(ios_version.to_string()),
@@ -146,6 +182,10 @@ fn update_build_json(
     // Update Android
     if let Some(android) = json_value.get_mut("android") {
         if let Some(obj) = android.as_object_mut() {
+            obj.insert(
+                "package".to_string(),
+                serde_json::Value::String(android_package.to_string()),
+            );
             obj.insert(
                 "version".to_string(),
                 serde_json::Value::String(android_version.to_string()),
@@ -168,7 +208,38 @@ fn update_build_json(
 
 #[command]
 pub async fn read_app_json(project_path: String) -> Result<AppJsonInfo, String> {
-    let build_json_path = Path::new(&project_path).join("build.json");
+    // Use .app-builder/build.json instead of build.json
+    let app_builder_dir = Path::new(&project_path).join(".app-builder");
+    let build_json_path = app_builder_dir.join("build.json");
+
+    // Create .app-builder directory if it doesn't exist
+    if !app_builder_dir.exists() {
+        fs::create_dir_all(&app_builder_dir)
+            .map_err(|e| format!("Failed to create .app-builder directory: {}", e))?;
+    }
+
+    // Create template build.json if it doesn't exist
+    if !build_json_path.exists() {
+        let template = serde_json::json!({
+            "android": {
+                "package": "",
+                "version": "1.0.0",
+                "versionCode": 1
+            },
+            "ios": {
+                "bundleIdentifier": "",
+                "version": "1.0.0",
+                "buildNumber": "1"
+            },
+            "name": ""
+        });
+
+        let template_content = serde_json::to_string_pretty(&template)
+            .map_err(|e| format!("Failed to serialize template build.json: {}", e))?;
+
+        fs::write(&build_json_path, template_content)
+            .map_err(|e| format!("Failed to create template build.json: {}", e))?;
+    }
 
     let content = fs::read_to_string(&build_json_path)
         .map_err(|e| format!("Failed to read build.json: {}", e))?;
@@ -295,8 +366,11 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
     // Update build.json
     update_build_json(
         &project.path,
+        &project.name,
+        &project.ios.bundle_id,
         &project.ios.version,
         project.ios.build_number,
+        &project.android.bundle_id,
         &project.android.version,
         project.android.version_code,
     )?;

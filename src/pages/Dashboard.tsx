@@ -119,6 +119,7 @@ export const Dashboard: React.FC = () => {
             backgroundColor: 'var(--color-surface)',
             fontSize: '14px',
             outline: 'none',
+            color: '#fff',
           }}
         />
       </div>
