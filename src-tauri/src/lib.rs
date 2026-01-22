@@ -1,6 +1,6 @@
 pub mod commands;
 pub mod models;
-pub mod utils;
+
 
 use tauri::Manager;
 
@@ -34,7 +34,7 @@ pub fn run() {
             list_projects,
             save_project,
             delete_project,
-            read_app_json,
+
             read_native_project_info,
             build_project,
             cancel_build_process,

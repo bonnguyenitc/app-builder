@@ -410,7 +410,7 @@ pub async fn build_project(
         _ => return Err(format!("Unsupported platform: {}", platform)),
     };
 
-    let mut child = Command::new(program)
+    let child = Command::new(program)
         .args(&args)
         .current_dir(&work_dir)
         .stdout(Stdio::piped())

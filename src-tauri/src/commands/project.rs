@@ -206,59 +206,7 @@ fn update_build_json(
     Ok(())
 }
 
-#[command]
-pub async fn read_app_json(project_path: String) -> Result<AppJsonInfo, String> {
-    // Use .app-builder/build.json instead of build.json
-    let app_builder_dir = Path::new(&project_path).join(".app-builder");
-    let build_json_path = app_builder_dir.join("build.json");
 
-    // Create .app-builder directory if it doesn't exist
-    if !app_builder_dir.exists() {
-        fs::create_dir_all(&app_builder_dir)
-            .map_err(|e| format!("Failed to create .app-builder directory: {}", e))?;
-    }
-
-    // Create template build.json if it doesn't exist
-    if !build_json_path.exists() {
-        let template = serde_json::json!({
-            "android": {
-                "package": "",
-                "version": "1.0.0",
-                "versionCode": 1
-            },
-            "ios": {
-                "bundleIdentifier": "",
-                "version": "1.0.0",
-                "buildNumber": "1"
-            },
-            "name": ""
-        });
-
-        let template_content = serde_json::to_string_pretty(&template)
-            .map_err(|e| format!("Failed to serialize template build.json: {}", e))?;
-
-        fs::write(&build_json_path, template_content)
-            .map_err(|e| format!("Failed to create template build.json: {}", e))?;
-    }
-
-    let content = fs::read_to_string(&build_json_path)
-        .map_err(|e| format!("Failed to read build.json: {}", e))?;
-
-    let app_json: AppJson = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse app.json: {}", e))?;
-
-    let info = AppJsonInfo {
-        name: app_json.name,
-        ios_bundle_id: app_json.ios.as_ref().and_then(|ios| ios.bundle_identifier.clone()),
-        ios_version: app_json.ios.as_ref().and_then(|ios| ios.version.clone()),
-        android_package: app_json.android.as_ref().and_then(|android| android.package.clone()),
-        android_version: app_json.android.as_ref().and_then(|android| android.version.clone()),
-        ios_build_number: app_json.ios.as_ref().and_then(|ios| ios.build_number.clone()),
-        android_version_code: app_json.android.as_ref().and_then(|android| android.version_code),
-    };
-
-    Ok(info)
-}
 
 #[command]
 pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInfo, String> {
