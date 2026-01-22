@@ -230,10 +230,10 @@ app-builder/
 
 ## 🔧 Configuration & Logs
 
-[!TIP]
-**Debug Logs:** If a build fails, check the detailed logs saved at:
-
-- **macOS:** `$TMPDIR/<project>_<platform>_<timestamp>.log`
+> [!TIP]
+> **Debug Logs:** If a build fails, check the detailed logs saved at:
+>
+> - **macOS:** `$TMPDIR/<project>_<platform>_<timestamp>.log`
 
 **Output Locations:**
 
