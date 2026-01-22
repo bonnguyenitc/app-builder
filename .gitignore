@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .agent
+
+# Security - Never commit these!
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest
+*.provisionprofile
+.env
