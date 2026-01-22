@@ -50,6 +50,8 @@
 
 The main goal of **App Builder** is to assist developers who manage **multiple mobile applications** simultaneously and prefer **local builds** over complex CI/CD pipelines.
 
+**🔒 100% Local Execution:** Everything runs locally on your machine. Your source code never leaves your computer, ensuring maximum privacy and eliminating the need for expensive cloud build servers.
+
 It requires **no special configuration**—you set up your project environment as you normally would for standard builds. This tool simply **streamlines the workflow**, automating the repetitive commands and steps, allowing you to **ship updates faster** directly from your local machine.
 
 ## ✨ Key Features
