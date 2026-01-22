@@ -5,8 +5,7 @@
 </p>
 
 <p align="center">
-  <!-- Placeholder for a screenshot - HIGHLY RECOMMENDED -->
-  <!-- <img src="docs/screenshot-dashboard.png" alt="App Dashboard" width="100%" /> -->
+  <img src="screenshot.png" alt="App Dashboard" width="100%" style="border-radius: 8px" />
 </p>
 
 <p align="center">
