@@ -51,7 +51,7 @@
 ### 📱 Project Management
 
 - **Multi-framework Support:** Manage React Native and Flutter projects in one place.
-- **Auto-Discovery:** Automatically reads `app.json`, `Info.plist`, `build.gradle`, and `pubspec.yaml`.
+- **Auto-Discovery:** Automatically reads `Info.plist`, `build.gradle`.
 - **Version Tracking:** Visual display of current version and build numbers.
 
 ### 🔨 iOS Automation
