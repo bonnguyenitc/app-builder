@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Shield, Key, Trash2, CheckCircle2, Plus, Edit2, Apple, Bot } from 'lucide-react';
+import {
+  Shield,
+  Key,
+  Trash2,
+  CheckCircle2,
+  Plus,
+  Edit2,
+  Apple,
+  Bot,
+  Lock,
+  Sparkles,
+} from 'lucide-react';
 import { useCredentials } from '../hooks/useCredentials';
 import { CredentialModal } from '../components/CredentialModal';
 import { Credential } from '../types/credential';
@@ -63,31 +74,55 @@ export const Settings: React.FC = () => {
   const androidCredentials = credentials.filter((c) => c.platform === 'android');
 
   return (
-    <div className="settings-page" style={{ maxWidth: '900px' }}>
+    <div className="settings-page" style={{ width: '100%' }}>
+      {/* Page Header */}
       <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700 }}>Settings</h1>
+        <h1
+          style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            marginBottom: '4px',
+            color: 'var(--color-primary)',
+          }}
+        >
+          Settings
+        </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
           Manage secure credentials for app distribution
         </p>
       </div>
 
+      {/* Status Toast */}
       {status && (
         <div
+          className="card"
           style={{
             padding: 'var(--spacing-md)',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor:
-              status.type === 'success' ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)',
-            color: status.type === 'success' ? 'var(--color-success)' : 'var(--color-error)',
             marginBottom: 'var(--spacing-lg)',
-            fontSize: '14px',
+            background:
+              status.type === 'success'
+                ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 59, 48, 0.05) 100%)',
+            border: `1px solid ${status.type === 'success' ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255, 59, 48, 0.3)'}`,
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--spacing-sm)',
+            animation: 'fadeInUp 0.3s ease-out',
           }}
         >
-          {status.type === 'success' ? <CheckCircle2 size={16} /> : <Shield size={16} />}
-          {status.message}
+          <div
+            className={`icon-container ${status.type === 'success' ? 'icon-container-success' : 'icon-container-error'}`}
+          >
+            {status.type === 'success' ? <CheckCircle2 size={18} /> : <Shield size={18} />}
+          </div>
+          <span
+            style={{
+              color: status.type === 'success' ? 'var(--color-success)' : 'var(--color-error)',
+              fontWeight: 500,
+            }}
+          >
+            {status.message}
+          </span>
         </div>
       )}
 
@@ -102,63 +137,74 @@ export const Settings: React.FC = () => {
               marginBottom: 'var(--spacing-lg)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
               <div
                 style={{
-                  padding: '8px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                  color: 'var(--color-primary)',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
                 }}
               >
-                <Apple size={20} />
+                <Apple size={22} color="white" />
               </div>
               <div>
-                <h2 style={{ fontSize: '17px', fontWeight: 600 }}>iOS Credentials</h2>
+                <h2 style={{ fontSize: '18px', fontWeight: 600 }}>iOS Credentials</h2>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                   App Store Connect API credentials for iOS builds
                 </p>
               </div>
             </div>
-            <button
-              className="btn btn-primary"
-              onClick={() => handleOpenModal()}
-              style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-            >
+            <button className="btn btn-primary" onClick={() => handleOpenModal()}>
               <Plus size={16} />
               <span>Add Credential</span>
             </button>
           </div>
 
           {loading ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: 'var(--spacing-xl)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Loading credentials...
+            <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+              <div className="skeleton skeleton-title" style={{ margin: '0 auto' }} />
+              <div className="skeleton skeleton-text" style={{ width: '80%', margin: '0 auto' }} />
             </div>
           ) : iosCredentials.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
-                padding: 'var(--spacing-xl)',
-                backgroundColor: 'var(--color-sidebar)',
+                padding: 'var(--spacing-2xl)',
+                background:
+                  'linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-bg) 100%)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--color-text-secondary)',
+                border: '2px dashed var(--color-border)',
               }}
             >
-              <Key size={32} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
-              <p style={{ fontSize: '14px' }}>No iOS credentials configured</p>
-              <p style={{ fontSize: '13px', marginTop: 'var(--spacing-sm)' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'var(--color-primary-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto var(--spacing-md)',
+                }}
+              >
+                <Key size={24} style={{ color: 'var(--color-primary)' }} />
+              </div>
+              <p style={{ fontSize: '15px', fontWeight: 500, marginBottom: '4px' }}>
+                No iOS credentials configured
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                 Add your first credential to start building iOS apps
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-              {iosCredentials.map((credential) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              {iosCredentials.map((credential, index) => (
                 <div
                   key={credential.id}
                   style={{
@@ -166,9 +212,12 @@ export const Settings: React.FC = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: 'var(--spacing-md)',
-                    backgroundColor: 'var(--color-sidebar)',
-                    borderRadius: 'var(--radius-sm)',
+                    background:
+                      'linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-surface) 100%)',
+                    borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--color-border)',
+                    transition: 'all var(--transition-fast)',
+                    animation: `fadeIn 0.3s ease-out ${index * 0.1}s both`,
                   }}
                 >
                   <div style={{ flex: 1 }}>
@@ -181,43 +230,33 @@ export const Settings: React.FC = () => {
                       }}
                     >
                       <h3 style={{ fontSize: '15px', fontWeight: 600 }}>{credential.name}</h3>
-                      <div
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                          color: 'var(--color-primary)',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        iOS
-                      </div>
+                      <span className="badge badge-primary">iOS</span>
                     </div>
                     {credential.ios && (
                       <div
                         style={{
-                          fontSize: '13px',
+                          fontSize: '12px',
                           color: 'var(--color-text-secondary)',
-                          fontFamily: 'monospace',
+                          fontFamily:
+                            "'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace",
                         }}
                       >
                         Team ID: {credential.ios.teamId} • Key ID: {credential.ios.apiKeyId}
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-ghost"
                       onClick={() => handleOpenModal(credential)}
-                      style={{ padding: '8px 12px', minWidth: 'auto' }}
+                      style={{ padding: '8px' }}
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-ghost"
                       onClick={() => handleDeleteCredential(credential)}
-                      style={{ padding: '8px 12px', minWidth: 'auto', color: 'var(--color-error)' }}
+                      style={{ padding: '8px', color: 'var(--color-error)' }}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -238,63 +277,74 @@ export const Settings: React.FC = () => {
               marginBottom: 'var(--spacing-lg)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
               <div
                 style={{
-                  padding: '8px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                  color: 'var(--color-success)',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-success)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(52, 199, 89, 0.3)',
                 }}
               >
-                <Bot size={20} />
+                <Bot size={22} color="white" />
               </div>
               <div>
-                <h2 style={{ fontSize: '17px', fontWeight: 600 }}>Android Credentials</h2>
+                <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Android Credentials</h2>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                   Google Play Console service account credentials
                 </p>
               </div>
             </div>
-            <button
-              className="btn btn-primary"
-              onClick={() => handleOpenModal()}
-              style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-            >
+            <button className="btn btn-primary" onClick={() => handleOpenModal()}>
               <Plus size={16} />
               <span>Add Credential</span>
             </button>
           </div>
 
           {loading ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: 'var(--spacing-xl)',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Loading credentials...
+            <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+              <div className="skeleton skeleton-title" style={{ margin: '0 auto' }} />
+              <div className="skeleton skeleton-text" style={{ width: '80%', margin: '0 auto' }} />
             </div>
           ) : androidCredentials.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
-                padding: 'var(--spacing-xl)',
-                backgroundColor: 'var(--color-sidebar)',
+                padding: 'var(--spacing-2xl)',
+                background:
+                  'linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-bg) 100%)',
                 borderRadius: 'var(--radius-md)',
-                color: 'var(--color-text-secondary)',
+                border: '2px dashed var(--color-border)',
               }}
             >
-              <Key size={32} style={{ margin: '0 auto var(--spacing-md)', opacity: 0.5 }} />
-              <p style={{ fontSize: '14px' }}>No Android credentials configured</p>
-              <p style={{ fontSize: '13px', marginTop: 'var(--spacing-sm)' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'rgba(52, 199, 89, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto var(--spacing-md)',
+                }}
+              >
+                <Key size={24} style={{ color: 'var(--color-success)' }} />
+              </div>
+              <p style={{ fontSize: '15px', fontWeight: 500, marginBottom: '4px' }}>
+                No Android credentials configured
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                 Add your first credential to start building Android apps
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-              {androidCredentials.map((credential) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              {androidCredentials.map((credential, index) => (
                 <div
                   key={credential.id}
                   style={{
@@ -302,9 +352,12 @@ export const Settings: React.FC = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: 'var(--spacing-md)',
-                    backgroundColor: 'var(--color-sidebar)',
-                    borderRadius: 'var(--radius-sm)',
+                    background:
+                      'linear-gradient(135deg, var(--color-sidebar) 0%, var(--color-surface) 100%)',
+                    borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--color-border)',
+                    transition: 'all var(--transition-fast)',
+                    animation: `fadeIn 0.3s ease-out ${index * 0.1}s both`,
                   }}
                 >
                   <div style={{ flex: 1 }}>
@@ -317,43 +370,33 @@ export const Settings: React.FC = () => {
                       }}
                     >
                       <h3 style={{ fontSize: '15px', fontWeight: 600 }}>{credential.name}</h3>
-                      <div
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                          color: 'var(--color-success)',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Android
-                      </div>
+                      <span className="badge badge-success">Android</span>
                     </div>
                     {credential.android?.serviceAccountEmail && (
                       <div
                         style={{
-                          fontSize: '13px',
+                          fontSize: '12px',
                           color: 'var(--color-text-secondary)',
-                          fontFamily: 'monospace',
+                          fontFamily:
+                            "'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace",
                         }}
                       >
                         {credential.android.serviceAccountEmail}
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-ghost"
                       onClick={() => handleOpenModal(credential)}
-                      style={{ padding: '8px 12px', minWidth: 'auto' }}
+                      style={{ padding: '8px' }}
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-ghost"
                       onClick={() => handleDeleteCredential(credential)}
-                      style={{ padding: '8px 12px', minWidth: 'auto', color: 'var(--color-error)' }}
+                      style={{ padding: '8px', color: 'var(--color-error)' }}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -366,25 +409,55 @@ export const Settings: React.FC = () => {
 
         {/* Info Section */}
         <section
+          className="card"
           style={{
-            display: 'flex',
-            gap: 'var(--spacing-md)',
-            padding: 'var(--spacing-md)',
-            backgroundColor: 'rgba(0, 122, 255, 0.05)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(0, 122, 255, 0.1)',
+            background:
+              'linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%)',
+            border: '1px solid rgba(0, 122, 255, 0.15)',
           }}
         >
-          <Shield size={20} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
-              Secure Storage
-            </h4>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
-              Your credentials are saved directly into the macOS Keychain. Sensitive data (API keys,
-              JSON files) is encrypted and never stored in the database. Only metadata is saved
-              locally for easy management.
-            </p>
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--gradient-premium)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+              }}
+            >
+              <Lock size={20} color="white" />
+            </div>
+            <div>
+              <h4
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)',
+                }}
+              >
+                Secure Storage
+                <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
+              </h4>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: 1.6,
+                }}
+              >
+                Your credentials are saved directly into the macOS Keychain. Sensitive data (API
+                keys, JSON files) is encrypted and never stored in the database. Only metadata is
+                saved locally for easy management.
+              </p>
+            </div>
           </div>
         </section>
       </div>
@@ -398,51 +471,60 @@ export const Settings: React.FC = () => {
 
       {/* Delete Confirmation Modal */}
       {deletingCredential && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setDeletingCredential(null)}
-        >
+        <div className="modal-overlay" onClick={() => setDeletingCredential(null)}>
           <div
-            className="card"
+            className="card modal-content"
             style={{
-              maxWidth: '400px',
+              maxWidth: '420px',
               padding: 'var(--spacing-xl)',
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'rgba(255, 59, 48, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--spacing-lg)',
+              }}
+            >
+              <Trash2 size={28} style={{ color: 'var(--color-error)' }} />
+            </div>
+            <h2
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                marginBottom: 'var(--spacing-sm)',
+                textAlign: 'center',
+              }}
+            >
               Delete Credential
             </h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
-              Are you sure you want to delete "{deletingCredential.name}"? This action cannot be
-              undone.
+            <p
+              style={{
+                color: 'var(--color-text-secondary)',
+                marginBottom: 'var(--spacing-xl)',
+                textAlign: 'center',
+                lineHeight: 1.6,
+              }}
+            >
+              Are you sure you want to delete "<strong>{deletingCredential.name}</strong>"? This
+              action cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setDeletingCredential(null)}>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setDeletingCredential(null)}
+                style={{ flex: 1 }}
+              >
                 Cancel
               </button>
-              <button
-                className="btn"
-                onClick={handleConfirmDelete}
-                style={{
-                  backgroundColor: 'var(--color-error)',
-                  color: 'white',
-                }}
-              >
-                Delete
+              <button className="btn btn-danger" onClick={handleConfirmDelete} style={{ flex: 1 }}>
+                Delete Credential
               </button>
             </div>
           </div>

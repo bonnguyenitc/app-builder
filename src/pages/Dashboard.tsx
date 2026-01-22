@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, FolderOpen, Sparkles } from 'lucide-react';
 import { useProjectStore } from '../stores/projectStore';
 import { useBuildStore } from '../stores/buildStore';
 import { ProjectCard } from '../components/ProjectCard';
@@ -83,6 +83,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-page">
+      {/* Page Header */}
       <div
         style={{
           display: 'flex',
@@ -92,9 +93,18 @@ export const Dashboard: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700 }}>Projects</h1>
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 700,
+              marginBottom: '4px',
+              color: 'var(--color-primary)',
+            }}
+          >
+            Projects
+          </h1>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-            Manage and release your projects
+            Manage and release your mobile applications
           </p>
         </div>
         <button className="btn btn-primary" onClick={handleAddProject}>
@@ -103,28 +113,32 @@ export const Dashboard: React.FC = () => {
         </button>
       </div>
 
+      {/* Error Alert */}
       {error && (
         <div
+          className="card"
           style={{
             padding: 'var(--spacing-md)',
             marginBottom: 'var(--spacing-lg)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid var(--color-error)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-error)',
+            background:
+              'linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 59, 48, 0.05) 100%)',
+            border: '1px solid rgba(255, 59, 48, 0.3)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <span>Error: {error}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <div className="icon-container icon-container-error">
+              <Sparkles size={16} />
+            </div>
+            <span style={{ color: 'var(--color-error)', fontWeight: 500 }}>Error: {error}</span>
+          </div>
           <button
             onClick={clearError}
+            className="btn btn-ghost"
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'inherit',
+              color: 'var(--color-error)',
               fontWeight: 600,
             }}
           >
@@ -133,73 +147,65 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div
-        style={{
-          marginBottom: 'var(--spacing-xl)',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <Search
-          size={16}
-          style={{
-            position: 'absolute',
-            left: 'var(--spacing-md)',
-            color: 'var(--color-text-secondary)',
-          }}
-        />
+      {/* Search Input */}
+      <div className="search-input-wrapper" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <Search size={18} className="search-icon" />
         <input
           type="text"
+          className="input"
           placeholder="Search projects by name or bundle ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
-            width: '100%',
-            padding: 'var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 40px',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-            fontSize: '14px',
-            outline: 'none',
-            color: '#fff',
+            paddingLeft: '48px',
+            height: '48px',
+            fontSize: '15px',
           }}
         />
       </div>
 
+      {/* Projects Grid or Empty State */}
       {filteredProjects.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '40px',
-            border: '2px dashed var(--color-border)',
-            borderRadius: 'var(--radius-lg)',
-            marginTop: 'var(--spacing-xl)',
-          }}
-        >
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            No projects found. Add your first project to get started!
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <FolderOpen size={32} />
+          </div>
+          <h3 className="empty-state-title">No projects found</h3>
+          <p className="empty-state-description">
+            {searchTerm
+              ? "Try adjusting your search term to find what you're looking for."
+              : 'Add your first project to start building amazing mobile apps!'}
           </p>
+          {!searchTerm && (
+            <button
+              className="btn btn-primary"
+              onClick={handleAddProject}
+              style={{ marginTop: 'var(--spacing-lg)' }}
+            >
+              <Plus size={18} />
+              <span>Create First Project</span>
+            </button>
+          )}
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: 'var(--spacing-lg)',
-          }}
-        >
-          {filteredProjects.map((project) => {
+        <div className="grid grid-auto-fill">
+          {filteredProjects.map((project, index) => {
             const projectWithStatus = getProjectWithStatus(project);
             return (
-              <ProjectCard
+              <div
                 key={project.id}
-                project={projectWithStatus}
-                onBuild={(platform, options) => handleBuild(project.id, platform, options)}
-                onSelect={() => console.log('Selected', project.id)}
-                onEdit={() => handleEditProject(project)}
-                onDelete={() => handleDeleteProject(project)}
-              />
+                style={{
+                  animation: `fadeInUp 0.4s ease-out ${index * 0.1}s both`,
+                }}
+              >
+                <ProjectCard
+                  project={projectWithStatus}
+                  onBuild={(platform, options) => handleBuild(project.id, platform, options)}
+                  onSelect={() => console.log('Selected', project.id)}
+                  onEdit={() => handleEditProject(project)}
+                  onDelete={() => handleDeleteProject(project)}
+                />
+              </div>
             );
           })}
         </div>
@@ -217,49 +223,60 @@ export const Dashboard: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       {deletingProject && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setDeletingProject(undefined)}
-        >
+        <div className="modal-overlay" onClick={() => setDeletingProject(undefined)}>
           <div
-            className="card"
+            className="card modal-content"
             style={{
-              maxWidth: '400px',
+              maxWidth: '420px',
               padding: 'var(--spacing-xl)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'rgba(255, 59, 48, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--spacing-lg)',
+              }}
+            >
+              <Sparkles size={28} style={{ color: 'var(--color-error)' }} />
+            </div>
+            <h2
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                marginBottom: 'var(--spacing-sm)',
+                textAlign: 'center',
+              }}
+            >
               Delete Project
             </h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-lg)' }}>
-              Are you sure you want to delete "{deletingProject.name}"? This action cannot be
-              undone.
+            <p
+              style={{
+                color: 'var(--color-text-secondary)',
+                marginBottom: 'var(--spacing-xl)',
+                textAlign: 'center',
+                lineHeight: 1.6,
+              }}
+            >
+              Are you sure you want to delete "<strong>{deletingProject.name}</strong>"? This action
+              cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setDeletingProject(undefined)}>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setDeletingProject(undefined)}
+                style={{ flex: 1 }}
+              >
                 Cancel
               </button>
-              <button
-                className="btn"
-                onClick={handleConfirmDelete}
-                style={{
-                  backgroundColor: 'var(--color-error)',
-                  color: 'white',
-                }}
-              >
-                Delete
+              <button className="btn btn-danger" onClick={handleConfirmDelete} style={{ flex: 1 }}>
+                Delete Project
               </button>
             </div>
           </div>

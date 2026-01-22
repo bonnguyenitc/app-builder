@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { LayoutGrid, ClipboardList, History, Settings as SettingsIcon } from 'lucide-react';
+import appIcon from './assets/app-icon.png';
 
 import { useProjectStore } from './stores/projectStore';
 import { useBuildStore } from './stores/buildStore';
@@ -22,9 +23,10 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <aside className="sidebar">
+          {/* Logo and Brand */}
           <div
             style={{
-              marginBottom: 'var(--spacing-xl)',
+              marginBottom: 'var(--spacing-2xl)',
               paddingLeft: 'var(--spacing-sm)',
               display: 'flex',
               alignItems: 'center',
@@ -32,11 +34,34 @@ function App() {
             }}
           >
             <img
-              src="/app-icon.png"
-              alt="App Icon"
-              style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+              src={appIcon}
+              alt="App Builder"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--radius-md)',
+              }}
             />
-            <h2 style={{ fontSize: '18px', fontWeight: 700 }}>App Builder</h2>
+            <div>
+              <h2
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: 'var(--color-primary)',
+                }}
+              >
+                App Builder
+              </h2>
+              <p
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--color-text-secondary)',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Build • Deploy • Ship
+              </p>
+            </div>
           </div>
 
           <nav className="sidebar-nav">
@@ -63,7 +88,7 @@ function App() {
               <span>History</span>
             </NavLink>
 
-            <div className="sidebar-header" style={{ marginTop: 'var(--spacing-lg)' }}>
+            <div className="sidebar-header" style={{ marginTop: 'var(--spacing-xl)' }}>
               App
             </div>
             <NavLink
@@ -74,6 +99,45 @@ function App() {
               <span>Settings</span>
             </NavLink>
           </nav>
+
+          {/* Footer branding */}
+          <div
+            style={{
+              marginTop: 'auto',
+              padding: 'var(--spacing-md)',
+              borderTop: '1px solid var(--color-border)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                padding: 'var(--spacing-sm)',
+                borderRadius: 'var(--radius-md)',
+                background:
+                  'linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%)',
+              }}
+            >
+              <div
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: 'var(--color-success)',
+                  boxShadow: '0 0 8px rgba(52, 199, 89, 0.5)',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                Ready to build
+              </span>
+            </div>
+          </div>
         </aside>
 
         <main className="main-content">

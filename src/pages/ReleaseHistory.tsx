@@ -1,7 +1,15 @@
 import React from 'react';
 import { useBuildStore } from '../stores/buildStore';
 import { useProjectStore } from '../stores/projectStore';
-import { CheckCircle2, XCircle, Apple, Smartphone, FolderOpen, FileText } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  Apple,
+  Smartphone,
+  FolderOpen,
+  FileText,
+  History,
+} from 'lucide-react';
 
 export const ReleaseHistory: React.FC = () => {
   const { buildHistory } = useBuildStore();
@@ -9,84 +17,126 @@ export const ReleaseHistory: React.FC = () => {
 
   return (
     <div>
+      {/* Page Header */}
       <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700 }}>History</h1>
+        <h1
+          style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            marginBottom: '4px',
+            color: 'var(--color-primary)',
+          }}
+        >
+          Build History
+        </h1>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
           Review past builds and releases
         </p>
       </div>
 
       {buildHistory.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>
-          <p>No build history yet.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <History size={32} />
+          </div>
+          <h3 className="empty-state-title">No Build History</h3>
+          <p className="empty-state-description">
+            Your build history will appear here after you complete your first build.
+          </p>
         </div>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="table">
             <thead>
-              <tr
-                style={{
-                  borderBottom: '1px solid var(--color-border)',
-                  textAlign: 'left',
-                  backgroundColor: 'var(--color-sidebar)',
-                }}
-              >
-                <th style={{ padding: '12px var(--spacing-md)' }}>Status</th>
-                <th style={{ padding: '12px var(--spacing-md)' }}>Project</th>
-                <th style={{ padding: '12px var(--spacing-md)' }}>Platform</th>
-                <th style={{ padding: '12px var(--spacing-md)' }}>Version</th>
-                <th style={{ padding: '12px var(--spacing-md)' }}>Release Note</th>
-                <th style={{ padding: '12px var(--spacing-md)' }}>Date</th>
-                <th style={{ padding: '12px var(--spacing-md)', textAlign: 'right' }}>Actions</th>
+              <tr>
+                <th>Status</th>
+                <th>Project</th>
+                <th>Platform</th>
+                <th>Version</th>
+                <th>Release Note</th>
+                <th>Date</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {buildHistory.map((build) => {
+              {buildHistory.map((build, index) => {
                 const project = projects.find((p) => p.id === build.projectId);
                 return (
-                  <tr key={build.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '12px var(--spacing-md)' }}>
+                  <tr
+                    key={build.id}
+                    style={{
+                      animation: `fadeIn 0.3s ease-out ${index * 0.05}s both`,
+                    }}
+                  >
+                    <td>
                       {build.status === 'success' ? (
                         <div
                           style={{
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
                             gap: 'var(--spacing-xs)',
+                            padding: '4px 10px',
+                            borderRadius: 'var(--radius-full)',
+                            background: 'rgba(52, 199, 89, 0.1)',
                             color: 'var(--color-success)',
+                            fontWeight: 600,
+                            fontSize: '12px',
                           }}
                         >
-                          <CheckCircle2 size={16} />
+                          <CheckCircle2 size={14} />
                           <span>Success</span>
                         </div>
                       ) : (
                         <div
                           style={{
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
                             gap: 'var(--spacing-xs)',
+                            padding: '4px 10px',
+                            borderRadius: 'var(--radius-full)',
+                            background: 'rgba(255, 59, 48, 0.1)',
                             color: 'var(--color-error)',
+                            fontWeight: 600,
+                            fontSize: '12px',
                           }}
                         >
-                          <XCircle size={16} />
+                          <XCircle size={14} />
                           <span>Failed</span>
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '12px var(--spacing-md)', fontWeight: 500 }}>
-                      {project?.name || 'Unknown'}
+                    <td>
+                      <span style={{ fontWeight: 600 }}>{project?.name || 'Unknown'}</span>
                     </td>
-                    <td style={{ padding: '12px var(--spacing-md)' }}>
+                    <td>
                       <div
-                        style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 'var(--spacing-xs)',
+                        }}
                       >
-                        {build.platform === 'ios' ? <Apple size={14} /> : <Smartphone size={14} />}
-                        <span style={{ textTransform: 'capitalize' }}>{build.platform}</span>
+                        <div
+                          className={`icon-container ${build.platform === 'ios' ? 'icon-container-primary' : 'icon-container-success'}`}
+                          style={{ padding: '4px' }}
+                        >
+                          {build.platform === 'ios' ? (
+                            <Apple size={12} />
+                          ) : (
+                            <Smartphone size={12} />
+                          )}
+                        </div>
+                        <span style={{ fontWeight: 500, textTransform: 'capitalize' }}>
+                          {build.platform}
+                        </span>
                       </div>
                     </td>
-                    <td style={{ padding: '12px var(--spacing-md)' }}>
-                      v{build.version} ({build.buildNumber})
+                    <td>
+                      <span className="badge badge-primary" style={{ fontSize: '11px' }}>
+                        v{build.version} ({build.buildNumber})
+                      </span>
                     </td>
-                    <td style={{ padding: '12px var(--spacing-md)', maxWidth: '200px' }}>
+                    <td style={{ maxWidth: '200px' }}>
                       <div
                         style={{
                           fontSize: '12px',
@@ -97,19 +147,26 @@ export const ReleaseHistory: React.FC = () => {
                         }}
                         title={build.releaseNote}
                       >
-                        {build.releaseNote || '-'}
+                        {build.releaseNote || '—'}
                       </div>
                     </td>
-                    <td
-                      style={{
-                        padding: '12px var(--spacing-md)',
-                        color: 'var(--color-text-secondary)',
-                      }}
-                    >
-                      {new Date(build.timestamp).toLocaleString()}
+                    <td>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: 'var(--color-text-secondary)',
+                        }}
+                      >
+                        {new Date(build.timestamp).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </td>
-                    <td style={{ padding: '12px var(--spacing-md)', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                         {build.status === 'success' && (
                           <button
                             className="btn btn-ghost"
@@ -124,7 +181,7 @@ export const ReleaseHistory: React.FC = () => {
                                 });
                               }
                             }}
-                            style={{ padding: '4px' }}
+                            style={{ padding: '6px' }}
                           >
                             <FolderOpen size={16} />
                           </button>
@@ -140,7 +197,7 @@ export const ReleaseHistory: React.FC = () => {
                                 }).catch((err) => console.error(err));
                               });
                             }}
-                            style={{ padding: '4px' }}
+                            style={{ padding: '6px' }}
                           >
                             <FileText size={16} />
                           </button>

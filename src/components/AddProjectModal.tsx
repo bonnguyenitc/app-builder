@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, FolderOpen, Key } from 'lucide-react';
+import { X, FolderOpen, Key, Apple, Smartphone, Package, Settings2, Sparkles } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../types/project';
@@ -161,435 +161,462 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
     onClose();
   };
 
+  // Reusable input styles
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--color-border)',
+    background: 'var(--color-surface)',
+    fontSize: '14px',
+    color: 'var(--color-text)',
+    transition: 'all var(--transition-fast)',
+    outline: 'none',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--color-text)',
+  };
+
+  const sectionStyle = {
+    padding: 'var(--spacing-md)',
+    background: 'var(--color-sidebar)',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--color-border)',
+  };
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        backdropFilter: 'blur(4px)',
-      }}
-    >
+    <div className="modal-overlay" onClick={onClose}>
       <div
-        className="card"
+        className="card modal-content"
         style={{
-          width: '560px',
+          width: '680px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          position: 'relative',
+          padding: 0,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
+        {/* Header */}
+        <div
           style={{
-            position: 'absolute',
-            top: 'var(--spacing-md)',
-            right: 'var(--spacing-md)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--color-text-secondary)',
+            padding: 'var(--spacing-lg)',
+            borderBottom: '1px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'var(--color-sidebar)',
           }}
         >
-          <X size={20} />
-        </button>
-
-        <h2 style={{ marginBottom: 'var(--spacing-lg)' }}>
-          {initialData ? 'Edit Project' : 'Add New Project'}
-        </h2>
-
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: 'var(--spacing-xs)',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              Project Name
-            </label>
-            <input
-              className="btn btn-secondary"
-              style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Awesome App"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: 'var(--spacing-xs)',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
-              Project Root Path
-            </label>
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-              <input
-                className="btn btn-secondary"
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  cursor: 'text',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                value={path}
-                onChange={(e) => setPath(e.target.value)}
-                placeholder="/Users/me/projects/my-app"
-                required
-              />
-              <button type="button" className="btn btn-secondary" onClick={handleBrowse}>
-                <FolderOpen size={16} />
-                <span>Browse</span>
-              </button>
-            </div>
-          </div>
-
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}
-          >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                iOS Bundle ID
-              </label>
-              <input
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosBundle}
-                onChange={(e) => setIosBundle(e.target.value)}
-                placeholder="com.example.app"
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                Android Package Name
-              </label>
-              <input
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={androidBundle}
-                onChange={(e) => setAndroidBundle(e.target.value)}
-                placeholder="com.example.app"
-              />
-            </div>
-          </div>
-
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}
-          >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                iOS Version
-              </label>
-              <input
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosVersion}
-                onChange={(e) => setIosVersion(e.target.value)}
-                placeholder="1.0.0"
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                Android Version
-              </label>
-              <input
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={androidVersion}
-                onChange={(e) => setAndroidVersion(e.target.value)}
-                placeholder="1.0.0"
-              />
-            </div>
-          </div>
-
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}
-          >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                iOS Build Number
-              </label>
-              <input
-                type="number"
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={iosBuildNumber}
-                onChange={(e) => setIosBuildNumber(parseInt(e.target.value) || 0)}
-                placeholder="1"
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                Android Version Code
-              </label>
-              <input
-                type="number"
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                value={androidBuildNumber}
-                onChange={(e) => setAndroidBuildNumber(parseInt(e.target.value) || 0)}
-                placeholder="1"
-              />
-            </div>
-          </div>
-
-          <div
-            style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-md)' }}
-          >
-            <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
-              iOS Configuration
-            </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
             <div
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
+              }}
             >
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: 'var(--spacing-xs)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                  }}
-                >
-                  Scheme
-                </label>
+              <Package size={22} color="white" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '2px' }}>
+                {initialData ? 'Edit Project' : 'Add New Project'}
+              </h2>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                Configure your mobile app project settings
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="btn btn-ghost"
+            style={{ padding: '8px', borderRadius: 'var(--radius-sm)' }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} style={{ padding: 'var(--spacing-lg)' }}>
+          {/* Basic Info Section */}
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-md)',
+              }}
+            >
+              <Sparkles size={16} style={{ color: 'var(--color-primary)' }} />
+              <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Basic Information</h3>
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <label style={labelStyle}>Project Name</label>
                 <input
-                  className="btn btn-secondary"
-                  style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                  value={iosScheme}
-                  onChange={(e) => setIosScheme(e.target.value)}
-                  placeholder="MyApp"
+                  style={inputStyle}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. My Awesome App"
+                  required
                 />
               </div>
+
               <div>
-                <label
+                <label style={labelStyle}>Project Root Path</label>
+                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <input
+                    style={{
+                      ...inputStyle,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    value={path}
+                    onChange={(e) => setPath(e.target.value)}
+                    placeholder="/Users/me/projects/my-app"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleBrowse}
+                    style={{ flexShrink: 0, gap: '6px' }}
+                  >
+                    <FolderOpen size={16} />
+                    <span>Browse</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Sections - Side by Side */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 'var(--spacing-lg)',
+              marginBottom: 'var(--spacing-lg)',
+            }}
+          >
+            {/* iOS Section */}
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)',
+                  marginBottom: 'var(--spacing-md)',
+                }}
+              >
+                <div className="icon-container icon-container-primary" style={{ padding: '4px' }}>
+                  <Apple size={14} />
+                </div>
+                <h3 style={{ fontSize: '14px', fontWeight: 600 }}>iOS</h3>
+              </div>
+
+              <div style={sectionStyle}>
+                <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+                  <label style={labelStyle}>Bundle ID</label>
+                  <input
+                    style={inputStyle}
+                    value={iosBundle}
+                    onChange={(e) => setIosBundle(e.target.value)}
+                    placeholder="com.example.app"
+                  />
+                </div>
+                <div
                   style={{
-                    display: 'block',
-                    marginBottom: 'var(--spacing-xs)',
-                    fontSize: '13px',
-                    fontWeight: 500,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 'var(--spacing-sm)',
                   }}
                 >
-                  Configuration
-                </label>
-                <input
-                  className="btn btn-secondary"
-                  style={{ width: '100%', textAlign: 'left', cursor: 'text' }}
-                  value={iosConfiguration}
-                  onChange={(e) => setIosConfiguration(e.target.value)}
-                  placeholder="Release"
-                />
+                  <div>
+                    <label style={labelStyle}>Version</label>
+                    <input
+                      style={inputStyle}
+                      value={iosVersion}
+                      onChange={(e) => setIosVersion(e.target.value)}
+                      placeholder="1.0.0"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Build Number</label>
+                    <input
+                      type="number"
+                      style={inputStyle}
+                      value={iosBuildNumber}
+                      onChange={(e) => setIosBuildNumber(parseInt(e.target.value) || 0)}
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
-              <label
+            {/* Android Section */}
+            <div>
+              <div
                 style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)',
+                  marginBottom: 'var(--spacing-md)',
                 }}
               >
-                Export Method
-              </label>
-              <select
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                value={iosExportMethod}
-                onChange={(e) => setIosExportMethod(e.target.value as any)}
-              >
-                <option value="development">Development - For testing on registered devices</option>
-                <option value="ad-hoc">Ad-Hoc - For distribution outside App Store</option>
-                <option value="app-store">App Store - For App Store submission</option>
-                <option value="enterprise">Enterprise - For enterprise distribution</option>
-              </select>
-            </div>
+                <div className="icon-container icon-container-success" style={{ padding: '4px' }}>
+                  <Smartphone size={14} />
+                </div>
+                <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Android</h3>
+              </div>
 
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                iOS Credential
-                <span
+              <div style={sectionStyle}>
+                <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+                  <label style={labelStyle}>Package Name</label>
+                  <input
+                    style={inputStyle}
+                    value={androidBundle}
+                    onChange={(e) => setAndroidBundle(e.target.value)}
+                    placeholder="com.example.app"
+                  />
+                </div>
+                <div
                   style={{
-                    color: 'var(--color-text-secondary)',
-                    fontWeight: 400,
-                    marginLeft: '4px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 'var(--spacing-sm)',
                   }}
                 >
-                  (optional)
-                </span>
-              </label>
-              <select
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                value={selectedIosCredentialId}
-                onChange={(e) => setSelectedIosCredentialId(e.target.value)}
+                  <div>
+                    <label style={labelStyle}>Version</label>
+                    <input
+                      style={inputStyle}
+                      value={androidVersion}
+                      onChange={(e) => setAndroidVersion(e.target.value)}
+                      placeholder="1.0.0"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Version Code</label>
+                    <input
+                      type="number"
+                      style={inputStyle}
+                      value={androidBuildNumber}
+                      onChange={(e) => setAndroidBuildNumber(parseInt(e.target.value) || 0)}
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* iOS Configuration */}
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-md)',
+              }}
+            >
+              <Settings2 size={16} style={{ color: 'var(--color-primary)' }} />
+              <h3 style={{ fontSize: '14px', fontWeight: 600 }}>iOS Build Configuration</h3>
+            </div>
+
+            <div style={sectionStyle}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 'var(--spacing-md)',
+                  marginBottom: 'var(--spacing-md)',
+                }}
               >
-                <option value="">None - Manual configuration</option>
-                {iosCredentials.map((cred) => (
-                  <option key={cred.id} value={cred.id}>
-                    {cred.name} ({cred.ios?.teamId})
-                  </option>
-                ))}
-              </select>
+                <div>
+                  <label style={labelStyle}>Scheme</label>
+                  <input
+                    style={inputStyle}
+                    value={iosScheme}
+                    onChange={(e) => setIosScheme(e.target.value)}
+                    placeholder="MyApp"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Configuration</label>
+                  <input
+                    style={inputStyle}
+                    value={iosConfiguration}
+                    onChange={(e) => setIosConfiguration(e.target.value)}
+                    placeholder="Release"
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 'var(--spacing-md)',
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>Export Method</label>
+                  <select
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    value={iosExportMethod}
+                    onChange={(e) => setIosExportMethod(e.target.value as any)}
+                  >
+                    <option value="development">Development</option>
+                    <option value="ad-hoc">Ad-Hoc</option>
+                    <option value="app-store">App Store</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    Credential
+                    <span
+                      style={{
+                        color: 'var(--color-text-secondary)',
+                        fontWeight: 400,
+                        marginLeft: '4px',
+                        fontSize: '12px',
+                      }}
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <select
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    value={selectedIosCredentialId}
+                    onChange={(e) => setSelectedIosCredentialId(e.target.value)}
+                  >
+                    <option value="">None</option>
+                    {iosCredentials.map((cred) => (
+                      <option key={cred.id} value={cred.id}>
+                        {cred.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               {iosCredentials.length === 0 && (
                 <p
                   style={{
                     fontSize: '12px',
                     color: 'var(--color-text-secondary)',
-                    marginTop: 'var(--spacing-xs)',
+                    marginTop: 'var(--spacing-sm)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
+                    padding: '8px 12px',
+                    background: 'rgba(0, 122, 255, 0.05)',
+                    borderRadius: 'var(--radius-sm)',
                   }}
                 >
                   <Key size={12} />
-                  No iOS credentials configured. Go to Settings to add one.
+                  No iOS credentials. Add one in Settings to enable App Store uploads.
                 </p>
               )}
             </div>
           </div>
 
-          <div
-            style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--spacing-md)' }}
-          >
-            <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
-              Android Configuration
-            </h3>
+          {/* Android Configuration */}
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-md)',
+              }}
+            >
+              <Settings2 size={16} style={{ color: 'var(--color-success)' }} />
+              <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Android Build Configuration</h3>
+            </div>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-xs)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                }}
-              >
-                Android Credential
-                <span
-                  style={{
-                    color: 'var(--color-text-secondary)',
-                    fontWeight: 400,
-                    marginLeft: '4px',
-                  }}
+            <div style={sectionStyle}>
+              <div>
+                <label style={labelStyle}>
+                  Credential
+                  <span
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      fontWeight: 400,
+                      marginLeft: '4px',
+                      fontSize: '12px',
+                    }}
+                  >
+                    (optional)
+                  </span>
+                </label>
+                <select
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  value={selectedAndroidCredentialId}
+                  onChange={(e) => setSelectedAndroidCredentialId(e.target.value)}
                 >
-                  (optional)
-                </span>
-              </label>
-              <select
-                className="btn btn-secondary"
-                style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                value={selectedAndroidCredentialId}
-                onChange={(e) => setSelectedAndroidCredentialId(e.target.value)}
-              >
-                <option value="">None - Manual configuration</option>
-                {androidCredentials.map((cred) => (
-                  <option key={cred.id} value={cred.id}>
-                    {cred.name}
-                    {cred.android?.serviceAccountEmail && ` (${cred.android.serviceAccountEmail})`}
-                  </option>
-                ))}
-              </select>
+                  <option value="">None</option>
+                  {androidCredentials.map((cred) => (
+                    <option key={cred.id} value={cred.id}>
+                      {cred.name}
+                      {cred.android?.serviceAccountEmail &&
+                        ` (${cred.android.serviceAccountEmail})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {androidCredentials.length === 0 && (
                 <p
                   style={{
                     fontSize: '12px',
                     color: 'var(--color-text-secondary)',
-                    marginTop: 'var(--spacing-xs)',
+                    marginTop: 'var(--spacing-sm)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
+                    padding: '8px 12px',
+                    background: 'rgba(52, 199, 89, 0.05)',
+                    borderRadius: 'var(--radius-sm)',
                   }}
                 >
                   <Key size={12} />
-                  No Android credentials configured. Go to Settings to add one.
+                  No Android credentials. Add one in Settings to enable Play Store uploads.
                 </p>
               )}
             </div>
           </div>
 
+          {/* Footer Actions */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: 'var(--spacing-md)',
-              marginTop: 'var(--spacing-lg)',
+              gap: 'var(--spacing-sm)',
+              paddingTop: 'var(--spacing-md)',
+              borderTop: '1px solid var(--color-border)',
             }}
           >
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary">
-              Save Project
+              {initialData ? 'Save Changes' : 'Create Project'}
             </button>
           </div>
         </form>

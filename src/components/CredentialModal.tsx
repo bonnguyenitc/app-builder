@@ -323,7 +323,7 @@ export const CredentialModal: React.FC<CredentialModalProps> = ({
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label
                   style={{
                     display: 'block',
@@ -349,7 +349,7 @@ export const CredentialModal: React.FC<CredentialModalProps> = ({
                   onChange={(e) => setApiKeyContent(e.target.value)}
                   placeholder="-----BEGIN PRIVATE KEY-----&#10;MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg...&#10;-----END PRIVATE KEY-----"
                 />
-              </div>
+              </div> */}
             </>
           )}
 
