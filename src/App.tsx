@@ -7,6 +7,7 @@ import {
   SettingsIcon,
   ImageIcon,
   StethoscopeIcon,
+  SmartphoneIcon,
 } from './components/Icons';
 import appIcon from './assets/app-icon.png';
 
@@ -19,6 +20,7 @@ import { Settings } from './pages/Settings';
 import { IconGenerator } from './pages/IconGenerator';
 import { PermissionsManager } from './pages/PermissionsManager';
 import { Doctor } from './pages/Doctor';
+import { EmulatorManager } from './pages/EmulatorManager';
 
 function App() {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
@@ -105,6 +107,13 @@ function App() {
               <span>Icon Generator</span>
             </NavLink>
             <NavLink
+              to="/emulators"
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            >
+              <SmartphoneIcon size={18} />
+              <span>Emulators</span>
+            </NavLink>
+            <NavLink
               to="/doctor"
               className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             >
@@ -170,6 +179,7 @@ function App() {
             <Route path="/queue" element={<BuildQueue />} />
             <Route path="/history" element={<ReleaseHistory />} />
             <Route path="/icon-generator" element={<IconGenerator />} />
+            <Route path="/emulators" element={<EmulatorManager />} />
             <Route path="/doctor" element={<Doctor />} />
             <Route path="/permissions/:projectId" element={<PermissionsManager />} />
             <Route path="/settings" element={<Settings />} />
