@@ -42,8 +42,9 @@
   - [Permissions Management](#2-manage-permissions)
   - [Permissions Management](#2-manage-permissions)
   - [Environment Doctor](#3-environment-doctor)
-  - [Credentials Configuration](#4-configure-credentials)
-  - [Building](#5-build-ios)
+  - [Emulator Manager](#4-emulator-manager)
+  - [Credentials Configuration](#5-configure-credentials)
+  - [Building](#6-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -162,7 +163,18 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
   <img src="screenshots/doctor.png" alt="Environment Doctor" width="100%" style="border-radius: 8px" />
 </p>
 
-### 4. Configure Credentials
+### 4. Emulator Manager
+
+1. Go to **Emulator Manager** (Smartphone Icon).
+2. View list of available Android Emulators and iOS Simulators.
+3. Click **Boot** to start a device.
+4. Select a project and click **Run** to launch the app directly on the device.
+
+<p align="center">
+  <img src="screenshots/emulators.png" alt="Emulator Manager" width="100%" style="border-radius: 8px" />
+</p>
+
+### 5. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -221,7 +233,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 5. Build iOS
+### 6. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -229,7 +241,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 6. Build Android
+### 7. Build Android
 
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
@@ -239,7 +251,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 7. View Build History
+### 8. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -260,6 +272,7 @@ Track all your builds and releases in the History page.
 - [ ] **Feature:** Firebase App Distribution support.
 - [x] **Feature:** Native Permissions Manager (Android/iOS).
 - [x] **Feature:** Environment Helper (Doctor/Fixer).
+- [x] **Feature:** Emulator Manager (Boot/Run).
 
 ---
 
