@@ -6,7 +6,10 @@ interface BuildState {
   activeBuilds: Record<string, BuildHistory>; // Key: projectId
   buildHistory: BuildHistory[];
   isLoading: boolean;
-  fetchHistory: () => Promise<void>;
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  fetchHistory: (page?: number, pageSize?: number) => Promise<void>;
   updateBuild: (projectId: string, updater: (prev: BuildHistory) => BuildHistory) => void;
   startBuild: (projectId: string, build: BuildHistory) => void;
   addToHistory: (build: BuildHistory) => void;
@@ -14,16 +17,34 @@ interface BuildState {
   cancelBuild: (projectId: string) => Promise<void>;
 }
 
-export const useBuildStore = create<BuildState>((set) => ({
+export const useBuildStore = create<BuildState>((set, get) => ({
   activeBuilds: {},
   buildHistory: [],
   isLoading: false,
+  currentPage: 1,
+  pageSize: 20,
+  totalItems: 0,
 
-  fetchHistory: async () => {
+  fetchHistory: async (page, pageSize) => {
+    const currentPage = page || get().currentPage;
+    const currentPageSize = pageSize || get().pageSize;
+
     set({ isLoading: true });
     try {
-      const buildHistory = await invoke<BuildHistory[]>('list_build_history');
-      set({ buildHistory, isLoading: false });
+      const response = await invoke<{ items: BuildHistory[]; total: number }>(
+        'list_build_history',
+        {
+          page: currentPage,
+          pageSize: currentPageSize,
+        },
+      );
+      set({
+        buildHistory: response.items,
+        totalItems: response.total,
+        currentPage: currentPage,
+        pageSize: currentPageSize,
+        isLoading: false,
+      });
     } catch (e) {
       console.error('Failed to fetch history', e);
       set({ isLoading: false });

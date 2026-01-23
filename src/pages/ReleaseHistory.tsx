@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useBuildStore } from '../stores/buildStore';
 import { useProjectStore } from '../stores/projectStore';
 import {
@@ -9,11 +9,17 @@ import {
   FolderOpen,
   FileText,
   History,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export const ReleaseHistory: React.FC = () => {
-  const { buildHistory } = useBuildStore();
+  const { buildHistory, currentPage, pageSize, totalItems, fetchHistory } = useBuildStore();
   const { projects } = useProjectStore();
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   return (
     <div>
@@ -209,6 +215,45 @@ export const ReleaseHistory: React.FC = () => {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderTop: '1px solid var(--color-border)',
+              background: 'var(--color-bg-secondary)',
+            }}
+          >
+            <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+              Showing {Math.min(buildHistory.length, pageSize)} of {totalItems} results
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="btn btn-ghost"
+                disabled={currentPage === 1}
+                onClick={() => fetchHistory(currentPage - 1, pageSize)}
+                style={{ padding: '6px' }}
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span style={{ fontSize: '13px', fontWeight: 500 }}>
+                Page {currentPage} of {Math.max(1, Math.ceil(totalItems / pageSize))}
+              </span>
+              <button
+                className="btn btn-ghost"
+                disabled={currentPage >= Math.ceil(totalItems / pageSize)}
+                onClick={() => fetchHistory(currentPage + 1, pageSize)}
+                style={{ padding: '6px' }}
+                title="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
