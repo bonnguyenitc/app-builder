@@ -39,8 +39,9 @@
 - [Installation](#-installation)
 - [User Guide](#-user-guide)
   - [Project Setup](#1-add-a-new-project)
-  - [Credentials Configuration](#2-configure-credentials)
-  - [Building](#3-build-ios)
+  - [Permissions Management](#2-manage-permissions)
+  - [Credentials Configuration](#3-configure-credentials)
+  - [Building](#4-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -139,7 +140,17 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
   <img src="screenshots/project.png" alt="Project Management" width="100%" style="border-radius: 8px" />
 </p>
 
-### 2. Configure Credentials
+### 2. Manage Permissions
+
+1. Select Project → Click **Permissions** (Shield Icon).
+2. Toggle permissions for **Android** and **iOS**.
+3. For iOS, you can also edit the **Usage Description**.
+
+<p align="center">
+  <img src="screenshots/permission.png" alt="Permissions Manager" width="100%" style="border-radius: 8px" />
+</p>
+
+### 3. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -198,7 +209,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 3. Build iOS
+### 4. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -206,7 +217,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 4. Build Android
+### 5. Build Android
 
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
@@ -216,7 +227,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 5. View Build History
+### 6. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -235,6 +246,7 @@ Track all your builds and releases in the History page.
 - [ ] **Android:** Upload AAB to Google Play Store (In Progress).
 - [ ] **Feature:** CI/CD Pipeline integration hooks.
 - [ ] **Feature:** Firebase App Distribution support.
+- [x] **Feature:** Native Permissions Manager (Android/iOS).
 
 ---
 
