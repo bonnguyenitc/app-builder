@@ -23,6 +23,21 @@ export const Settings: React.FC = () => {
   const [deletingCredential, setDeletingCredential] = useState<Credential | null>(null);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && deletingCredential) {
+        setDeletingCredential(null);
+      }
+    };
+
+    if (deletingCredential) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [deletingCredential]);
+
   const handleOpenModal = (credential?: Credential) => {
     setEditingCredential(credential || null);
     setIsModalOpen(true);

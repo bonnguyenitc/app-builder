@@ -14,6 +14,22 @@ export const Dashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
   const [deletingProject, setDeletingProject] = useState<Project | undefined>(undefined);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && deletingProject) {
+        setDeletingProject(undefined);
+      }
+    };
+
+    if (deletingProject) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [deletingProject]);
+
   const { startBuild } = useBuild();
 
   const activeBuilds = useBuildStore((state) => state.activeBuilds);

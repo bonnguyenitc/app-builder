@@ -78,6 +78,21 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
   const { cancelBuild } = useBuildStore();
   const [showConfirm, setShowConfirm] = React.useState(false);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showConfirm) {
+        setShowConfirm(false);
+      }
+    };
+
+    if (showConfirm) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showConfirm]);
+
   // Debounce logs to prevent excessive re-renders
   const debouncedLogs = useDebouncedLogs(build.logs, 500);
 
