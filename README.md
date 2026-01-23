@@ -40,8 +40,10 @@
 - [User Guide](#-user-guide)
   - [Project Setup](#1-add-a-new-project)
   - [Permissions Management](#2-manage-permissions)
-  - [Credentials Configuration](#3-configure-credentials)
-  - [Building](#4-build-ios)
+  - [Permissions Management](#2-manage-permissions)
+  - [Environment Doctor](#3-environment-doctor)
+  - [Credentials Configuration](#4-configure-credentials)
+  - [Building](#5-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -150,7 +152,17 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
   <img src="screenshots/permission.png" alt="Permissions Manager" width="100%" style="border-radius: 8px" />
 </p>
 
-### 3. Configure Credentials
+### 3. Environment Doctor
+
+1. Go to **Environment Doctor** (Stethoscope Icon).
+2. Click **Run Checkup** to verify Node.js, Ruby, Java, Xcode, and CocoaPods.
+3. If an issue is found (e.g., missing CocoaPods), click **Quick Fix** to auto-install dependencies.
+
+<p align="center">
+  <img src="screenshots/doctor.png" alt="Environment Doctor" width="100%" style="border-radius: 8px" />
+</p>
+
+### 4. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -209,7 +221,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 4. Build iOS
+### 5. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -217,7 +229,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 5. Build Android
+### 6. Build Android
 
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
@@ -227,7 +239,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 6. View Build History
+### 7. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -247,6 +259,7 @@ Track all your builds and releases in the History page.
 - [ ] **Feature:** CI/CD Pipeline integration hooks.
 - [ ] **Feature:** Firebase App Distribution support.
 - [x] **Feature:** Native Permissions Manager (Android/iOS).
+- [x] **Feature:** Environment Helper (Doctor/Fixer).
 
 ---
 
