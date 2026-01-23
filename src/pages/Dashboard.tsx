@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PlusIcon, SearchIcon, FolderIcon, AlertCircleIcon, TrashIcon } from '../components/Icons';
+import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { useBuildStore } from '../stores/buildStore';
 import { ProjectCard } from '../components/ProjectCard';
@@ -8,6 +9,7 @@ import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { projects, addProject, updateProject, deleteProject, error, clearError } =
     useProjectStore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,6 +222,7 @@ export const Dashboard: React.FC = () => {
                   onSelect={() => console.log('Selected', project.id)}
                   onEdit={() => handleEditProject(project)}
                   onDelete={() => handleDeleteProject(project)}
+                  onPermissions={() => navigate(`/permissions/${project.id}`)}
                 />
               </div>
             );

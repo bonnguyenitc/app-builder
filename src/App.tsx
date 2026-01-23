@@ -16,6 +16,7 @@ import { BuildQueue } from './pages/BuildQueue';
 import { ReleaseHistory } from './pages/ReleaseHistory';
 import { Settings } from './pages/Settings';
 import { IconGenerator } from './pages/IconGenerator';
+import { PermissionsManager } from './pages/PermissionsManager';
 
 function App() {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
@@ -160,6 +161,7 @@ function App() {
             <Route path="/queue" element={<BuildQueue />} />
             <Route path="/history" element={<ReleaseHistory />} />
             <Route path="/icon-generator" element={<IconGenerator />} />
+            <Route path="/permissions/:projectId" element={<PermissionsManager />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
