@@ -117,6 +117,14 @@ npm run tauri dev
 npm run tauri build
 ```
 
+### 4. Troubleshooting (macOS)
+
+If the app fails to open ("App is damaged"), run:
+
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
+```
+
 ---
 
 ## 📖 User Guide
