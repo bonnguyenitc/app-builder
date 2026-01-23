@@ -24,13 +24,212 @@ pub async fn build_project(
 ) -> Result<(), String> {
     println!("Building project {} for platform {}", project.name, platform);
 
-    let (program, args, work_dir) = match platform.as_str() {
+    match platform.as_str() {
         "android" => {
             let android_dir = std::path::Path::new(&project.path).join("android");
+
+            // Create logs directory for Android
+            let logs_dir = android_dir.join("build/logs");
+            std::fs::create_dir_all(&logs_dir)
+                .map_err(|e| format!("Failed to create logs directory: {}", e))?;
+
+            // Create log file with timestamp
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            let log_file_path = logs_dir.join(format!("{}.log", timestamp));
+            let mut log_file = File::create(&log_file_path)
+                .map_err(|e| format!("Failed to create log file: {}", e))?;
+
+            // Emit start message
+            let start_msg = format!("🚀 Starting Android build for project: {}", project.name);
+            window.emit("build-log", &start_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", start_msg).map_err(|e| e.to_string())?;
+
             if !android_dir.exists() {
-                return Err(format!("Android directory not found at {:?}", android_dir));
+                let err_msg = format!("❌ Android directory not found at: {:?}", android_dir);
+                window.emit("build-log", &err_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                return Err(err_msg);
             }
-            ("./gradlew", vec!["bundleRelease"], android_dir)
+
+            // Check if gradlew exists
+            let gradlew_path = android_dir.join("gradlew");
+            if !gradlew_path.exists() {
+                let err_msg = format!("❌ gradlew not found at: {:?}", gradlew_path);
+                window.emit("build-log", &err_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                return Err(err_msg);
+            }
+
+            let path_msg = format!("📁 Android directory: {:?}", android_dir);
+            window.emit("build-log", &path_msg).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", path_msg).map_err(|e| e.to_string())?;
+
+            // Use /bin/sh -l -c to run in a login shell
+            // Add common paths for Node.js (Homebrew, NVM, etc.) and source shell profiles
+            let android_dir_str = android_dir.to_str().unwrap_or("");
+
+            // Build comprehensive shell command that sources profiles and adds common paths
+            let shell_command = format!(
+                r#"
+                # 1. Add standard paths explicitly (Homebrew, Local, System)
+                export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+                # 2. Source shell profiles (This handles most version managers like fnm, asdf, volta if configured in shell)
+                # We suppress output to avoid polluting logs
+                [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" >/dev/null 2>&1 || true
+                [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" >/dev/null 2>&1 || true
+                [ -f "$HOME/.bash_profile" ] && source "$HOME/.bash_profile" >/dev/null 2>&1 || true
+
+                # 3. Explicitly look for NVM if likely not loaded yet
+                if [ -d "$HOME/.nvm" ]; then
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" >/dev/null 2>&1 || true
+                fi
+
+                # 4. Fallback: Try to find common version managers if node is still missing
+                if ! command -v node >/dev/null 2>&1; then
+                    # Check for Volta
+                    if [ -d "$HOME/.volta" ]; then
+                        export VOLTA_HOME="$HOME/.volta"
+                        export PATH="$VOLTA_HOME/bin:$PATH"
+                    fi
+                    # Check for FNM (Fast Node Manager)
+                    if [ -d "$HOME/Library/Application Support/fnm" ]; then
+                        export PATH="$HOME/Library/Application Support/fnm:$PATH"
+                        eval "`fnm env --use-on-cd 2>/dev/null`" || true
+                    fi
+                fi
+
+                # Log environment for debugging
+                echo "🔍 Node path: $(which node 2>/dev/null || echo 'not found')"
+                echo "🔍 Node version: $(node -v 2>/dev/null || echo 'unknown')"
+                echo "🔍 Java path: $(which java 2>/dev/null || echo 'not found')"
+
+                cd '{}' && ./gradlew bundleRelease 2>&1
+                "#,
+                android_dir_str
+            );
+
+            let cmd_info = format!("🔧 Running Android build with enhanced environment...");
+            window.emit("build-log", &cmd_info).map_err(|e| e.to_string())?;
+            writeln!(log_file, "{}", cmd_info).map_err(|e| e.to_string())?;
+
+            let child = Command::new("/bin/sh")
+                .args(&["-c", &shell_command])
+                .current_dir(&android_dir)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .map_err(|e| {
+                    let err_msg = format!("❌ Failed to start build command: {}", e);
+                    let _ = window.emit("build-log", &err_msg);
+                    let _ = writeln!(log_file, "{}", err_msg);
+                    let _ = window.emit("build-log-file", log_file_path.to_str().unwrap());
+                    let _ = window.emit("build-status", "failed");
+                    err_msg
+                })?;
+
+            // Store process for cancellation
+            let process_id = project.id.clone();
+            {
+                let mut processes = process_state.0.lock().unwrap();
+                processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(child))));
+            }
+
+            // Get process back for monitoring
+            let process_arc = {
+                let processes = process_state.0.lock().unwrap();
+                processes.get(&process_id).cloned()
+            };
+
+            if let Some(process_mutex) = process_arc {
+                let mut child = process_mutex.lock().unwrap().take().unwrap();
+
+                // Read stdout and write to log file
+                if let Some(stdout) = child.stdout.take() {
+                    let reader = BufReader::new(stdout);
+                    for line in reader.lines() {
+                        if let Ok(line_content) = line {
+                            window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                            writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
+                        }
+                    }
+                }
+
+                // Read stderr and write to log file
+                if let Some(stderr) = child.stderr.take() {
+                    let reader = BufReader::new(stderr);
+                    for line in reader.lines() {
+                        if let Ok(line_content) = line {
+                            let stderr_line = format!("⚠️ {}", line_content);
+                            window.emit("build-log", &stderr_line).map_err(|e| e.to_string())?;
+                            writeln!(log_file, "{}", stderr_line).map_err(|e| e.to_string())?;
+                        }
+                    }
+                }
+
+                let status = child.wait().map_err(|e| e.to_string())?;
+
+                // Cleanup process from state
+                {
+                    let mut processes = process_state.0.lock().unwrap();
+                    processes.remove(&process_id);
+                }
+
+                // Emit log file path so frontend can save it
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+
+                if status.success() {
+                    // Rename the AAB file
+                    let bundle_dir = android_dir.join("app/build/outputs/bundle/release");
+                    let original_aab = bundle_dir.join("app-release.aab");
+
+                    if original_aab.exists() {
+                        let ts = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
+                        let new_filename = format!(
+                            "{}_{}_{}_{}.aab",
+                            project.name.replace(" ", "_"),
+                            project.android.version,
+                            project.android.version_code,
+                            ts
+                        );
+                        let new_aab_path = bundle_dir.join(&new_filename);
+                        std::fs::rename(&original_aab, &new_aab_path)
+                            .map_err(|e| format!("Failed to rename AAB file: {}", e))?;
+
+                        let rename_msg = format!("✅ AAB renamed to: {}", new_filename);
+                        window.emit("build-log", &rename_msg).map_err(|e| e.to_string())?;
+                        writeln!(log_file, "{}", rename_msg).map_err(|e| e.to_string())?;
+                    }
+
+                    let success_msg = "✅ Android build completed successfully";
+                    window.emit("build-log", success_msg).map_err(|e| e.to_string())?;
+                    writeln!(log_file, "{}", success_msg).map_err(|e| e.to_string())?;
+                    window.emit("build-status", "success").map_err(|e| e.to_string())?;
+                    return Ok(());
+                } else {
+                    let exit_code = status.code().map(|c| c.to_string()).unwrap_or("unknown".to_string());
+                    let error_msg = format!("❌ Build failed with exit code: {}", exit_code);
+                    window.emit("build-log", &error_msg).map_err(|e| e.to_string())?;
+                    writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
+                    window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                    return Err(error_msg);
+                }
+            } else {
+                let err_msg = "Failed to get process handle";
+                window.emit("build-log", err_msg).map_err(|e| e.to_string())?;
+                writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                return Err(err_msg.into());
+            }
         },
         "ios" => {
             let ios_dir = std::path::Path::new(&project.path).join("ios");
@@ -407,89 +606,10 @@ pub async fn build_project(
 
             return Ok(());
         },
-        _ => return Err(format!("Unsupported platform: {}", platform)),
-    };
-
-    let child = Command::new(program)
-        .args(&args)
-        .current_dir(&work_dir)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to start build command: {}", e))?;
-
-    // Store process for cancellation
-    let process_id = project.id.clone();
-    {
-        let mut processes = process_state.0.lock().unwrap();
-        processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(child))));
-    }
-
-    // Get process back for monitoring
-    let process_arc = {
-        let processes = process_state.0.lock().unwrap();
-        processes.get(&process_id).cloned()
-    };
-
-    if let Some(process_mutex) = process_arc {
-        let mut child = process_mutex.lock().unwrap().take().unwrap();
-
-        let stdout = child.stdout.take().unwrap();
-        let reader = BufReader::new(stdout);
-
-        // Stream logs to frontend
-        for line in reader.lines() {
-            if let Ok(line_content) = line {
-                window.emit("build-log", line_content).map_err(|e| e.to_string())?;
-            }
-        }
-
-        let status = child.wait().map_err(|e| e.to_string())?;
-
-        // Cleanup process from state
-        {
-            let mut processes = process_state.0.lock().unwrap();
-            processes.remove(&process_id);
-        }
-
-        if status.success() {
-            // For Android builds, rename the AAB file
-            if platform == "android" {
-                let bundle_dir = work_dir.join("app/build/outputs/bundle/release");
-                let original_aab = bundle_dir.join("app-release.aab");
-
-                if original_aab.exists() {
-                    // Create timestamp
-                    let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
-
-                    // Create new filename: appname_version_timestamp.aab
-                    let new_filename = format!(
-                        "{}_{}_{}_{}.aab",
-                        project.name.replace(" ", "_"),
-                        project.android.version,
-                        project.android.version_code,
-                        timestamp
-                    );
-
-                    let new_aab_path = bundle_dir.join(&new_filename);
-
-                    // Rename the file
-                    std::fs::rename(&original_aab, &new_aab_path)
-                        .map_err(|e| format!("Failed to rename AAB file: {}", e))?;
-
-                    let rename_msg = format!("✅ AAB renamed to: {}", new_filename);
-                    window.emit("build-log", &rename_msg).map_err(|e| e.to_string())?;
-                }
-            }
-
-            window.emit("build-status", "success").map_err(|e| e.to_string())?;
-            Ok(())
-        } else {
+        _ => {
             window.emit("build-status", "failed").map_err(|e| e.to_string())?;
-            Err("Build failed".into())
+            return Err(format!("Unsupported platform: {}", platform));
         }
-    } else {
-        Err("Failed to store process".into())
     }
 }
 
