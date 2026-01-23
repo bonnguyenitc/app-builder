@@ -1,7 +1,15 @@
 import React from 'react';
 import { useBuildStore } from '../stores/buildStore';
 import { useProjectStore } from '../stores/projectStore';
-import { Terminal, Clock, Download, AlertCircle, X, Loader, Apple, Smartphone } from 'lucide-react';
+import {
+  TerminalIcon,
+  ClockIcon,
+  DownloadIcon,
+  AlertCircleIcon,
+  CloseIcon,
+  LoaderIcon,
+} from '../components/Icons';
+import { AppleIcon, AndroidIcon } from '../components/Icons';
 import { useDebouncedLogs } from '../hooks/useDebouncedLogs';
 import { processLogsForDisplay, downloadLogs } from '../utils/logUtils';
 
@@ -33,7 +41,7 @@ export const BuildQueue: React.FC = () => {
       {activeBuildList.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
-            <Clock size={32} />
+            <ClockIcon size={32} />
           </div>
           <h3 className="empty-state-title">No Active Builds</h3>
           <p className="empty-state-description">
@@ -122,7 +130,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
                 margin: '0 auto var(--spacing-lg)',
               }}
             >
-              <X size={28} style={{ color: 'var(--color-error)' }} />
+              <CloseIcon size={28} style={{ color: 'var(--color-error)' }} />
             </div>
             <h3
               style={{
@@ -188,9 +196,9 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
             }}
           >
             {build.platform === 'ios' ? (
-              <Apple size={22} color="white" />
+              <AppleIcon size={22} style={{ color: 'white' }} />
             ) : (
-              <Smartphone size={22} color="white" />
+              <AndroidIcon size={22} style={{ color: 'white' }} />
             )}
           </div>
           <div>
@@ -232,7 +240,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
               borderColor: 'var(--color-error)',
             }}
           >
-            <X size={14} />
+            <CloseIcon size={14} />
             <span>Stop</span>
           </button>
           <button
@@ -243,7 +251,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
               fontSize: '13px',
             }}
           >
-            <Download size={14} />
+            <DownloadIcon size={14} />
             <span>Logs</span>
           </button>
           <div
@@ -260,7 +268,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
               boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
             }}
           >
-            <Loader size={12} className="animate-spin" />
+            <LoaderIcon size={12} className="animate-spin" />
             Building
           </div>
         </div>
@@ -302,7 +310,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <Terminal size={14} style={{ color: '#58a6ff' }} />
+            <TerminalIcon size={14} style={{ color: '#58a6ff' }} />
             <span style={{ color: '#8b949e' }}>
               Build {build.platform === 'ios' ? 'Status' : 'Logs'}
             </span>
@@ -322,7 +330,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
                 color: '#d29922',
               }}
             >
-              <AlertCircle size={12} />
+              <AlertCircleIcon size={12} />
               <span>{hiddenCount} lines hidden</span>
             </div>
           )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, FolderOpen, Sparkles } from 'lucide-react';
+import { PlusIcon, SearchIcon, FolderIcon, AlertCircleIcon, TrashIcon } from '../components/Icons';
 import { useProjectStore } from '../stores/projectStore';
 import { useBuildStore } from '../stores/buildStore';
 import { ProjectCard } from '../components/ProjectCard';
@@ -108,7 +108,7 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
         <button className="btn btn-primary" onClick={handleAddProject}>
-          <Plus size={18} />
+          <PlusIcon size={18} />
           <span>Add Project</span>
         </button>
       </div>
@@ -130,7 +130,7 @@ export const Dashboard: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div className="icon-container icon-container-error">
-              <Sparkles size={16} />
+              <AlertCircleIcon size={16} />
             </div>
             <span style={{ color: 'var(--color-error)', fontWeight: 500 }}>Error: {error}</span>
           </div>
@@ -149,7 +149,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Search Input */}
       <div className="search-input-wrapper" style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <Search size={18} className="search-icon" />
+        <SearchIcon size={18} className="search-icon" />
         <input
           type="text"
           className="input"
@@ -168,7 +168,7 @@ export const Dashboard: React.FC = () => {
       {filteredProjects.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
-            <FolderOpen size={32} />
+            <FolderIcon size={32} />
           </div>
           <h3 className="empty-state-title">No projects found</h3>
           <p className="empty-state-description">
@@ -182,7 +182,7 @@ export const Dashboard: React.FC = () => {
               onClick={handleAddProject}
               style={{ marginTop: 'var(--spacing-lg)' }}
             >
-              <Plus size={18} />
+              <PlusIcon size={18} />
               <span>Create First Project</span>
             </button>
           )}
@@ -244,7 +244,7 @@ export const Dashboard: React.FC = () => {
                 margin: '0 auto var(--spacing-lg)',
               }}
             >
-              <Sparkles size={28} style={{ color: 'var(--color-error)' }} />
+              <TrashIcon size={28} style={{ color: 'var(--color-error)' }} />
             </div>
             <h2
               style={{

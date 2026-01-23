@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Shield } from 'lucide-react';
+import { CloseIcon, KeyIcon, ShieldIcon } from './Icons';
 import { Credential } from '../types/credential';
 
 interface CredentialModalProps {
@@ -170,7 +170,7 @@ export const CredentialModal: React.FC<CredentialModalProps> = ({
                 color: 'var(--color-primary)',
               }}
             >
-              <Key size={20} />
+              <KeyIcon size={20} />
             </div>
             <h2 style={{ fontSize: '20px', fontWeight: 600 }}>
               {editingCredential ? 'Edit Credential' : 'Add New Credential'}
@@ -181,7 +181,7 @@ export const CredentialModal: React.FC<CredentialModalProps> = ({
             onClick={onClose}
             style={{ padding: '8px', minWidth: 'auto' }}
           >
-            <X size={20} />
+            <CloseIcon size={20} />
           </button>
         </div>
 
@@ -418,7 +418,7 @@ export const CredentialModal: React.FC<CredentialModalProps> = ({
               border: '1px solid rgba(0, 122, 255, 0.1)',
             }}
           >
-            <Shield
+            <ShieldIcon
               size={16}
               style={{ color: 'var(--color-primary)', flexShrink: 0, marginTop: '2px' }}
             />

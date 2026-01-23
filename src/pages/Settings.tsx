@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-  Shield,
-  Key,
-  Trash2,
-  CheckCircle2,
-  Plus,
-  Edit2,
-  Apple,
-  Bot,
-  Lock,
-  Sparkles,
-} from 'lucide-react';
+  AppleIcon,
+  AndroidIcon,
+  ShieldIcon,
+  KeyIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  PlusIcon,
+  EditIcon,
+  LockIcon,
+  SparklesIcon,
+} from '../components/Icons';
 import { useCredentials } from '../hooks/useCredentials';
 import { CredentialModal } from '../components/CredentialModal';
 import { Credential } from '../types/credential';
@@ -113,7 +113,7 @@ export const Settings: React.FC = () => {
           <div
             className={`icon-container ${status.type === 'success' ? 'icon-container-success' : 'icon-container-error'}`}
           >
-            {status.type === 'success' ? <CheckCircle2 size={18} /> : <Shield size={18} />}
+            {status.type === 'success' ? <CheckCircleIcon size={18} /> : <ShieldIcon size={18} />}
           </div>
           <span
             style={{
@@ -150,7 +150,7 @@ export const Settings: React.FC = () => {
                   boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
                 }}
               >
-                <Apple size={22} color="white" />
+                <AppleIcon size={22} style={{ color: 'white' }} />
               </div>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: 600 }}>iOS Credentials</h2>
@@ -160,7 +160,7 @@ export const Settings: React.FC = () => {
               </div>
             </div>
             <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-              <Plus size={16} />
+              <PlusIcon size={16} />
               <span>Add Credential</span>
             </button>
           </div>
@@ -193,7 +193,7 @@ export const Settings: React.FC = () => {
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <Key size={24} style={{ color: 'var(--color-primary)' }} />
+                <KeyIcon size={24} style={{ color: 'var(--color-primary)' }} />
               </div>
               <p style={{ fontSize: '15px', fontWeight: 500, marginBottom: '4px' }}>
                 No iOS credentials configured
@@ -251,14 +251,14 @@ export const Settings: React.FC = () => {
                       onClick={() => handleOpenModal(credential)}
                       style={{ padding: '8px' }}
                     >
-                      <Edit2 size={16} />
+                      <EditIcon size={16} />
                     </button>
                     <button
                       className="btn btn-ghost"
                       onClick={() => handleDeleteCredential(credential)}
                       style={{ padding: '8px', color: 'var(--color-error)' }}
                     >
-                      <Trash2 size={16} />
+                      <TrashIcon size={16} />
                     </button>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export const Settings: React.FC = () => {
                   boxShadow: '0 4px 12px rgba(52, 199, 89, 0.3)',
                 }}
               >
-                <Bot size={22} color="white" />
+                <AndroidIcon size={22} style={{ color: 'white' }} />
               </div>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Android Credentials</h2>
@@ -300,7 +300,7 @@ export const Settings: React.FC = () => {
               </div>
             </div>
             <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-              <Plus size={16} />
+              <PlusIcon size={16} />
               <span>Add Credential</span>
             </button>
           </div>
@@ -333,7 +333,7 @@ export const Settings: React.FC = () => {
                   margin: '0 auto var(--spacing-md)',
                 }}
               >
-                <Key size={24} style={{ color: 'var(--color-success)' }} />
+                <KeyIcon size={24} style={{ color: 'var(--color-success)' }} />
               </div>
               <p style={{ fontSize: '15px', fontWeight: 500, marginBottom: '4px' }}>
                 No Android credentials configured
@@ -391,14 +391,14 @@ export const Settings: React.FC = () => {
                       onClick={() => handleOpenModal(credential)}
                       style={{ padding: '8px' }}
                     >
-                      <Edit2 size={16} />
+                      <EditIcon size={16} />
                     </button>
                     <button
                       className="btn btn-ghost"
                       onClick={() => handleDeleteCredential(credential)}
                       style={{ padding: '8px', color: 'var(--color-error)' }}
                     >
-                      <Trash2 size={16} />
+                      <TrashIcon size={16} />
                     </button>
                   </div>
                 </div>
@@ -430,7 +430,7 @@ export const Settings: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
               }}
             >
-              <Lock size={20} color="white" />
+              <LockIcon size={20} color="white" />
             </div>
             <div>
               <h4
@@ -444,7 +444,7 @@ export const Settings: React.FC = () => {
                 }}
               >
                 Secure Storage
-                <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
+                <SparklesIcon size={14} style={{ color: 'var(--color-primary)' }} />
               </h4>
               <p
                 style={{
@@ -492,7 +492,7 @@ export const Settings: React.FC = () => {
                 margin: '0 auto var(--spacing-lg)',
               }}
             >
-              <Trash2 size={28} style={{ color: 'var(--color-error)' }} />
+              <TrashIcon size={28} style={{ color: 'var(--color-error)' }} />
             </div>
             <h2
               style={{

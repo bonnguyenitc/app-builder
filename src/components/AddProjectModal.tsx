@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, FolderOpen, Key, Apple, Smartphone, Package, Settings2, Sparkles } from 'lucide-react';
+import {
+  CloseIcon,
+  FolderIcon,
+  KeyIcon,
+  AppleIcon,
+  AndroidIcon,
+  PackageIcon,
+  SettingsIcon,
+  SparklesIcon,
+} from './Icons';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../types/project';
@@ -225,7 +234,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
               }}
             >
-              <Package size={22} color="white" />
+              <PackageIcon size={22} style={{ color: 'white' }} />
             </div>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '2px' }}>
@@ -241,7 +250,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
             className="btn btn-ghost"
             style={{ padding: '8px', borderRadius: 'var(--radius-sm)' }}
           >
-            <X size={20} />
+            <CloseIcon size={20} />
           </button>
         </div>
 
@@ -257,7 +266,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 marginBottom: 'var(--spacing-md)',
               }}
             >
-              <Sparkles size={16} style={{ color: 'var(--color-primary)' }} />
+              <SparklesIcon size={16} style={{ color: 'var(--color-primary)' }} />
               <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Basic Information</h3>
             </div>
 
@@ -293,7 +302,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                     onClick={handleBrowse}
                     style={{ flexShrink: 0, gap: '6px' }}
                   >
-                    <FolderOpen size={16} />
+                    <FolderIcon size={16} />
                     <span>Browse</span>
                   </button>
                 </div>
@@ -321,7 +330,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 }}
               >
                 <div className="icon-container icon-container-primary" style={{ padding: '4px' }}>
-                  <Apple size={14} />
+                  <AppleIcon size={14} />
                 </div>
                 <h3 style={{ fontSize: '14px', fontWeight: 600 }}>iOS</h3>
               </div>
@@ -377,7 +386,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 }}
               >
                 <div className="icon-container icon-container-success" style={{ padding: '4px' }}>
-                  <Smartphone size={14} />
+                  <AndroidIcon size={14} />
                 </div>
                 <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Android</h3>
               </div>
@@ -433,7 +442,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 marginBottom: 'var(--spacing-md)',
               }}
             >
-              <Settings2 size={16} style={{ color: 'var(--color-primary)' }} />
+              <SettingsIcon size={16} style={{ color: 'var(--color-primary)' }} />
               <h3 style={{ fontSize: '14px', fontWeight: 600 }}>iOS Build Configuration</h3>
             </div>
 
@@ -529,7 +538,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                     borderRadius: 'var(--radius-sm)',
                   }}
                 >
-                  <Key size={12} />
+                  <KeyIcon size={12} />
                   No iOS credentials. Add one in Settings to enable App Store uploads.
                 </p>
               )}
@@ -546,7 +555,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                 marginBottom: 'var(--spacing-md)',
               }}
             >
-              <Settings2 size={16} style={{ color: 'var(--color-success)' }} />
+              <SettingsIcon size={16} style={{ color: 'var(--color-success)' }} />
               <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Android Build Configuration</h3>
             </div>
 
@@ -595,7 +604,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                     borderRadius: 'var(--radius-sm)',
                   }}
                 >
-                  <Key size={12} />
+                  <KeyIcon size={12} />
                   No Android credentials. Add one in Settings to enable Play Store uploads.
                 </p>
               )}

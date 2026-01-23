@@ -2,17 +2,17 @@ import React, { useEffect } from 'react';
 import { useBuildStore } from '../stores/buildStore';
 import { useProjectStore } from '../stores/projectStore';
 import {
-  CheckCircle2,
-  XCircle,
-  Apple,
-  Smartphone,
-  FolderOpen,
-  FileText,
-  History as HistoryIcon,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from 'lucide-react';
+  CheckCircleIcon,
+  XCircleIcon,
+  FolderIcon,
+  FileTextIcon,
+  HistoryIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  AppleIcon,
+  AndroidIcon,
+} from '../components/Icons';
 import { BuildHistory } from '../types/project';
 
 const LogModal = ({ build, onClose }: { build: BuildHistory; onClose: () => void }) => {
@@ -81,7 +81,7 @@ const LogModal = ({ build, onClose }: { build: BuildHistory; onClose: () => void
             )}
           </div>
           <button className="btn btn-ghost" onClick={onClose} style={{ padding: '4px' }}>
-            <X size={20} />
+            <CloseIcon size={20} />
           </button>
         </div>
         <div style={{ flex: 1, overflow: 'auto', padding: '0' }}>
@@ -181,7 +181,7 @@ export const ReleaseHistory: React.FC = () => {
                             fontSize: '12px',
                           }}
                         >
-                          <CheckCircle2 size={14} />
+                          <CheckCircleIcon size={14} />
                           <span>Success</span>
                         </div>
                       ) : (
@@ -198,7 +198,7 @@ export const ReleaseHistory: React.FC = () => {
                             fontSize: '12px',
                           }}
                         >
-                          <XCircle size={14} />
+                          <XCircleIcon size={14} />
                           <span>Failed</span>
                         </div>
                       )}
@@ -219,9 +219,9 @@ export const ReleaseHistory: React.FC = () => {
                           style={{ padding: '4px' }}
                         >
                           {build.platform === 'ios' ? (
-                            <Apple size={12} />
+                            <AppleIcon size={12} />
                           ) : (
-                            <Smartphone size={12} />
+                            <AndroidIcon size={12} />
                           )}
                         </div>
                         <span style={{ fontWeight: 500, textTransform: 'capitalize' }}>
@@ -281,7 +281,7 @@ export const ReleaseHistory: React.FC = () => {
                             }}
                             style={{ padding: '6px' }}
                           >
-                            <FolderOpen size={16} />
+                            <FolderIcon size={16} />
                           </button>
                         )}
                         <button
@@ -290,7 +290,7 @@ export const ReleaseHistory: React.FC = () => {
                           onClick={() => setViewingBuild(build)}
                           style={{ padding: '6px' }}
                         >
-                          <FileText size={16} />
+                          <FileTextIcon size={16} />
                         </button>
                       </div>
                     </td>
@@ -322,7 +322,7 @@ export const ReleaseHistory: React.FC = () => {
                 style={{ padding: '6px' }}
                 title="Previous Page"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeftIcon size={16} />
               </button>
               <span style={{ fontSize: '13px', fontWeight: 500 }}>
                 Page {currentPage} of {Math.max(1, Math.ceil(totalItems / pageSize))}
@@ -334,7 +334,7 @@ export const ReleaseHistory: React.FC = () => {
                 style={{ padding: '6px' }}
                 title="Next Page"
               >
-                <ChevronRight size={16} />
+                <ChevronRightIcon size={16} />
               </button>
             </div>
           </div>

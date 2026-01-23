@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, Smartphone, Settings, Loader, Trash2 } from 'lucide-react';
+import { AppleIcon, AndroidIcon, SettingsIcon, LoaderIcon, TrashIcon } from './Icons';
 import { Project } from '../types/project';
 
 interface ProjectCardProps {
@@ -131,7 +131,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               borderRadius: 'var(--radius-sm)',
             }}
           >
-            <Settings size={14} />
+            <SettingsIcon size={14} />
           </button>
           <button
             onClick={(e) => {
@@ -145,7 +145,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               color: 'var(--color-error)',
             }}
           >
-            <Trash2 size={14} />
+            <TrashIcon size={14} />
           </button>
         </div>
       </div>
@@ -172,7 +172,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           }}
         >
           <div className="icon-container icon-container-primary" style={{ padding: '4px' }}>
-            <Apple size={14} />
+            <AppleIcon size={14} />
           </div>
           <span style={{ flex: 1, fontWeight: 500 }}>iOS</span>
           <span className="badge badge-primary" style={{ fontSize: '11px', padding: '2px 8px' }}>
@@ -188,7 +188,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           }}
         >
           <div className="icon-container icon-container-success" style={{ padding: '4px' }}>
-            <Smartphone size={14} />
+            <AndroidIcon size={14} />
           </div>
           <span style={{ flex: 1, fontWeight: 500 }}>Android</span>
           <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 8px' }}>
@@ -290,12 +290,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         >
           {isBuilding && project.lastBuild?.platform === 'ios' ? (
             <>
-              <Loader size={14} className="animate-spin" />
+              <LoaderIcon size={14} className="animate-spin" />
               <span>Building...</span>
             </>
           ) : (
             <>
-              <Apple size={14} />
+              <AppleIcon size={14} />
               <span>Build iOS</span>
             </>
           )}
@@ -323,12 +323,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         >
           {isBuilding && project.lastBuild?.platform === 'android' ? (
             <>
-              <Loader size={14} className="animate-spin" />
+              <LoaderIcon size={14} className="animate-spin" />
               <span>Building...</span>
             </>
           ) : (
             <>
-              <Smartphone size={14} />
+              <AndroidIcon size={14} />
               <span>Build Android</span>
             </>
           )}

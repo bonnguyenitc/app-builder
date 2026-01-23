@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutGrid, ClipboardList, History, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutGridIcon, ClipboardListIcon, HistoryIcon, SettingsIcon } from './components/Icons';
 import appIcon from './assets/app-icon.png';
 
 import { useProjectStore } from './stores/projectStore';
@@ -70,21 +70,21 @@ function App() {
               to="/"
               className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             >
-              <LayoutGrid size={18} />
+              <LayoutGridIcon size={18} />
               <span>Projects</span>
             </NavLink>
             <NavLink
               to="/queue"
               className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             >
-              <ClipboardList size={18} />
+              <ClipboardListIcon size={18} />
               <span>Build Queue</span>
             </NavLink>
             <NavLink
               to="/history"
               className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
             >
-              <History size={18} />
+              <HistoryIcon size={18} />
               <span>History</span>
             </NavLink>
 
