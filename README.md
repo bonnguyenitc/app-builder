@@ -158,7 +158,6 @@ Go to **Settings** → **Credentials** → **Add iOS Credential**:
 
 - **Team ID:** From Apple Developer Account (Membership details).
 - **Key ID & Issuer ID:** From Step 1.
-- **Key Content:** Copy/paste content of `.p8` file.
 </details>
 
 <details>
