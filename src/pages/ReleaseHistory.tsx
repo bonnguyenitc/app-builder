@@ -8,14 +8,106 @@ import {
   Smartphone,
   FolderOpen,
   FileText,
-  History,
+  History as HistoryIcon,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
+import { BuildHistory } from '../types/project';
+
+const LogModal = ({ build, onClose }: { build: BuildHistory; onClose: () => void }) => {
+  const handleOpenExternal = () => {
+    if (build.logFilePath) {
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('open_log_file', {
+          logFilePath: build.logFilePath,
+        }).catch((err) => console.error(err));
+      });
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '80%',
+          height: '80%',
+          backgroundColor: 'var(--color-bg-primary)',
+          borderRadius: 'var(--radius-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          border: '1px solid var(--color-border)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'var(--spacing-md)',
+            borderBottom: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-bg-secondary)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Build Logs</h3>
+            {build.logFilePath && (
+              <button
+                className="btn btn-ghost"
+                onClick={handleOpenExternal}
+                title="Open in External Editor"
+                style={{ fontSize: '12px', height: '24px', padding: '0 8px' }}
+              >
+                Open External
+              </button>
+            )}
+          </div>
+          <button className="btn btn-ghost" onClick={onClose} style={{ padding: '4px' }}>
+            <X size={20} />
+          </button>
+        </div>
+        <div style={{ flex: 1, overflow: 'auto', padding: '0' }}>
+          <pre
+            style={{
+              margin: 0,
+              padding: '16px',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {build.logs || 'No logs available.'}
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const ReleaseHistory: React.FC = () => {
   const { buildHistory, currentPage, pageSize, totalItems, fetchHistory } = useBuildStore();
   const { projects } = useProjectStore();
+  const [viewingBuild, setViewingBuild] = React.useState<BuildHistory | null>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -43,7 +135,7 @@ export const ReleaseHistory: React.FC = () => {
       {buildHistory.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
-            <History size={32} />
+            <HistoryIcon size={32} />
           </div>
           <h3 className="empty-state-title">No Build History</h3>
           <p className="empty-state-description">
@@ -192,22 +284,14 @@ export const ReleaseHistory: React.FC = () => {
                             <FolderOpen size={16} />
                           </button>
                         )}
-                        {build.logFilePath && (
-                          <button
-                            className="btn btn-ghost"
-                            title="Open Log File"
-                            onClick={() => {
-                              import('@tauri-apps/api/core').then(({ invoke }) => {
-                                invoke('open_log_file', {
-                                  logFilePath: build.logFilePath,
-                                }).catch((err) => console.error(err));
-                              });
-                            }}
-                            style={{ padding: '6px' }}
-                          >
-                            <FileText size={16} />
-                          </button>
-                        )}
+                        <button
+                          className="btn btn-ghost"
+                          title="View Logs"
+                          onClick={() => setViewingBuild(build)}
+                          style={{ padding: '6px' }}
+                        >
+                          <FileText size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -256,6 +340,7 @@ export const ReleaseHistory: React.FC = () => {
           </div>
         </div>
       )}
+      {viewingBuild && <LogModal build={viewingBuild} onClose={() => setViewingBuild(null)} />}
     </div>
   );
 };

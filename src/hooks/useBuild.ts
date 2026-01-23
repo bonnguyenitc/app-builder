@@ -83,6 +83,11 @@ export const useBuild = () => {
           };
           clearActive(project.id);
           addToHistory(failedBuild);
+          try {
+            await invoke('save_build_history', { history: failedBuild });
+          } catch (e) {
+            console.error('Failed to save build history', e);
+          }
         }
         unlistenLogs();
         unlistenLogFile();
