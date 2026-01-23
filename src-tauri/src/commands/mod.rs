@@ -4,3 +4,4 @@ pub mod history;
 pub mod credentials;
 pub mod icon_generator;
 pub mod permissions;
+pub mod doctor;

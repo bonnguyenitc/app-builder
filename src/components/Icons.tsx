@@ -521,3 +521,23 @@ export const UploadIcon = ({ size = 24, className, ...props }: IconProps) => (
     <path d="M12 3v12" />
   </svg>
 );
+
+export const StethoscopeIcon = ({ size = 24, className, ...props }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .2.3V4a1.2 1.2 0 0 1 1.2 1.2v5a5.2 5.2 0 1 1-10.4 0V5.2a1.2 1.2 0 0 1 1.2-1.2h.4z" />
+    <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" />
+    <circle cx="20" cy="10" r="2" />
+  </svg>
+);

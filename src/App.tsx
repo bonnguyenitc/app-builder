@@ -6,6 +6,7 @@ import {
   HistoryIcon,
   SettingsIcon,
   ImageIcon,
+  StethoscopeIcon,
 } from './components/Icons';
 import appIcon from './assets/app-icon.png';
 
@@ -17,6 +18,7 @@ import { ReleaseHistory } from './pages/ReleaseHistory';
 import { Settings } from './pages/Settings';
 import { IconGenerator } from './pages/IconGenerator';
 import { PermissionsManager } from './pages/PermissionsManager';
+import { Doctor } from './pages/Doctor';
 
 function App() {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
@@ -102,6 +104,13 @@ function App() {
               <ImageIcon size={18} />
               <span>Icon Generator</span>
             </NavLink>
+            <NavLink
+              to="/doctor"
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            >
+              <StethoscopeIcon size={18} />
+              <span>Environment Doctor</span>
+            </NavLink>
 
             <div className="sidebar-header" style={{ marginTop: 'var(--spacing-xl)' }}>
               App
@@ -161,6 +170,7 @@ function App() {
             <Route path="/queue" element={<BuildQueue />} />
             <Route path="/history" element={<ReleaseHistory />} />
             <Route path="/icon-generator" element={<IconGenerator />} />
+            <Route path="/doctor" element={<Doctor />} />
             <Route path="/permissions/:projectId" element={<PermissionsManager />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>

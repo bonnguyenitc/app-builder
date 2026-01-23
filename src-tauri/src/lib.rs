@@ -10,6 +10,7 @@ use commands::history::*;
 use commands::credentials::*;
 use commands::icon_generator::*;
 use commands::permissions::*;
+use commands::doctor::*;
 use models::database::init_db;
 use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
@@ -61,7 +62,9 @@ pub fn run() {
             generate_app_icons,
             open_folder,
             get_project_permissions,
-            update_permission
+            update_permission,
+            run_doctor_checks,
+            run_fix_command
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
