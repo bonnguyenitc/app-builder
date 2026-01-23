@@ -1,11 +1,11 @@
 # App Builder
 
 <p align="center">
-  <img src="app-icon.png" alt="App Builder Icon" width="128" height="128" style="border-radius: 20px" />
+  <img src="screenshots/app-icon.png" alt="App Builder Icon" width="128" height="128" style="border-radius: 20px" />
 </p>
 
 <p align="center">
-  <img src="screenshot.png" alt="App Dashboard" width="100%" style="border-radius: 8px" />
+  <img src="screenshots/project.png" alt="App Dashboard" width="100%" style="border-radius: 8px" />
 </p>
 
 <p align="center">
@@ -135,7 +135,15 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
 2. Select your React Native or Flutter root folder.
 3. The app auto-detects configuration. Review and Save.
 
+<p align="center">
+  <img src="screenshots/project.png" alt="Project Management" width="100%" style="border-radius: 8px" />
+</p>
+
 ### 2. Configure Credentials
+
+<p align="center">
+  <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
+</p>
 
 <details>
 <summary><strong>🍎 iOS - App Store Connect API Key (Click to expand)</strong></summary>
@@ -203,6 +211,18 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
 3. Toggle **Upload to Play Store** (Coming soon).
+
+<p align="center">
+  <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
+</p>
+
+### 5. View Build History
+
+Track all your builds and releases in the History page.
+
+<p align="center">
+  <img src="screenshots/history.png" alt="Build History" width="100%" style="border-radius: 8px" />
+</p>
 
 ---
 
