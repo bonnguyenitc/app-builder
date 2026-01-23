@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutGridIcon, ClipboardListIcon, HistoryIcon, SettingsIcon } from './components/Icons';
+import {
+  LayoutGridIcon,
+  ClipboardListIcon,
+  HistoryIcon,
+  SettingsIcon,
+  ImageIcon,
+} from './components/Icons';
 import appIcon from './assets/app-icon.png';
 
 import { useProjectStore } from './stores/projectStore';
@@ -9,6 +15,7 @@ import { Dashboard } from './pages/Dashboard';
 import { BuildQueue } from './pages/BuildQueue';
 import { ReleaseHistory } from './pages/ReleaseHistory';
 import { Settings } from './pages/Settings';
+import { IconGenerator } from './pages/IconGenerator';
 
 function App() {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
@@ -87,6 +94,13 @@ function App() {
               <HistoryIcon size={18} />
               <span>History</span>
             </NavLink>
+            <NavLink
+              to="/icon-generator"
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            >
+              <ImageIcon size={18} />
+              <span>Icon Generator</span>
+            </NavLink>
 
             <div className="sidebar-header" style={{ marginTop: 'var(--spacing-xl)' }}>
               App
@@ -145,6 +159,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/queue" element={<BuildQueue />} />
             <Route path="/history" element={<ReleaseHistory />} />
+            <Route path="/icon-generator" element={<IconGenerator />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
