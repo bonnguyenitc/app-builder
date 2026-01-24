@@ -210,6 +210,11 @@ fn update_build_json(
 
 #[command]
 pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInfo, String> {
+    // Explicitly reject Flutter projects
+    if Path::new(&project_path).join("pubspec.yaml").exists() {
+        return Err("Flutter projects are not supported. Please select a React Native project.".to_string());
+    }
+
     // First, try to read from .app-builder/build.json if it exists
     let app_builder_dir = Path::new(&project_path).join(".app-builder");
     let build_json_path = app_builder_dir.join("build.json");
@@ -379,6 +384,11 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
 
 #[command]
 pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result<(), String> {
+    // Explicitly reject Flutter projects
+    if Path::new(&project.path).join("pubspec.yaml").exists() {
+        return Err("Flutter projects are not supported. Please select a React Native project.".to_string());
+    }
+
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT OR REPLACE INTO projects (

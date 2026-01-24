@@ -26,7 +26,7 @@
 <p align="center">
   <strong>A cross-platform desktop application that automates the build and release process for mobile apps.</strong>
   <br />
-  Manage <b>React Native</b> and <b>Flutter</b> projects, build iOS/Android binaries, and upload directly to stores without touching the command line.
+  Manage <b>React Native</b> projects, build iOS/Android binaries, and upload directly to stores without touching the command line.
 </p>
 
 ---
@@ -62,7 +62,7 @@ It requires **no special configuration**—you set up your project environment a
 
 ### 📱 Project Management
 
-- **Multi-framework Support:** Manage React Native and Flutter projects in one place.
+- **Framework Support:** Manage React Native projects in one place.
 - **Auto-Discovery:** Automatically reads `Info.plist`, `build.gradle`.
 - **Version Tracking:** Visual display of current version and build numbers.
 
@@ -136,7 +136,7 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
 ### 1. Add a New Project
 
 1. Go to **Projects** → **Add Project**.
-2. Select your React Native or Flutter root folder.
+2. Select your React Native root folder.
 3. The app auto-detects configuration. Review and Save.
 
 <p align="center">
@@ -291,7 +291,7 @@ Track all your builds and releases in the History page.
 
 ## 🗺️ Roadmap
 
-- [x] **Core:** Project Management (RN/Flutter), Auto-info reading.
+- [x] **Core:** Project Management (React Native), Auto-info reading.
 - [x] **iOS:** `xcodebuild` + Upload to App Store Connect.
 - [x] **Android:** Gradle Build (AAB/APK).
 - [x] **System:** Queue Management, History, Secure Credentials.
