@@ -40,11 +40,11 @@
 - [User Guide](#-user-guide)
   - [Project Setup](#1-add-a-new-project)
   - [Permissions Management](#2-manage-permissions)
-  - [Permissions Management](#2-manage-permissions)
   - [Environment Doctor](#3-environment-doctor)
   - [Emulator Manager](#4-emulator-manager)
-  - [Credentials Configuration](#5-configure-credentials)
-  - [Building](#6-build-ios)
+  - [Store Assets Creator](#5-store-assets-creator)
+  - [Credentials Configuration](#6-configure-credentials)
+  - [Building](#7-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -174,7 +174,35 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
   <img src="screenshots/emulators.png" alt="Emulator Manager" width="100%" style="border-radius: 8px" />
 </p>
 
-### 5. Configure Credentials
+### 5. Store Assets Creator
+
+Create stunning App Store & Play Store screenshots with professional device frames.
+
+1. Go to **Store Assets** (Images Icon).
+2. Select your target platform (iOS/Android) and device size.
+3. Drag & drop your app screenshots or click **Add Screenshots**.
+4. Customize the **background gradient** and **text color**.
+5. Edit the **title** and **subtitle** for each screenshot.
+6. Click **Export All** to download high-resolution PNGs in a ZIP file.
+
+**Supported Sizes:**
+
+| Platform | Device         | Size      | Required |
+| -------- | -------------- | --------- | -------- |
+| iOS      | iPhone 6.7"    | 1290×2796 | ⭐ Yes   |
+| iOS      | iPhone 6.5"    | 1284×2778 | ⭐ Yes   |
+| iOS      | iPhone 5.5"    | 1242×2208 | No       |
+| iOS      | iPad Pro 12.9" | 2048×2732 | ⭐ Yes   |
+| iOS      | iPad Pro 11"   | 1668×2388 | No       |
+| Android  | Phone          | 1080×2400 | ⭐ Yes   |
+| Android  | 7" Tablet      | 1200×1920 | No       |
+| Android  | 10" Tablet     | 1600×2560 | No       |
+
+<p align="center">
+  <img src="screenshots/store-assets.png" alt="Store Assets Creator" width="100%" style="border-radius: 8px" />
+</p>
+
+### 6. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -233,7 +261,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 6. Build iOS
+### 7. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -241,7 +269,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 7. Build Android
+### 8. Build Android
 
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
@@ -251,7 +279,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 8. View Build History
+### 9. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -273,6 +301,7 @@ Track all your builds and releases in the History page.
 - [x] **Feature:** Native Permissions Manager (Android/iOS).
 - [x] **Feature:** Environment Helper (Doctor/Fixer).
 - [x] **Feature:** Emulator Manager (Boot/Run).
+- [x] **Feature:** Store Assets Creator (App Store/Play Store screenshots).
 
 ---
 

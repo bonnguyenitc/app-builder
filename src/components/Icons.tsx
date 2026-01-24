@@ -578,3 +578,23 @@ export const PlayIcon = ({ size = 24, className, ...props }: IconProps) => (
     <polygon points="5 3 19 12 5 21 5 3" />
   </svg>
 );
+
+export const ImagesIcon = ({ size = 24, className, ...props }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path d="M18 22H4a2 2 0 0 1-2-2V6" />
+    <path d="M22 18V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z" />
+    <path d="m15 9-6 6" />
+  </svg>
+);

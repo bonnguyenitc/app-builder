@@ -481,6 +481,12 @@ body {
   box-shadow: 0 4px 14px rgba(255, 59, 48, 0.3);
 }
 
+.btn-lg {
+  padding: 12px 20px;
+  gap: 10px;
+  font-size: 14px;
+}
+
 /* Input Styling */
 .input {
   width: 100%;
