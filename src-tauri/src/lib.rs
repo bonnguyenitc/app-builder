@@ -68,7 +68,8 @@ pub fn run() {
             run_fix_command,
             list_emulators,
             launch_emulator,
-            run_app_on_emulator
+            run_app_on_emulator,
+            open_url_on_emulator
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

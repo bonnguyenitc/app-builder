@@ -233,3 +233,41 @@ pub async fn run_app_on_emulator(project_path: String, platform: String, device_
 
     Ok(())
 }
+
+#[command]
+pub async fn open_url_on_emulator(url: String, platform: String, device_id: String) -> Result<(), String> {
+    println!("open_url_on_emulator called with: url={}, platform={}, device_id={}", url, platform, device_id);
+    match platform.as_str() {
+        "ios" => {
+            // xcrun simctl openurl <device_id> <url>
+            let device_target = if device_id.is_empty() { "booted".to_string() } else { device_id };
+            let output = Command::new("xcrun")
+                .args(&["simctl", "openurl", &device_target, &url])
+                .output()
+                .map_err(|e| format!("Failed to execute xcrun: {}", e))?;
+
+            if !output.status.success() {
+                return Err(String::from_utf8_lossy(&output.stderr).to_string());
+            }
+        },
+        "android" => {
+             // adb -s <device_id> shell am start -a android.intent.action.VIEW -d <url>
+             let output = Command::new("adb")
+                .args(&["-s", &device_id, "shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", &url])
+                .output()
+                .or_else(|_| {
+                     Command::new("sh")
+                        .arg("-c")
+                        .arg(format!("source ~/.zshrc; adb -s {} shell am start -a android.intent.action.VIEW -d \"{}\"", device_id, url))
+                        .output()
+                })
+                .map_err(|e| format!("Failed to execute adb: {}", e))?;
+
+             if !output.status.success() {
+                 return Err(String::from_utf8_lossy(&output.stderr).to_string());
+             }
+        },
+        _ => return Err("Unsupported platform".to_string()),
+    }
+    Ok(())
+}

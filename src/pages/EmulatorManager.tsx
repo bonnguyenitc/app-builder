@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useProjectStore } from '../stores/projectStore';
-import { AndroidIcon, AppleIcon, PlayIcon, SmartphoneIcon } from '../components/Icons';
+import { AndroidIcon, AppleIcon, PlayIcon, SmartphoneIcon, LinkIcon } from '../components/Icons';
 
 interface Emulator {
   id: string;
@@ -17,6 +17,8 @@ export const EmulatorManager = () => {
   const { projects } = useProjectStore();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [targetEmulator, setTargetEmulator] = useState<Emulator | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -67,6 +69,25 @@ export const EmulatorManager = () => {
       });
     } catch (e) {
       alert('Failed to run app: ' + e);
+    }
+  };
+
+  const handleDeepLink = (em: Emulator) => {
+    setTargetEmulator(em);
+    setShowLinkModal(true);
+  };
+
+  const confirmDeepLink = async (em: Emulator, url: string) => {
+    console.log('Opening deep link:', url, 'on', em.platform, em.id);
+    try {
+      await invoke('open_url_on_emulator', {
+        url,
+        platform: em.platform,
+        deviceId: em.id,
+      });
+    } catch (e) {
+      console.error('Deep link failed:', e);
+      alert('Failed to open URL: ' + e);
     }
   };
 
@@ -162,6 +183,7 @@ export const EmulatorManager = () => {
                 emulator={e}
                 onLaunch={handleLaunch}
                 onRun={handleRunApp}
+                onDeepLink={handleDeepLink}
                 isLaunching={launchingId === e.id}
                 canRun={!!selectedProjectId}
               />
@@ -197,6 +219,7 @@ export const EmulatorManager = () => {
                 emulator={e}
                 onLaunch={handleLaunch}
                 onRun={handleRunApp}
+                onDeepLink={handleDeepLink}
                 isLaunching={launchingId === e.id}
                 canRun={!!selectedProjectId}
               />
@@ -204,6 +227,20 @@ export const EmulatorManager = () => {
           </div>
         </div>
       </div>
+      {showLinkModal && targetEmulator && (
+        <DeepLinkModal
+          initialUrl={(() => {
+            const project = projects.find((p) => p.id === selectedProjectId);
+            if (!project) return 'myapp://';
+
+            const bundleId =
+              targetEmulator.platform === 'ios' ? project.ios.bundleId : project.android.bundleId;
+            return bundleId ? `${bundleId}://` : 'myapp://';
+          })()}
+          onClose={() => setShowLinkModal(false)}
+          onConfirm={(url) => confirmDeepLink(targetEmulator, url)}
+        />
+      )}
     </div>
   );
 };
@@ -212,12 +249,14 @@ const EmulatorCard = ({
   emulator,
   onLaunch,
   onRun,
+  onDeepLink,
   isLaunching,
   canRun,
 }: {
   emulator: Emulator;
   onLaunch: (e: Emulator) => void;
   onRun: (e: Emulator) => void;
+  onDeepLink: (e: Emulator) => void;
   isLaunching: boolean;
   canRun: boolean;
 }) => {
@@ -282,16 +321,103 @@ const EmulatorCard = ({
           </button>
         )}
         {isBooted && (
+          <>
+            <button
+              className="btn btn-secondary"
+              onClick={() => onDeepLink(emulator)}
+              title="Open Deep Link"
+              style={{ fontSize: '13px', padding: '6px 12px', gap: '6px' }}
+            >
+              <LinkIcon size={14} /> Link
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => onRun(emulator)}
+              disabled={!canRun}
+              title={!canRun ? 'Select a project first' : 'Run App'}
+              style={{
+                fontSize: '13px',
+                padding: '6px 12px',
+                gap: '6px',
+                opacity: canRun ? 1 : 0.5,
+              }}
+            >
+              <SmartphoneIcon size={14} /> Run
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DeepLinkModal = ({
+  initialUrl,
+  onClose,
+  onConfirm,
+}: {
+  initialUrl: string;
+  onClose: () => void;
+  onConfirm: (url: string) => void;
+}) => {
+  const [url, setUrl] = useState(initialUrl);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <div
+        className="card"
+        style={{
+          width: '400px',
+          padding: 'var(--spacing-lg)',
+          background: 'var(--color-bg-primary)',
+        }}
+      >
+        <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
+          Open Deep Link
+        </h3>
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="myapp://..."
+          style={{
+            width: '100%',
+            padding: '10px',
+            marginBottom: 'var(--spacing-lg)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text-primary)',
+          }}
+          autoFocus
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
           <button
             className="btn btn-primary"
-            onClick={() => onRun(emulator)}
-            disabled={!canRun}
-            title={!canRun ? 'Select a project first' : 'Run App'}
-            style={{ fontSize: '13px', padding: '6px 12px', gap: '6px', opacity: canRun ? 1 : 0.5 }}
+            onClick={() => {
+              if (url) onConfirm(url);
+              onClose();
+            }}
           >
-            <SmartphoneIcon size={14} /> Run
+            Open
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
