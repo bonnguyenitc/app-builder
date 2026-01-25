@@ -63,11 +63,6 @@ jobs:
           DEVELOPER_ID=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.*)"/\1/')
           TEAM_ID=$(echo "$DEVELOPER_ID" | sed -E 's/.*\(([A-Z0-9]+)\).*/\1/')
 
-          if [ -z "$DEVELOPER_ID" ]; then
-            echo "❌ No Developer ID Application certificate found"
-            exit 1
-          fi
-
           echo "✅ Found: $DEVELOPER_ID"
           echo "✅ Team ID: $TEAM_ID"
 
@@ -79,16 +74,36 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build and Release
-        uses: tauri-apps/tauri-action@v0
+      # Thêm retry cho macOS build
+      - name: Build and Release (macOS)
+        if: matrix.platform == 'macos-latest'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_wait_seconds: 60
+          command: |
+            npm run tauri build -- ${{ matrix.args }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code Signing
           APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
-          # Notarization
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ env.APPLE_TEAM_ID }}
+
+      - name: Upload macOS artifacts
+        if: matrix.platform == 'macos-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            src-tauri/target/*/release/bundle/dmg/*.dmg
+            src-tauri/target/*/release/bundle/macos/*.app.tar.gz
+
+      - name: Build and Release (Windows/Linux)
+        if: matrix.platform != 'macos-latest'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'App Builder v__VERSION__'
