@@ -697,3 +697,132 @@ pub async fn simctl_erase_device(device_id: String) -> Result<String, String> {
     }
 }
 
+
+/// Start screen recording on emulator
+#[command]
+pub async fn start_recording(
+    device_id: String,
+    platform: String,
+    save_path: String,
+    state: tauri::State<'_, crate::RecordingState>,
+) -> Result<(), String> {
+    println!("[Recording] Starting recording for {} on {}", device_id, platform);
+
+    let child = match platform.as_str() {
+        "android" => {
+            let temp_device_path = "/sdcard/recording_temp.mp4";
+            Command::new("adb")
+                .args(&["-s", &device_id, "shell", "screenrecord", temp_device_path])
+                .spawn()
+                .map(|c| (c, Some(temp_device_path.to_string())))
+                .map_err(|e| format!("Failed to start adb recording: {}", e))?
+        }
+        "ios" => {
+            Command::new("xcrun")
+                .args(&["simctl", "io", &device_id, "recordVideo", &save_path])
+                .spawn()
+                .map(|c| (c, None))
+                .map_err(|e| format!("Failed to start simctl recording: {}", e))?
+        }
+        _ => return Err("Unsupported platform".to_string()),
+    };
+
+    let mut map = state.0.lock().map_err(|_| "Failed to lock recording state")?;
+    map.insert(
+        device_id,
+        crate::RecordingProcess {
+            child: child.0,
+            platform,
+            device_temp_path: child.1,
+            destination_path: save_path,
+        },
+    );
+
+    Ok(())
+}
+
+/// Stop screen recording on emulator
+#[command]
+pub async fn stop_recording(
+    device_id: String,
+    state: tauri::State<'_, crate::RecordingState>,
+) -> Result<String, String> {
+    println!("[Recording] Stopping recording for {}", device_id);
+
+    let mut process = {
+        let mut map = state.0.lock().map_err(|_| "Failed to lock recording state")?;
+        map.remove(&device_id).ok_or("No active recording found for this device")?
+    };
+
+    // 1. Send SIGINT (2) to stop the recording process gracefully
+    let pid = process.child.id();
+
+    if process.platform == "android" {
+        // Send signal directly to the screenrecord process ON the device
+        // We use killall -INT which is more common across Android versions
+        let _ = Command::new("adb")
+            .args(&["-s", &device_id, "shell", "killall", "-INT", "screenrecord"])
+            .output();
+
+        // Give the device 1 second to finish the file write
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
+
+    // Also stop the local adb/simctl process
+    let _ = Command::new("kill")
+        .args(&["-2", &pid.to_string()])
+        .output();
+
+    // 2. Wait for the local process to exit
+    let _ = process.child.wait();
+
+    // 3. CRITICAL: Wait for the OS/Device to finalize the file.
+    std::thread::sleep(std::time::Duration::from_secs(2));
+
+    if process.platform == "android" {
+        if let Some(temp_path) = process.device_temp_path {
+            println!("[Recording] Pulling video from Android: {} -> {}", temp_path, process.destination_path);
+
+            // Check if file exists on device before pulling
+            let check_file = Command::new("adb")
+                .args(&["-s", &device_id, "shell", "ls", &temp_path])
+                .output();
+
+            if let Ok(out) = check_file {
+                if out.status.success() {
+                    // Pull the file
+                    let pull = Command::new("adb")
+                        .args(&["-s", &device_id, "pull", &temp_path, &process.destination_path])
+                        .output();
+
+                    match pull {
+                        Ok(p) if p.status.success() => {
+                            println!("[Recording] Successfully pulled Android recording");
+                        }
+                        Ok(p) => return Err(format!("ADB Pull failed: {}", String::from_utf8_lossy(&p.stderr))),
+                        Err(e) => return Err(format!("Failed to execute ADB pull: {}", e)),
+                    }
+
+                    // Cleanup device
+                    let _ = Command::new("adb")
+                        .args(&["-s", &device_id, "shell", "rm", &temp_path])
+                        .output();
+                } else {
+                    return Err("Recording file not found on Android device. Maybe it was too short?".to_string());
+                }
+            }
+        }
+    }
+
+    Ok(process.destination_path)
+}
+
+/// Check if a device is currently recording
+#[command]
+pub async fn is_device_recording(
+    device_id: String,
+    state: tauri::State<'_, crate::RecordingState>,
+) -> Result<bool, String> {
+    let map = state.0.lock().map_err(|_| "Failed to lock recording state")?;
+    Ok(map.contains_key(&device_id))
+}

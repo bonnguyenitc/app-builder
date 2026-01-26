@@ -15,6 +15,7 @@ import {
   ScrollTextIcon,
   CameraIcon,
   StopCircleIcon,
+  VideoIcon,
 } from '../components/Icons';
 
 interface Emulator {
@@ -286,7 +287,26 @@ const EmulatorCard = ({
   const isAndroid = emulator.platform === 'android';
   const [showToolsMenu, setShowToolsMenu] = useState(false);
   const [toolLoading, setToolLoading] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Check recording status
+  const checkRecordingStatus = async () => {
+    try {
+      const recording = await invoke<boolean>('is_device_recording', { deviceId: emulator.id });
+      setIsRecording(recording);
+    } catch (e) {
+      console.error('Failed to check recording status:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isBooted) {
+      checkRecordingStatus();
+      const interval = setInterval(checkRecordingStatus, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [isBooted, emulator.id]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -300,14 +320,35 @@ const EmulatorCard = ({
   }, []);
 
   const handleEmulatorAction = async (action: string) => {
-    if (!selectedPackageName && action !== 'screenshot' && action !== 'erase') {
+    if (
+      !selectedPackageName &&
+      !['screenshot', 'erase', 'record_start', 'record_stop'].includes(action)
+    ) {
       alert('Please select a project first');
       return;
     }
 
     setToolLoading(action);
     try {
-      if (isAndroid) {
+      if (action === 'record_start') {
+        const filePath = await save({
+          defaultPath: `recording_${emulator.platform}_${Date.now()}.mp4`,
+          filters: [{ name: 'MPEG4 Video', extensions: ['mp4'] }],
+        });
+        if (filePath) {
+          await invoke('start_recording', {
+            deviceId: emulator.id,
+            platform: emulator.platform,
+            savePath: filePath,
+          });
+          setIsRecording(true);
+        }
+      } else if (action === 'record_stop') {
+        const savedPath = await invoke<string>('stop_recording', { deviceId: emulator.id });
+        setIsRecording(false);
+        // Add a small delay for the OS to see the file as finalized
+        setTimeout(() => alert(`Recording saved successfully to: ${savedPath}`), 500);
+      } else if (isAndroid) {
         switch (action) {
           case 'uninstall':
             await invoke('adb_uninstall_app', {
@@ -436,6 +477,12 @@ const EmulatorCard = ({
         },
         { id: 'divider' },
         {
+          id: isRecording ? 'record_stop' : 'record_start',
+          icon: <VideoIcon size={14} />,
+          label: isRecording ? 'Stop Recording' : 'Record Screen',
+          color: isRecording ? 'var(--color-error)' : 'var(--color-text-primary)',
+        },
+        {
           id: 'logcat',
           icon: <ScrollTextIcon size={14} />,
           label: 'View Logcat',
@@ -468,6 +515,12 @@ const EmulatorCard = ({
           color: 'var(--color-error)',
         },
         { id: 'divider' },
+        {
+          id: isRecording ? 'record_stop' : 'record_start',
+          icon: <VideoIcon size={14} />,
+          label: isRecording ? 'Stop Recording' : 'Record Screen',
+          color: isRecording ? 'var(--color-error)' : 'var(--color-text-primary)',
+        },
         {
           id: 'screenshot',
           icon: <CameraIcon size={14} />,
@@ -502,6 +555,9 @@ const EmulatorCard = ({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
           title={emulator.name}
         >
@@ -509,6 +565,20 @@ const EmulatorCard = ({
           <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 400 }}>
             ({emulator.version})
           </span>
+          {isRecording && (
+            <span
+              className="animate-pulse"
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: 'var(--color-error)',
+                display: 'inline-block',
+                boxShadow: '0 0 5px var(--color-error)',
+              }}
+              title="Recording in progress..."
+            />
+          )}
         </div>
         <div
           style={{

@@ -23,6 +23,15 @@ pub struct DbState(pub Mutex<Connection>);
 // Store active build processes for cancellation
 pub struct BuildProcessState(pub Arc<Mutex<HashMap<String, Arc<Mutex<Option<Child>>>>>>);
 
+// Store active recording processes
+pub struct RecordingProcess {
+    pub child: Child,
+    pub platform: String,
+    pub device_temp_path: Option<String>, // For Android: path on device
+    pub destination_path: String,         // Final path on Mac
+}
+pub struct RecordingState(pub Arc<Mutex<HashMap<String, RecordingProcess>>>);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -38,6 +47,7 @@ pub fn run() {
             let conn = init_db(app.handle()).expect("Failed to initialize database");
             app.manage(DbState(Mutex::new(conn)));
             app.manage(BuildProcessState(Arc::new(Mutex::new(HashMap::new()))));
+            app.manage(RecordingState(Arc::new(Mutex::new(HashMap::new()))));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -81,7 +91,10 @@ pub fn run() {
             simctl_terminate_app,
             simctl_restart_app,
             simctl_take_screenshot,
-            simctl_erase_device
+            simctl_erase_device,
+            start_recording,
+            stop_recording,
+            is_device_recording
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
