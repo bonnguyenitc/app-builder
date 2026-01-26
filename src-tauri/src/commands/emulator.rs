@@ -40,7 +40,7 @@ pub async fn list_emulators() -> Result<Vec<Emulator>, String> {
     };
 
     // 2. Get Running Devices to map status
-    let mut running_avds = HashMap::new();
+    let mut running_avds_serials = HashMap::new(); // AVD Name -> Serial
 
     let adb_output = Command::new("adb")
         .arg("devices")
@@ -55,15 +55,15 @@ pub async fn list_emulators() -> Result<Vec<Emulator>, String> {
     if let Ok(output) = adb_output {
         let output_str = String::from_utf8_lossy(&output.stdout);
         for line in output_str.lines().skip(1) {
-            if let Some(device_id) = line.split_whitespace().next() {
-                // adb -s <device_id> emu avd name
+            if let Some(serial) = line.split_whitespace().next() {
+                // adb -s <serial> emu avd name
                 let name_cmd = Command::new("adb")
-                    .args(&["-s", device_id, "emu", "avd", "name"])
+                    .args(&["-s", serial, "emu", "avd", "name"])
                     .output()
                     .or_else(|_| {
                         Command::new("sh")
                             .arg("-c")
-                            .arg(format!("source ~/.zshrc; adb -s {} emu avd name", device_id))
+                            .arg(format!("source ~/.zshrc; adb -s {} emu avd name", serial))
                             .output()
                     });
 
@@ -72,7 +72,7 @@ pub async fn list_emulators() -> Result<Vec<Emulator>, String> {
                      for n in name_raw.lines() {
                          let trimmed = n.trim();
                          if !trimmed.is_empty() && trimmed != "OK" {
-                             running_avds.insert(trimmed.to_string(), true);
+                             running_avds_serials.insert(trimmed.to_string(), serial.to_string());
                              break;
                          }
                      }
@@ -102,21 +102,17 @@ pub async fn list_emulators() -> Result<Vec<Emulator>, String> {
                  if let Some(v) = parse_version(content) {
                      version = v;
                  }
-                 // If not found in .ini, check the .avd/config.ini if available.
-                 // Actually usually .ini just points to the path.
-                 // But in our previous check, .ini *did* have the target.
-                 // Let's assume it's there or we fall back.
              }
         }
 
-        // If still unknown, and we want to be thorough, we could follow the 'path=' in .ini to find config.ini
-        // But let's keep it simple for now.
+        let serial = running_avds_serials.get(&avd);
+        let is_booted = serial.is_some();
 
         emulators.push(Emulator {
-            id: avd.clone(),
+            id: serial.cloned().unwrap_or(avd.clone()),
             name: avd.clone(),
             platform: "android".to_string(),
-            state: if running_avds.contains_key(&avd) { "Booted".to_string() } else { "Shutdown".to_string() },
+            state: if is_booted { "Booted".to_string() } else { "Shutdown".to_string() },
             version
         });
     }
@@ -245,7 +241,7 @@ fn is_expo_project(project_path: &std::path::Path) -> bool {
 }
 
 #[command]
-pub async fn run_app_on_emulator(project_path: String, platform: String, device_id: String) -> Result<(), String> {
+pub async fn run_app_on_emulator(project_path: String, platform: String, device_id: String, device_name: String) -> Result<(), String> {
     let path = std::path::Path::new(&project_path);
     if !path.exists() {
         return Err("Project path does not exist".to_string());
@@ -258,16 +254,18 @@ pub async fn run_app_on_emulator(project_path: String, platform: String, device_
     let project_type = if is_expo { "Expo" } else { "React Native" };
     println!("[Emulator] Project type detected: {}", project_type);
     println!("[Emulator] Project path: {}", project_path);
-    println!("[Emulator] Platform: {}, Device ID: {}", platform, device_id);
+    println!("[Emulator] Platform: {}, Device ID: {}, Device Name: {}", platform, device_id, device_name);
 
     #[cfg(target_os = "macos")]
     {
         let run_command = match platform.as_str() {
             "android" => {
                 if is_expo {
-                    format!("npx expo run:android")
+                    // Expo Android works better with the AVD Name / Model Name
+                    format!("npx expo run:android --device '{}'", device_name)
                 } else {
-                    format!("npx react-native run-android")
+                    // React Native works fine with Serial
+                    format!("npx react-native run-android --deviceId '{}'", device_id)
                 }
             },
             "ios" => {
@@ -356,4 +354,254 @@ pub async fn open_url_on_emulator(url: String, platform: String, device_id: Stri
         _ => return Err("Unsupported platform".to_string()),
     }
     Ok(())
+}
+
+/// Uninstall an app from the Android emulator
+#[command]
+pub async fn adb_uninstall_app(device_id: String, package_name: String) -> Result<String, String> {
+    println!("[ADB] Uninstalling {} from device {}", package_name, device_id);
+
+    let output = Command::new("adb")
+        .args(&["-s", &device_id, "uninstall", &package_name])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("source ~/.zshrc; adb -s {} uninstall {}", device_id, package_name))
+                .output()
+        })
+        .map_err(|e| format!("Failed to execute adb: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if output.status.success() || stdout.contains("Success") {
+        Ok(format!("Successfully uninstalled {}", package_name))
+    } else {
+        Err(format!("Failed to uninstall: {} {}", stdout, stderr))
+    }
+}
+
+/// Clear app data on Android emulator
+#[command]
+pub async fn adb_clear_app_data(device_id: String, package_name: String) -> Result<String, String> {
+    println!("[ADB] Clearing data for {} on device {}", package_name, device_id);
+
+    let output = Command::new("adb")
+        .args(&["-s", &device_id, "shell", "pm", "clear", &package_name])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("source ~/.zshrc; adb -s {} shell pm clear {}", device_id, package_name))
+                .output()
+        })
+        .map_err(|e| format!("Failed to execute adb: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    if output.status.success() || stdout.contains("Success") {
+        Ok(format!("Successfully cleared data for {}", package_name))
+    } else {
+        Err(format!("Failed to clear data: {} {}", stdout, stderr))
+    }
+}
+
+/// Force stop an app on Android emulator
+#[command]
+pub async fn adb_force_stop_app(device_id: String, package_name: String) -> Result<String, String> {
+    println!("[ADB] Force stopping {} on device {}", package_name, device_id);
+
+    let output = Command::new("adb")
+        .args(&["-s", &device_id, "shell", "am", "force-stop", &package_name])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("source ~/.zshrc; adb -s {} shell am force-stop {}", device_id, package_name))
+                .output()
+        })
+        .map_err(|e| format!("Failed to execute adb: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully stopped {}", package_name))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// Open logcat in a new terminal window
+#[command]
+pub async fn adb_open_logcat(device_id: String, package_name: Option<String>) -> Result<(), String> {
+    println!("[ADB] Opening logcat for device {}", device_id);
+
+    #[cfg(target_os = "macos")]
+    {
+        let logcat_cmd = if let Some(pkg) = package_name {
+            format!("adb -s {} logcat --pid=$(adb -s {} shell pidof -s {})", device_id, device_id, pkg)
+        } else {
+            format!("adb -s {} logcat", device_id)
+        };
+
+        let apple_script = format!(
+            r#"
+            tell application "Terminal"
+                do script "echo '📱 Logcat for {}' && {}"
+                activate
+            end tell
+            "#,
+            device_id,
+            logcat_cmd
+        );
+
+        Command::new("osascript")
+            .arg("-e")
+            .arg(apple_script)
+            .spawn()
+            .map_err(|e| format!("Failed to open logcat: {}", e))?;
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        return Err("Only macOS is supported currently".to_string());
+    }
+
+    Ok(())
+}
+
+/// Take a screenshot from the Android emulator
+#[command]
+pub async fn adb_take_screenshot(device_id: String, save_path: String) -> Result<String, String> {
+    println!("[ADB] Taking screenshot from device {} to {}", device_id, save_path);
+
+    // Take screenshot on device
+    let temp_path = "/sdcard/screenshot.png";
+    let capture = Command::new("adb")
+        .args(&["-s", &device_id, "shell", "screencap", "-p", temp_path])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("source ~/.zshrc; adb -s {} shell screencap -p {}", device_id, temp_path))
+                .output()
+        })
+        .map_err(|e| format!("Failed to capture screenshot: {}", e))?;
+
+    if !capture.status.success() {
+        return Err(String::from_utf8_lossy(&capture.stderr).to_string());
+    }
+
+    // Pull the file
+    let pull = Command::new("adb")
+        .args(&["-s", &device_id, "pull", temp_path, &save_path])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("source ~/.zshrc; adb -s {} pull {} {}", device_id, temp_path, save_path))
+                .output()
+        })
+        .map_err(|e| format!("Failed to pull screenshot: {}", e))?;
+
+    if pull.status.success() {
+        // Clean up temp file on device
+        let _ = Command::new("adb")
+            .args(&["-s", &device_id, "shell", "rm", temp_path])
+            .output();
+
+        Ok(save_path)
+    } else {
+        Err(String::from_utf8_lossy(&pull.stderr).to_string())
+    }
+}
+
+/// Restart (force-stop then launch) an app on Android emulator
+#[command]
+pub async fn adb_restart_app(device_id: String, package_name: String) -> Result<String, String> {
+    println!("[ADB] Restarting {} on device {}", package_name, device_id);
+
+    // Force stop first
+    let _ = Command::new("adb")
+        .args(&["-s", &device_id, "shell", "am", "force-stop", &package_name])
+        .output();
+
+    // Launch the app using monkey (launches main activity)
+    let output = Command::new("adb")
+        .args(&["-s", &device_id, "shell", "monkey", "-p", &package_name, "-c", "android.intent.category.LAUNCHER", "1"])
+        .output()
+        .or_else(|_| {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!(
+                    "source ~/.zshrc; adb -s {} shell monkey -p {} -c android.intent.category.LAUNCHER 1",
+                    device_id, package_name
+                ))
+                .output()
+        })
+        .map_err(|e| format!("Failed to restart app: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully restarted {}", package_name))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// List installed packages on emulator (both Android and iOS)
+#[command]
+pub async fn list_installed_apps(device_id: String, platform: String) -> Result<Vec<String>, String> {
+    println!("[Emulator] Listing installed apps on {} ({})", device_id, platform);
+
+    match platform.as_str() {
+        "android" => {
+            let output = Command::new("adb")
+                .args(&["-s", &device_id, "shell", "pm", "list", "packages", "-3"])
+                .output()
+                .or_else(|_| {
+                    Command::new("sh")
+                        .arg("-c")
+                        .arg(format!("source ~/.zshrc; adb -s {} shell pm list packages -3", device_id))
+                        .output()
+                })
+                .map_err(|e| format!("Failed to list packages: {}", e))?;
+
+            if output.status.success() {
+                let packages: Vec<String> = String::from_utf8_lossy(&output.stdout)
+                    .lines()
+                    .filter_map(|line| {
+                        line.strip_prefix("package:").map(|s| s.trim().to_string())
+                    })
+                    .collect();
+                Ok(packages)
+            } else {
+                Err(String::from_utf8_lossy(&output.stderr).to_string())
+            }
+        },
+        "ios" => {
+            let output = Command::new("xcrun")
+                .args(&["simctl", "listapps", &device_id])
+                .output()
+                .map_err(|e| format!("Failed to list apps: {}", e))?;
+
+            if output.status.success() {
+                // Parse plist output to get bundle IDs
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let apps: Vec<String> = stdout
+                    .lines()
+                    .filter(|line| line.contains("CFBundleIdentifier"))
+                    .filter_map(|line| {
+                        line.split('=').nth(1).map(|s| {
+                            s.trim().trim_matches(|c| c == ';' || c == '"' || c == ' ').to_string()
+                        })
+                    })
+                    .filter(|s| !s.starts_with("com.apple."))
+                    .collect();
+                Ok(apps)
+            } else {
+                Err(String::from_utf8_lossy(&output.stderr).to_string())
+            }
+        },
+        _ => Err("Unsupported platform".to_string()),
+    }
 }

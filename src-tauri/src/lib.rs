@@ -69,7 +69,14 @@ pub fn run() {
             list_emulators,
             launch_emulator,
             run_app_on_emulator,
-            open_url_on_emulator
+            open_url_on_emulator,
+            adb_uninstall_app,
+            adb_clear_app_data,
+            adb_force_stop_app,
+            adb_open_logcat,
+            adb_take_screenshot,
+            adb_restart_app,
+            list_installed_apps
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

@@ -1,7 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
 import { useProjectStore } from '../stores/projectStore';
-import { AndroidIcon, AppleIcon, PlayIcon, SmartphoneIcon, LinkIcon } from '../components/Icons';
+import {
+  AndroidIcon,
+  AppleIcon,
+  PlayIcon,
+  SmartphoneIcon,
+  LinkIcon,
+  MoreVerticalIcon,
+  TrashIcon,
+  EraserIcon,
+  RefreshCwIcon,
+  ScrollTextIcon,
+  CameraIcon,
+  StopCircleIcon,
+} from '../components/Icons';
 
 interface Emulator {
   id: string;
@@ -66,6 +80,7 @@ export const EmulatorManager = () => {
         projectPath: project.path,
         platform: em.platform,
         deviceId: em.id,
+        deviceName: em.name,
       });
     } catch (e) {
       alert('Failed to run app: ' + e);
@@ -90,6 +105,10 @@ export const EmulatorManager = () => {
       alert('Failed to open URL: ' + e);
     }
   };
+
+  // Get selected project's package name for ADB commands
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+  const selectedPackageName = selectedProject?.android?.bundleId || '';
 
   const androidEmulators = emulators.filter((e) => e.platform === 'android');
   const iosEmulators = emulators.filter((e) => e.platform === 'ios');
@@ -186,6 +205,7 @@ export const EmulatorManager = () => {
                 onDeepLink={handleDeepLink}
                 isLaunching={launchingId === e.id}
                 canRun={!!selectedProjectId}
+                selectedPackageName={selectedPackageName}
               />
             ))}
           </div>
@@ -222,6 +242,7 @@ export const EmulatorManager = () => {
                 onDeepLink={handleDeepLink}
                 isLaunching={launchingId === e.id}
                 canRun={!!selectedProjectId}
+                selectedPackageName={selectedPackageName}
               />
             ))}
           </div>
@@ -252,6 +273,7 @@ const EmulatorCard = ({
   onDeepLink,
   isLaunching,
   canRun,
+  selectedPackageName,
 }: {
   emulator: Emulator;
   onLaunch: (e: Emulator) => void;
@@ -259,8 +281,134 @@ const EmulatorCard = ({
   onDeepLink: (e: Emulator) => void;
   isLaunching: boolean;
   canRun: boolean;
+  selectedPackageName?: string;
 }) => {
   const isBooted = emulator.state === 'Booted';
+  const isAndroid = emulator.platform === 'android';
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
+  const [toolLoading, setToolLoading] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowToolsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAdbAction = async (action: string) => {
+    if (!selectedPackageName) {
+      alert('Please select a project first');
+      return;
+    }
+
+    setToolLoading(action);
+    try {
+      switch (action) {
+        case 'uninstall':
+          await invoke('adb_uninstall_app', {
+            deviceId: emulator.id,
+            packageName: selectedPackageName,
+          });
+          alert(`Successfully uninstalled ${selectedPackageName}`);
+          break;
+
+        case 'clearData':
+          await invoke('adb_clear_app_data', {
+            deviceId: emulator.id,
+            packageName: selectedPackageName,
+          });
+          alert(`Successfully cleared data for ${selectedPackageName}`);
+          break;
+
+        case 'forceStop':
+          await invoke('adb_force_stop_app', {
+            deviceId: emulator.id,
+            packageName: selectedPackageName,
+          });
+          alert(`Successfully stopped ${selectedPackageName}`);
+          break;
+
+        case 'restart':
+          await invoke('adb_restart_app', {
+            deviceId: emulator.id,
+            packageName: selectedPackageName,
+          });
+          alert(`Successfully restarted ${selectedPackageName}`);
+          break;
+
+        case 'logcat':
+          await invoke('adb_open_logcat', {
+            deviceId: emulator.id,
+            packageName: selectedPackageName,
+          });
+          break;
+
+        case 'screenshot':
+          const filePath = await save({
+            defaultPath: `screenshot_${Date.now()}.png`,
+            filters: [{ name: 'PNG Image', extensions: ['png'] }],
+          });
+          if (filePath) {
+            await invoke('adb_take_screenshot', {
+              deviceId: emulator.id,
+              savePath: filePath,
+            });
+            alert(`Screenshot saved to ${filePath}`);
+          }
+          break;
+      }
+    } catch (e) {
+      alert(`Error: ${e}`);
+    } finally {
+      setToolLoading(null);
+      setShowToolsMenu(false);
+    }
+  };
+
+  const toolsMenuItems = [
+    {
+      id: 'restart',
+      icon: <RefreshCwIcon size={14} />,
+      label: 'Restart App',
+      color: 'var(--color-primary)',
+    },
+    {
+      id: 'forceStop',
+      icon: <StopCircleIcon size={14} />,
+      label: 'Force Stop',
+      color: 'var(--color-warning)',
+    },
+    {
+      id: 'clearData',
+      icon: <EraserIcon size={14} />,
+      label: 'Clear App Data',
+      color: 'var(--color-warning)',
+    },
+    {
+      id: 'uninstall',
+      icon: <TrashIcon size={14} />,
+      label: 'Uninstall App',
+      color: 'var(--color-error)',
+    },
+    { id: 'divider' },
+    {
+      id: 'logcat',
+      icon: <ScrollTextIcon size={14} />,
+      label: 'View Logcat',
+      color: 'var(--color-text-primary)',
+    },
+    {
+      id: 'screenshot',
+      icon: <CameraIcon size={14} />,
+      label: 'Take Screenshot',
+      color: 'var(--color-text-primary)',
+    },
+  ];
 
   return (
     <div
@@ -270,6 +418,8 @@ const EmulatorCard = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 'var(--spacing-md)',
+        overflow: 'visible', // Ensure dropdown menu isn't cut off
+        zIndex: showToolsMenu ? 50 : 1, // Bring to front when menu is open
       }}
     >
       <div style={{ overflow: 'hidden', marginRight: '8px' }}>
@@ -344,6 +494,83 @@ const EmulatorCard = ({
             >
               <SmartphoneIcon size={14} /> Run
             </button>
+
+            {/* ADB Tools Menu - Android only */}
+            {isAndroid && canRun && (
+              <div style={{ position: 'relative' }} ref={menuRef}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowToolsMenu(!showToolsMenu)}
+                  title="ADB Tools"
+                  style={{ fontSize: '13px', padding: '6px 10px' }}
+                >
+                  <MoreVerticalIcon size={16} />
+                </button>
+
+                {showToolsMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '4px',
+                      background: 'var(--color-bg-primary)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-xl)',
+                      zIndex: 1000,
+                      minWidth: '200px',
+                      overflow: 'hidden',
+                      animation: 'scaleIn 0.15s ease-out',
+                    }}
+                  >
+                    {toolsMenuItems.map((item) =>
+                      item.id === 'divider' ? (
+                        <div
+                          key={item.id}
+                          style={{
+                            height: '1px',
+                            background: 'var(--color-border)',
+                            margin: '4px 0',
+                          }}
+                        />
+                      ) : (
+                        <button
+                          key={item.id}
+                          onClick={() => handleAdbAction(item.id)}
+                          disabled={toolLoading !== null}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            width: '100%',
+                            padding: '10px 14px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: item.color,
+                            fontSize: '13px',
+                            cursor: toolLoading !== null ? 'wait' : 'pointer',
+                            textAlign: 'left',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background = 'var(--color-bg-secondary)')
+                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          {toolLoading === item.id ? (
+                            <span style={{ width: 14, height: 14 }}>⏳</span>
+                          ) : (
+                            item.icon
+                          )}
+                          {item.label}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
