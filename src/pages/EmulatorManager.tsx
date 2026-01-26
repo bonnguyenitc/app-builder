@@ -689,10 +689,16 @@ const EmulatorCard = ({
             {/* Tools Menu */}
             <div style={{ position: 'relative' }} ref={menuRef}>
               <button
-                className="btn btn-secondary"
+                className={showToolsMenu ? 'btn btn-primary' : 'btn btn-secondary'}
                 onClick={() => setShowToolsMenu(!showToolsMenu)}
                 title="Emulator Tools"
-                style={{ fontSize: '13px', padding: '6px 10px' }}
+                style={{
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  transition: 'all 0.2s ease',
+                  background: showToolsMenu ? 'var(--color-primary)' : undefined,
+                  color: showToolsMenu ? 'white' : undefined,
+                }}
               >
                 <MoreVerticalIcon size={16} />
               </button>
@@ -703,15 +709,18 @@ const EmulatorCard = ({
                     position: 'absolute',
                     top: '100%',
                     right: 0,
-                    marginTop: '4px',
-                    background: 'var(--color-bg-primary)',
+                    marginTop: '8px',
+                    background: 'var(--glass-bg-strong)',
+                    backdropFilter: 'var(--glass-blur)',
+                    WebkitBackdropFilter: 'var(--glass-blur)',
                     border: '1px solid var(--color-border)',
                     borderRadius: 'var(--radius-md)',
                     boxShadow: 'var(--shadow-xl)',
                     zIndex: 1000,
-                    minWidth: '200px',
+                    minWidth: '220px',
                     overflow: 'hidden',
                     animation: 'scaleIn 0.15s ease-out',
+                    padding: '4px',
                   }}
                 >
                   {toolsMenuItems.map((item) =>
@@ -721,7 +730,8 @@ const EmulatorCard = ({
                         style={{
                           height: '1px',
                           background: 'var(--color-border)',
-                          margin: '4px 0',
+                          margin: '4px 8px',
+                          opacity: 0.5,
                         }}
                       />
                     ) : (
@@ -732,27 +742,42 @@ const EmulatorCard = ({
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '10px',
+                          gap: '12px',
                           width: '100%',
-                          padding: '10px 14px',
+                          padding: '10px 12px',
                           border: 'none',
                           background: 'transparent',
                           color: item.color,
                           fontSize: '13px',
+                          fontWeight: 500,
                           cursor: toolLoading !== null ? 'wait' : 'pointer',
                           textAlign: 'left',
-                          transition: 'background 0.15s',
+                          transition: 'all 0.15s',
+                          borderRadius: 'var(--radius-sm)',
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background = 'var(--color-bg-secondary)')
-                        }
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--color-primary-light)';
+                        }}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        {toolLoading === item.id ? (
-                          <span style={{ width: 14, height: 14 }}>⏳</span>
-                        ) : (
-                          item.icon
-                        )}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            background: `${item.color}15`, // Add 15 for 8% opacity
+                            color: item.color,
+                          }}
+                        >
+                          {toolLoading === item.id ? (
+                            <span style={{ fontSize: '10px' }}>⏳</span>
+                          ) : (
+                            item.icon
+                          )}
+                        </div>
                         {item.label}
                       </button>
                     ),
