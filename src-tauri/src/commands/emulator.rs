@@ -605,3 +605,95 @@ pub async fn list_installed_apps(device_id: String, platform: String) -> Result<
         _ => Err("Unsupported platform".to_string()),
     }
 }
+
+/// Uninstall an app from the iOS simulator
+#[command]
+pub async fn simctl_uninstall_app(device_id: String, bundle_id: String) -> Result<String, String> {
+    println!("[simctl] Uninstalling {} from device {}", bundle_id, device_id);
+
+    let output = Command::new("xcrun")
+        .args(&["simctl", "uninstall", &device_id, &bundle_id])
+        .output()
+        .map_err(|e| format!("Failed to execute simctl: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully uninstalled {}", bundle_id))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// Terminate (force stop) an app on the iOS simulator
+#[command]
+pub async fn simctl_terminate_app(device_id: String, bundle_id: String) -> Result<String, String> {
+    println!("[simctl] Terminating {} on device {}", bundle_id, device_id);
+
+    let output = Command::new("xcrun")
+        .args(&["simctl", "terminate", &device_id, &bundle_id])
+        .output()
+        .map_err(|e| format!("Failed to execute simctl: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully terminated {}", bundle_id))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// Restart an app on the iOS simulator
+#[command]
+pub async fn simctl_restart_app(device_id: String, bundle_id: String) -> Result<String, String> {
+    println!("[simctl] Restarting {} on device {}", bundle_id, device_id);
+
+    // Terminate first
+    let _ = Command::new("xcrun")
+        .args(&["simctl", "terminate", &device_id, &bundle_id])
+        .output();
+
+    // Launch
+    let output = Command::new("xcrun")
+        .args(&["simctl", "launch", &device_id, &bundle_id])
+        .output()
+        .map_err(|e| format!("Failed to execute simctl: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully restarted {}", bundle_id))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// Take a screenshot of the iOS simulator
+#[command]
+pub async fn simctl_take_screenshot(device_id: String, save_path: String) -> Result<String, String> {
+    println!("[simctl] Taking screenshot of device {} to {}", device_id, save_path);
+
+    let output = Command::new("xcrun")
+        .args(&["simctl", "io", &device_id, "screenshot", &save_path])
+        .output()
+        .map_err(|e| format!("Failed to execute simctl: {}", e))?;
+
+    if output.status.success() {
+        Ok(save_path)
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+/// Erase (wipe) the iOS simulator contents and settings
+#[command]
+pub async fn simctl_erase_device(device_id: String) -> Result<String, String> {
+    println!("[simctl] Erasing device {}", device_id);
+
+    let output = Command::new("xcrun")
+        .args(&["simctl", "erase", &device_id])
+        .output()
+        .map_err(|e| format!("Failed to execute simctl: {}", e))?;
+
+    if output.status.success() {
+        Ok(format!("Successfully erased device content and settings"))
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
