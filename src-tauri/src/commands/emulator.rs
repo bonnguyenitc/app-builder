@@ -197,6 +197,53 @@ pub async fn launch_emulator(id: String, platform: String) -> Result<(), String>
     Ok(())
 }
 
+/// Check if the project is an Expo project by looking for Expo-specific files and dependencies
+fn is_expo_project(project_path: &std::path::Path) -> bool {
+    // Check for app.json or app.config.js (Expo config files)
+    let app_json_path = project_path.join("app.json");
+    let app_config_js_path = project_path.join("app.config.js");
+    let app_config_ts_path = project_path.join("app.config.ts");
+
+    // If app.json exists, check if it has "expo" key
+    if app_json_path.exists() {
+        if let Ok(content) = fs::read_to_string(&app_json_path) {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                if json.get("expo").is_some() {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // If app.config.js or app.config.ts exists, it's likely an Expo project
+    if app_config_js_path.exists() || app_config_ts_path.exists() {
+        return true;
+    }
+
+    // Check package.json for "expo" dependency
+    let package_json_path = project_path.join("package.json");
+    if package_json_path.exists() {
+        if let Ok(content) = fs::read_to_string(&package_json_path) {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                // Check in dependencies
+                if let Some(deps) = json.get("dependencies") {
+                    if deps.get("expo").is_some() {
+                        return true;
+                    }
+                }
+                // Check in devDependencies
+                if let Some(dev_deps) = json.get("devDependencies") {
+                    if dev_deps.get("expo").is_some() {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 #[command]
 pub async fn run_app_on_emulator(project_path: String, platform: String, device_id: String) -> Result<(), String> {
     let path = std::path::Path::new(&project_path);
@@ -204,24 +251,63 @@ pub async fn run_app_on_emulator(project_path: String, platform: String, device_
         return Err("Project path does not exist".to_string());
     }
 
+    // Detect if this is an Expo project
+    let is_expo = is_expo_project(path);
+
+    // Log for debugging
+    let project_type = if is_expo { "Expo" } else { "React Native" };
+    println!("[Emulator] Project type detected: {}", project_type);
+    println!("[Emulator] Project path: {}", project_path);
+    println!("[Emulator] Platform: {}, Device ID: {}", platform, device_id);
+
     #[cfg(target_os = "macos")]
     {
-        let script = match platform.as_str() {
+        let run_command = match platform.as_str() {
             "android" => {
-                format!("cd '{}' && npx react-native run-android", project_path)
+                if is_expo {
+                    format!("npx expo run:android")
+                } else {
+                    format!("npx react-native run-android")
+                }
             },
             "ios" => {
-                format!("cd '{}' && npx react-native run-ios --udid '{}'", project_path, device_id)
+                if is_expo {
+                    format!("npx expo run:ios --device '{}'", device_id)
+                } else {
+                    format!("npx react-native run-ios --udid '{}'", device_id)
+                }
             },
             _ => return Err("Unsupported platform".to_string()),
         };
 
+        println!("[Emulator] Running command: {}", run_command);
+
+        // Build full script with echo for debugging in terminal
+        let script = format!(
+            "cd '{}' && echo '🚀 [App Builder] Detected project type: {}' && echo '📦 Running: {}' && echo '' && {}",
+            project_path,
+            project_type,
+            run_command,
+            run_command
+        );
+
         // Escape for AppleScript
         let escaped_script = script.replace("\\", "\\\\").replace("\"", "\\\"");
 
+        // Use AppleScript to open Terminal, run the script, AND activate Terminal (bring to front)
+        let apple_script = format!(
+            r#"
+            tell application "Terminal"
+                do script "{}"
+                activate
+            end tell
+            "#,
+            escaped_script
+        );
+
         Command::new("osascript")
             .arg("-e")
-            .arg(format!("tell application \"Terminal\" to do script \"{}\"", escaped_script))
+            .arg(apple_script)
             .spawn()
             .map_err(|e| format!("Failed to launch terminal: {}", e))?;
     }
