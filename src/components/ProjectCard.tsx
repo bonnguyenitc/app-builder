@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { AppleIcon, AndroidIcon, SettingsIcon, LoaderIcon, TrashIcon, ShieldIcon } from './Icons';
+import {
+  AppleIcon,
+  AndroidIcon,
+  SettingsIcon,
+  LoaderIcon,
+  TrashIcon,
+  ShieldIcon,
+  EraserIcon,
+} from './Icons';
 import { Project } from '../types/project';
 
 interface ProjectCardProps {
@@ -12,6 +20,7 @@ interface ProjectCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onPermissions: () => void;
+  onDeepClean: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -21,6 +30,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onEdit,
   onDelete,
   onPermissions,
+  onDeepClean,
 }) => {
   const [uploadToAppStore, setUploadToAppStore] = useState(() => {
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
@@ -135,6 +145,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             title="Manage Permissions"
           >
             <ShieldIcon size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeepClean();
+            }}
+            className="btn btn-ghost"
+            style={{
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+            }}
+            title="Deep Clean (Fix Everything)"
+          >
+            <EraserIcon size={14} />
           </button>
           <button
             onClick={(e) => {

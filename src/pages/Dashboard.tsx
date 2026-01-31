@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { PlusIcon, SearchIcon, FolderIcon, AlertCircleIcon, TrashIcon } from '../components/Icons';
+import {
+  PlusIcon,
+  SearchIcon,
+  FolderIcon,
+  AlertCircleIcon,
+  TrashIcon,
+  EraserIcon,
+} from '../components/Icons';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { useBuildStore } from '../stores/buildStore';
 import { ProjectCard } from '../components/ProjectCard';
 import { AddProjectModal } from '../components/AddProjectModal';
+import { DeepCleanModal } from '../components/DeepCleanModal';
 import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
 
@@ -16,6 +24,10 @@ export const Dashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
   const [deletingProject, setDeletingProject] = useState<Project | undefined>(undefined);
+  const [cleaningProject, setCleaningProject] = useState<Project | undefined>(undefined);
+  const [confirmingCleanProject, setConfirmingCleanProject] = useState<Project | undefined>(
+    undefined,
+  );
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,6 +43,10 @@ export const Dashboard: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [deletingProject]);
+
+  const handleDeepClean = (project: Project) => {
+    setConfirmingCleanProject(project);
+  };
 
   const { startBuild } = useBuild();
 
@@ -223,6 +239,7 @@ export const Dashboard: React.FC = () => {
                   onEdit={() => handleEditProject(project)}
                   onDelete={() => handleDeleteProject(project)}
                   onPermissions={() => navigate(`/permissions/${project.id}`)}
+                  onDeepClean={() => handleDeepClean(project)}
                 />
               </div>
             );
@@ -238,6 +255,12 @@ export const Dashboard: React.FC = () => {
         }}
         onSave={handleSaveProject}
         initialData={editingProject}
+      />
+
+      <DeepCleanModal
+        isOpen={!!cleaningProject}
+        project={cleaningProject || null}
+        onClose={() => setCleaningProject(undefined)}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -296,6 +319,87 @@ export const Dashboard: React.FC = () => {
               </button>
               <button className="btn btn-danger" onClick={handleConfirmDelete} style={{ flex: 1 }}>
                 Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deep Clean Confirmation Dialog */}
+      {confirmingCleanProject && (
+        <div className="modal-overlay" onClick={() => setConfirmingCleanProject(undefined)}>
+          <div
+            className="card modal-content"
+            style={{
+              maxWidth: '450px',
+              padding: 'var(--spacing-xl)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'rgba(255, 159, 10, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--spacing-lg)',
+              }}
+            >
+              <EraserIcon size={28} style={{ color: '#FF9F0A' }} />
+            </div>
+            <h2
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                marginBottom: 'var(--spacing-sm)',
+                textAlign: 'center',
+              }}
+            >
+              Deep Clean Project?
+            </h2>
+            <p
+              style={{
+                color: 'var(--color-text-secondary)',
+                marginBottom: 'var(--spacing-md)',
+                textAlign: 'center',
+                lineHeight: 1.6,
+                fontSize: '14px',
+              }}
+            >
+              This will <strong>delete node_modules, build folders, and pods</strong>, then
+              reinstall everything from scratch.
+            </p>
+            <p
+              style={{
+                color: 'var(--color-text-secondary)',
+                marginBottom: 'var(--spacing-xl)',
+                textAlign: 'center',
+                lineHeight: 1.6,
+                fontSize: '14px',
+              }}
+            >
+              Use this to fix build issues. This process cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setConfirmingCleanProject(undefined)}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setCleaningProject(confirmingCleanProject);
+                  setConfirmingCleanProject(undefined);
+                }}
+                style={{ flex: 1, backgroundColor: '#FF9F0A', borderColor: '#FF9F0A' }}
+              >
+                Yes, Clean It
               </button>
             </div>
           </div>
