@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { UploadIcon, TrashIcon, PlusIcon } from '../Icons';
 import { AssetItem } from '../../hooks/useStoreAssets';
-import { DevicePreset } from '../../constants/storeAssets';
+import { DevicePreset, BackgroundType } from '../../constants/storeAssets';
 
 interface AssetPreviewProps {
   assets: AssetItem[];
@@ -11,6 +11,8 @@ interface AssetPreviewProps {
   onRemove: (id: string) => void;
   onUpdate: (id: string, field: 'title' | 'subtitle', value: string) => void;
   onFileUpload: (files: FileList | null) => void;
+  backgroundType: BackgroundType;
+  customBackgroundUrl: string | null;
 }
 
 export const AssetPreview: React.FC<AssetPreviewProps> = ({
@@ -21,6 +23,8 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   onRemove,
   onUpdate,
   onFileUpload,
+  backgroundType,
+  customBackgroundUrl,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,12 +83,14 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
     <div
       style={{
         display: 'flex',
-        gap: '1.5rem',
+        gap: '3rem',
         overflowX: 'auto',
         overflowY: 'hidden',
-        paddingBottom: '1rem',
-        minHeight: '500px',
-        height: 'calc(100vh - 250px)',
+        padding: '3rem',
+        height: 'calc(100vh - 280px)',
+        minHeight: '400px',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
       }}
     >
       {assets.map((asset) => (
@@ -92,48 +98,65 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
           key={asset.id}
           style={{
             flex: '0 0 auto',
-            width: selectedDevice.isTablet ? '400px' : '320px',
             height: '100%',
+            aspectRatio: `${selectedDevice.width} / ${selectedDevice.height}`,
             position: 'relative',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.25)',
+            borderRadius: '2rem',
+            // Define a scale factor based on container height to make fonts responsive
+            fontSize: 'min(2vw, 16px)',
           }}
         >
           <button
             onClick={() => onRemove(asset.id)}
             style={{
               position: 'absolute',
-              top: '8px',
-              right: '8px',
-              width: '28px',
-              height: '28px',
+              top: '-15px',
+              right: '-15px',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               backgroundColor: 'var(--color-danger)',
               color: '#fff',
-              border: 'none',
+              border: '3px solid var(--color-bg-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              zIndex: 10,
-              boxShadow: '0 2px 8px rgba(255, 59, 48, 0.4)',
+              zIndex: 30,
+              boxShadow: '0 8px 16px rgba(255, 59, 48, 0.3)',
             }}
           >
-            <TrashIcon size={14} />
+            <TrashIcon size={18} />
           </button>
 
           <div
             style={{
               width: '100%',
               height: '100%',
-              background: gradientStyle,
-              borderRadius: 'var(--radius-lg)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              padding: '24px 16px',
-              boxSizing: 'border-box',
+              background:
+                backgroundType === 'custom' && customBackgroundUrl
+                  ? `url(${customBackgroundUrl})`
+                  : gradientStyle,
+              backgroundSize: '100% 100%',
+              backgroundPosition: 'center',
+              borderRadius: 'inherit',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: '16px', width: '100%' }}>
+            {/* Text Overlay - Positioned exactly as in canvasUtils (top: 8%) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '8%',
+                left: 0,
+                right: 0,
+                textAlign: 'center',
+                padding: '0 8%',
+                zIndex: 5,
+              }}
+            >
               <input
                 type="text"
                 value={asset.title}
@@ -144,8 +167,9 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                   border: 'none',
                   textAlign: 'center',
                   color: textColor,
-                  fontSize: '18px',
+                  fontSize: '1.2rem',
                   fontWeight: 700,
+                  display: 'block',
                   outline: 'none',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
                   textShadow: textColor === '#ffffff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
@@ -162,10 +186,11 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                   border: 'none',
                   textAlign: 'center',
                   color: textColor,
-                  fontSize: '13px',
-                  opacity: 0.8,
+                  fontSize: '0.8rem',
+                  opacity: 0.85,
+                  display: 'block',
                   outline: 'none',
-                  marginTop: '4px',
+                  marginTop: '0.2rem',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
                   textShadow: textColor === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
                 }}
@@ -173,29 +198,94 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
               />
             </div>
 
+            {/* Device Frame - Using DEVICE_PRESETS ratio */}
             <div
               style={{
-                flex: 1,
-                width: '100%',
+                position: 'absolute',
+                bottom: selectedDevice.isTablet ? '6%' : '5%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: selectedDevice.isTablet ? '72%' : '70%',
+                aspectRatio: `${selectedDevice.width} / ${selectedDevice.height}`,
+                backgroundColor: selectedDevice.platform === 'ios' ? '#1c1c1e' : '#202124',
+                borderRadius: selectedDevice.isTablet ? '5.5%' : '2.5rem',
+                padding: '1%',
+                boxSizing: 'border-box',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                alignItems: 'flex-end',
-                paddingTop: '20px',
               }}
             >
-              <img
-                src={asset.imageSrc}
-                alt="Screenshot"
+              {/* Screen Area - Exactly matching device ratio */}
+              <div
                 style={{
-                  width: '85%',
-                  height: 'auto',
-                  maxHeight: '100%',
-                  borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                  objectFit: 'cover',
-                  objectPosition: 'top',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: selectedDevice.isTablet ? '4.5%' : '2rem',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  backgroundColor: '#333',
                 }}
-              />
+              >
+                <img
+                  src={asset.imageSrc}
+                  alt="Screenshot"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+
+                {/* Dynamic Island (iOS Phone only) */}
+                {selectedDevice.platform === 'ios' && !selectedDevice.isTablet && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '1.5%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '28%',
+                      aspectRatio: '1 / 0.3',
+                      backgroundColor: '#000',
+                      borderRadius: '50px',
+                    }}
+                  />
+                )}
+
+                {/* Camera hole (Android Phone only) */}
+                {selectedDevice.platform === 'android' && !selectedDevice.isTablet && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '1.5%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '3.5%',
+                      aspectRatio: '1',
+                      backgroundColor: '#1a1a1a',
+                      borderRadius: '50%',
+                    }}
+                  />
+                )}
+
+                {/* Home Indicator (iOS only) */}
+                {selectedDevice.platform === 'ios' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '2%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: selectedDevice.isTablet ? '12%' : '35%',
+                      height: selectedDevice.isTablet ? '6px' : '5px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                      borderRadius: '50px',
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

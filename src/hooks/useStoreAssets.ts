@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 import JSZip from 'jszip';
-import { DEVICE_PRESETS, GRADIENT_PRESETS, DevicePreset } from '../constants/storeAssets';
+import {
+  DEVICE_PRESETS,
+  GRADIENT_PRESETS,
+  DevicePreset,
+  BackgroundType,
+} from '../constants/storeAssets';
 import { generateAssetImage } from '../utils/canvasUtils';
 
 export interface AssetItem {
@@ -17,6 +22,9 @@ export const useStoreAssets = () => {
   const [selectedGradient, setSelectedGradient] = useState(0);
   const [textColor, setTextColor] = useState('#ffffff');
   const [isExporting, setIsExporting] = useState(false);
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>('gradient');
+  const [customBackgroundUrl, setCustomBackgroundUrl] = useState<string | null>(null);
+  const [customBackgroundData, setCustomBackgroundData] = useState<string | null>(null);
 
   const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -44,6 +52,28 @@ export const useStoreAssets = () => {
     setAssets((prev) => [...prev, ...newAssets]);
   }, []);
 
+  const handleBackgroundUpload = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith('image/')) return;
+
+    const imageData = await fileToDataUrl(file);
+    const imageUrl = URL.createObjectURL(file);
+
+    setCustomBackgroundData(imageData);
+    setCustomBackgroundUrl(imageUrl);
+    setBackgroundType('custom');
+  }, []);
+
+  const clearCustomBackground = useCallback(() => {
+    if (customBackgroundUrl) {
+      URL.revokeObjectURL(customBackgroundUrl);
+    }
+    setCustomBackgroundData(null);
+    setCustomBackgroundUrl(null);
+    setBackgroundType('gradient');
+  }, [customBackgroundUrl]);
+
   const removeAsset = useCallback((id: string) => {
     setAssets((prev) => prev.filter((a) => a.id !== id));
   }, []);
@@ -69,6 +99,8 @@ export const useStoreAssets = () => {
           imageData: asset.imageData,
           gradientColors,
           textColor,
+          backgroundType,
+          customBackgroundData: customBackgroundData || undefined,
         });
 
         const fileName = `screenshot_${String(i + 1).padStart(2, '0')}_${selectedDevice.id}_${asset.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)}.png`;
@@ -84,6 +116,7 @@ export const useStoreAssets = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      alert('Export successful!');
     } catch (error) {
       console.error('Export failed:', error);
       alert('Export failed. Please try again.');
@@ -105,5 +138,11 @@ export const useStoreAssets = () => {
     removeAsset,
     updateAsset,
     exportAllAssets,
+    backgroundType,
+    setBackgroundType,
+    customBackgroundUrl,
+    customBackgroundData,
+    handleBackgroundUpload,
+    clearCustomBackground,
   };
 };

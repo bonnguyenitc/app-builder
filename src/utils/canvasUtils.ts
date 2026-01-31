@@ -1,4 +1,4 @@
-import { DevicePreset } from '../constants/storeAssets';
+import { DevicePreset, BackgroundType } from '../constants/storeAssets';
 
 export const roundRect = (
   ctx: CanvasRenderingContext2D,
@@ -50,10 +50,21 @@ export interface ExportOptions {
   imageData: string;
   gradientColors: string[];
   textColor: string;
+  backgroundType?: BackgroundType;
+  customBackgroundData?: string;
 }
 
 export const generateAssetImage = async (options: ExportOptions): Promise<Blob> => {
-  const { device, title, subtitle, imageData, gradientColors, textColor } = options;
+  const {
+    device,
+    title,
+    subtitle,
+    imageData,
+    gradientColors,
+    textColor,
+    backgroundType,
+    customBackgroundData,
+  } = options;
   const { width, height, platform, isTablet } = device;
 
   const canvas = document.createElement('canvas');
@@ -61,9 +72,23 @@ export const generateAssetImage = async (options: ExportOptions): Promise<Blob> 
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
 
-  const gradient = createCanvasGradient(ctx, width, height, gradientColors);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
+  // Draw background (gradient or custom image)
+  if (backgroundType === 'custom' && customBackgroundData) {
+    try {
+      const bgImg = await loadImage(customBackgroundData);
+      // Fill the entire canvas with the background image (stretch to fit)
+      ctx.drawImage(bgImg, 0, 0, width, height);
+    } catch (e) {
+      // Fallback to gradient if image fails to load
+      const gradient = createCanvasGradient(ctx, width, height, gradientColors);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+  } else {
+    const gradient = createCanvasGradient(ctx, width, height, gradientColors);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
 
   const titleFontSize = Math.round(width * 0.055);
   const subtitleFontSize = Math.round(width * 0.032);
@@ -90,18 +115,21 @@ export const generateAssetImage = async (options: ExportOptions): Promise<Blob> 
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
-  const frameWidth = Math.round(width * (isTablet ? 0.75 : 0.65));
-  const frameHeight = Math.round(height * 0.72);
+  // Calculate frame dimension based on device ratio
+  const frameWidth = Math.round(width * (isTablet ? 0.72 : 0.8));
+  const frameHeight = Math.round(frameWidth * (height / width));
+
   const frameX = (width - frameWidth) / 2;
-  const frameY = height - frameHeight - Math.round(height * 0.04);
+  const frameY = height - frameHeight - Math.round(height * (isTablet ? 0.06 : 0.05));
 
   const isIOS = platform === 'ios';
   const frameRadius = isTablet
-    ? Math.round(frameWidth * 0.03)
+    ? Math.round(frameWidth * 0.05)
     : isIOS
       ? Math.round(frameWidth * 0.12)
       : Math.round(frameWidth * 0.08);
-  const framePadding = Math.round(frameWidth * 0.02);
+
+  const framePadding = Math.round(frameWidth * 0.015);
   const screenRadius = frameRadius - framePadding;
 
   ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
@@ -130,21 +158,23 @@ export const generateAssetImage = async (options: ExportOptions): Promise<Blob> 
     const imgRatio = img.width / img.height;
     const screenRatio = screenWidth / screenHeight;
 
-    let drawWidth, drawHeight, drawX, drawY;
+    let sx, sy, sw, sh;
 
     if (imgRatio > screenRatio) {
-      drawHeight = screenHeight;
-      drawWidth = drawHeight * imgRatio;
-      drawX = screenX - (drawWidth - screenWidth) / 2;
-      drawY = screenY;
+      // Image is wider than screen (ratio wise)
+      sh = img.height;
+      sw = sh * screenRatio;
+      sx = (img.width - sw) / 2;
+      sy = 0;
     } else {
-      drawWidth = screenWidth;
-      drawHeight = drawWidth / imgRatio;
-      drawX = screenX;
-      drawY = screenY - (drawHeight - screenHeight) / 2;
+      // Image is taller than screen (ratio wise)
+      sw = img.width;
+      sh = sw / screenRatio;
+      sx = 0;
+      sy = (img.height - sh) / 2;
     }
 
-    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+    ctx.drawImage(img, sx, sy, sw, sh, screenX, screenY, screenWidth, screenHeight);
   } catch (e) {
     ctx.fillStyle = '#333';
     ctx.fillRect(screenX, screenY, screenWidth, screenHeight);

@@ -83,7 +83,21 @@ export const DEVICE_PRESETS: DevicePreset[] = [
   },
 ];
 
-export const GRADIENT_PRESETS = [
+export interface GradientPreset {
+  name: string;
+  colors: string[];
+}
+
+export type BackgroundType = 'gradient' | 'custom';
+
+export interface CustomBackground {
+  type: BackgroundType;
+  gradientIndex: number;
+  customImageUrl?: string;
+  customImageData?: string;
+}
+
+export const GRADIENT_PRESETS: GradientPreset[] = [
   { name: 'Ocean', colors: ['#667eea', '#764ba2'] },
   { name: 'Sunset', colors: ['#f093fb', '#f5576c'] },
   { name: 'Forest', colors: ['#11998e', '#38ef7d'] },

@@ -20,6 +20,11 @@ export const StoreAssetsCreator = () => {
     removeAsset,
     updateAsset,
     exportAllAssets,
+    backgroundType,
+    setBackgroundType,
+    customBackgroundUrl,
+    handleBackgroundUpload,
+    clearCustomBackground,
   } = useStoreAssets();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -93,6 +98,11 @@ export const StoreAssetsCreator = () => {
           setSelectedGradient={setSelectedGradient}
           textColor={textColor}
           setTextColor={setTextColor}
+          backgroundType={backgroundType}
+          setBackgroundType={setBackgroundType}
+          customBackgroundUrl={customBackgroundUrl}
+          onBackgroundUpload={handleBackgroundUpload}
+          onClearBackground={clearCustomBackground}
         />
 
         <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingBottom: '1rem' }}>
@@ -104,6 +114,8 @@ export const StoreAssetsCreator = () => {
             onRemove={removeAsset}
             onUpdate={updateAsset}
             onFileUpload={handleFileUpload}
+            backgroundType={backgroundType}
+            customBackgroundUrl={customBackgroundUrl}
           />
         </div>
       </div>
