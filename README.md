@@ -43,8 +43,10 @@
   - [Environment Doctor](#3-environment-doctor)
   - [Emulator Manager](#4-emulator-manager)
   - [Store Assets Creator](#5-store-assets-creator)
-  - [Credentials Configuration](#6-configure-credentials)
-  - [Building](#7-build-ios)
+  - [App Icon Generator](#6-app-icon-generator)
+  - [Keystore Creator](#7-keystore-creator)
+  - [Credentials Configuration](#8-configure-credentials)
+  - [Building](#9-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -63,8 +65,16 @@ It requires **no special configuration**—you set up your project environment a
 ### 📱 Project Management
 
 - **Framework Support:** Manage React Native projects in one place.
+- **Deep Clean:** One-click maintenance to wipe `node_modules`, `Pods`, and artifacts.
 - **Auto-Discovery:** Automatically reads `Info.plist`, `build.gradle`.
-- **Version Tracking:** Visual display of current version and build numbers.
+- **Notifications:** Real-time build status updates via Slack, Discord, and Telegram.
+
+### 🛠️ Essential Tools
+
+- **Store Assets Creator:** Design App Store & Play Store screenshots.
+- **App Icon Generator:** Create all icon sizes for iOS/Android from a single image.
+- **Keystore Generator:** Distinct visual tool to create Android signing keys.
+- **Emulator Manager:** Boot and run apps on simulators/emulators.
 
 ### 🔨 iOS Automation
 
@@ -202,7 +212,24 @@ Create stunning App Store & Play Store screenshots with professional device fram
   <img src="screenshots/store-assets.png" alt="Store Assets Creator" width="100%" style="border-radius: 8px" />
 </p>
 
-### 6. Configure Credentials
+### 6. App Icon Generator
+
+Generate all required app icon sizes for iOS and Android from a single 1024x1024 input.
+
+1. Go to **Icon Generator** (Grid Icon).
+2. Upload your source image (PNG/JPG).
+3. Select target platforms.
+4. Click **Generate** to create `AppIcon.appiconset` and Android adaptive icons.
+
+### 7. Keystore Creator
+
+Easily create Android release keystores without CLI tools.
+
+1. Go to **Keystore Generator** (Key Icon).
+2. Fill in the keystore details (Alias, Passwords, Validity).
+3. Click **Generate Keystore** and save the `.jks` or `.keystore` file.
+
+### 8. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -261,7 +288,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 7. Build iOS
+### 9. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -269,7 +296,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 8. Build Android
+### 10. Build Android
 
 1. Select Project → Click **Build Android**.
 2. Enter **Release Notes**.
@@ -279,7 +306,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 9. View Build History
+### 11. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -302,6 +329,10 @@ Track all your builds and releases in the History page.
 - [x] **Feature:** Environment Helper (Doctor/Fixer).
 - [x] **Feature:** Emulator Manager (Boot/Run).
 - [x] **Feature:** Store Assets Creator (App Store/Play Store screenshots).
+- [x] **Feature:** App Icon Generator.
+- [x] **Feature:** Keystore Generator.
+- [x] **Feature:** Discord/Slack/Telegram Notifications.
+- [x] **Feature:** Deep Clean maintenance.
 
 ---
 
