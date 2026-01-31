@@ -283,15 +283,7 @@ pub async fn build_project(
             window.emit("build-log", &archive_msg).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", archive_msg).map_err(|e| e.to_string())?;
 
-            let mut archive_args = vec![
-                "-scheme", scheme,
-                "-sdk", "iphoneos",
-                "-configuration", configuration,
-                "archive",
-                "-archivePath", archive_path_str,
-            ];
-
-            // Add workspace or project flag
+            // Find workspace or project flag
             let build_file_path = if let Some(ref ws_path) = workspace_path {
                 let msg = format!("🔍 Found workspace: {}", ws_path.file_name().unwrap().to_string_lossy());
                 window.emit("build-log", &msg).map_err(|e| e.to_string())?;
@@ -307,18 +299,25 @@ pub async fn build_project(
             };
 
             let build_type = if workspace_path.is_some() { "-workspace" } else { "-project" };
-            archive_args.insert(0, &build_file_path);
-            archive_args.insert(0, build_type);
 
-            let mut archive_child = Command::new("xcodebuild")
-                .args(&archive_args)
+            let archive_cmd = format!(
+                "xcodebuild {} '{}' -scheme '{}' -sdk iphoneos -configuration '{}' archive -archivePath '{}' 2>&1",
+                build_type,
+                build_file_path.replace("'", "'\\''"),
+                scheme.replace("'", "'\\''"),
+                configuration.replace("'", "'\\''"),
+                archive_path_str.replace("'", "'\\''")
+            );
+
+            let mut archive_child = Command::new("/bin/sh")
+                .args(&["-c", &archive_cmd])
                 .current_dir(&ios_dir)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()
                 .map_err(|e| format!("Failed to start archive command: {}", e))?;
 
-            // Take stdout ownership to read logs
+            // Take stdout ownership to read logs (now includes stderr due to 2>&1)
             let archive_stdout = archive_child.stdout.take().unwrap();
             let archive_reader = BufReader::new(archive_stdout);
 
@@ -330,10 +329,23 @@ pub async fn build_project(
                 processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(archive_child))));
             }
 
-            // Write all logs to file, logging blocks here until logs are done (or pipe closed)
+            // Collect some recent logs to show in case of failure
+            let mut recent_logs = std::collections::VecDeque::with_capacity(20);
+
+            // Write all logs to file, but only stream errors/warnings to UI to avoid lag
             for line in archive_reader.lines() {
                 if let Ok(line_content) = line {
                     writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
+
+                    let lower_line = line_content.to_lowercase();
+                    if lower_line.contains("error:") || lower_line.contains("warning:") {
+                        window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                    }
+
+                    if recent_logs.len() >= 20 {
+                        recent_logs.pop_front();
+                    }
+                    recent_logs.push_back(line_content);
                 }
             }
 
@@ -355,9 +367,15 @@ pub async fn build_project(
             };
 
             if !archive_status.success() {
-                let error_msg = "❌ Archive failed - check log file for details";
-                window.emit("build-log", error_msg).map_err(|e| e.to_string())?;
-                writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
+                let error_header = "❌ Archive failed. Recent logs:";
+                window.emit("build-log", error_header).map_err(|e| e.to_string())?;
+
+                for log in recent_logs {
+                    window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                }
+
+                let final_err = "Check log file for full details.";
+                window.emit("build-log", final_err).map_err(|e| e.to_string())?;
                 window.emit("build-status", "failed").map_err(|e| e.to_string())?;
                 window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
                 return Err("Archive failed".into());
@@ -439,15 +457,15 @@ pub async fn build_project(
 
             let export_path = build_dir.to_str().ok_or("Invalid export path")?;
 
-            let export_args = vec![
-                "-exportArchive",
-                "-archivePath", archive_path_str,
-                "-exportOptionsPlist", export_plist_path.to_str().ok_or("Invalid plist path")?,
-                "-exportPath", export_path,
-            ];
+            let export_cmd = format!(
+                "xcodebuild -exportArchive -archivePath '{}' -exportOptionsPlist '{}' -exportPath '{}' 2>&1",
+                archive_path_str.replace("'", "'\\''"),
+                export_plist_path.to_str().ok_or("Invalid plist path")?.replace("'", "'\\''"),
+                export_path.replace("'", "'\\''")
+            );
 
-            let mut export_child = Command::new("xcodebuild")
-                .args(&export_args)
+            let mut export_child = Command::new("/bin/sh")
+                .args(&["-c", &export_cmd])
                 .current_dir(&ios_dir)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -463,10 +481,22 @@ pub async fn build_project(
                 processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(export_child))));
             }
 
-            // Write all logs to file, don't stream to UI
+            let mut recent_export_logs = std::collections::VecDeque::with_capacity(20);
+
+            // Write all logs to file, but only stream errors/warnings to UI
             for line in export_reader.lines() {
                 if let Ok(line_content) = line {
                     writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
+
+                    let lower_line = line_content.to_lowercase();
+                    if lower_line.contains("error:") || lower_line.contains("warning:") {
+                        window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                    }
+
+                    if recent_export_logs.len() >= 20 {
+                        recent_export_logs.pop_front();
+                    }
+                    recent_export_logs.push_back(line_content);
                 }
             }
 
@@ -485,9 +515,13 @@ pub async fn build_project(
             };
 
             if !export_status.success() {
-                let error_msg = "❌ Export failed - check log file for details";
-                window.emit("build-log", error_msg).map_err(|e| e.to_string())?;
-                writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
+                let error_header = "❌ Export failed. Recent logs:";
+                window.emit("build-log", error_header).map_err(|e| e.to_string())?;
+
+                for log in recent_export_logs {
+                    window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                }
+
                 window.emit("build-status", "failed").map_err(|e| e.to_string())?;
                 window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
                 return Err("Export failed".into());
