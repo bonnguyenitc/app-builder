@@ -553,76 +553,86 @@ pub async fn build_project(
                         }
                     }
 
-                    if let Some(ipa_file) = ipa_path {
+                     if let Some(ipa_file) = ipa_path {
                          let ipa_path_str = ipa_file.to_str().unwrap();
                          let file_msg = format!("Found IPA: {}", ipa_path_str);
                          window.emit("build-log", &file_msg).map_err(|e| e.to_string())?;
                          writeln!(log_file, "{}", file_msg).map_err(|e| e.to_string())?;
 
-                         let upload_args = vec![
-                            "--upload-app",
-                            "--type", "ios",
-                            "--file", ipa_path_str,
-                            "--apiKey", api_key,
-                            "--apiIssuer", api_issuer,
-                         ];
+                         let upload_cmd = format!(
+                            "xcrun altool --upload-app --type ios --file '{}' --apiKey '{}' --apiIssuer '{}' 2>&1",
+                            ipa_path_str.replace("'", "'\\''"),
+                            api_key.replace("'", "'\\''"),
+                            api_issuer.replace("'", "'\\''")
+                         );
 
-                         let mut upload_child = Command::new("xcrun")
-                            .arg("altool")
-                            .args(&upload_args)
+                         let mut upload_child = Command::new("/bin/sh")
+                            .args(&["-c", &upload_cmd])
                             .stdout(Stdio::piped())
                             .stderr(Stdio::piped())
                             .spawn()
                             .map_err(|e| format!("Failed to start upload: {}", e))?;
 
                         let upload_stdout = upload_child.stdout.take().unwrap();
-                        let upload_stderr = upload_child.stderr.take().unwrap(); // altool writes to stderr often
-
-                         // We can read both or just one. Usually altool outputs progress.
-                         // For simplicity, let's just wait and read output.
-                         // But we want to stream logs?
-                         // Implementing full streaming for both might be complex in this single function structure without helpers.
-                         // Let's rely on standard wait for now, maybe stream stdout.
-
                         let upload_reader = BufReader::new(upload_stdout);
-                        let upload_err_reader = BufReader::new(upload_stderr);
+                        let mut recent_upload_logs = std::collections::VecDeque::with_capacity(20);
 
-                        // TODO: Better concurrent reading. For now, sequential read might block if buffer fills?
-                        // Given we are in async function but doing blocking IO here...
-                        // We launched archive/export with similar pattern but they are processed sequentially here.
+                        // Store process for cancellation
+                        let process_id = project.id.clone();
+                        {
+                            let mut processes = process_state.0.lock().unwrap();
+                            processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(upload_child))));
+                        }
 
-                        // Just read stdout line by line
                         for line in upload_reader.lines() {
                             if let Ok(line_content) = line {
-                                window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
                                 writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
-                            }
-                        }
-                        // Then stderr
-                         for line in upload_err_reader.lines() {
-                            if let Ok(line_content) = line {
-                                window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
-                                writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
+
+                                let lower_line = line_content.to_lowercase();
+                                if lower_line.contains("error:") || lower_line.contains("warning:") {
+                                    window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                                }
+
+                                if recent_upload_logs.len() >= 20 {
+                                    recent_upload_logs.pop_front();
+                                }
+                                recent_upload_logs.push_back(line_content);
                             }
                         }
 
-                         let upload_status = upload_child.wait().map_err(|e| e.to_string())?;
+                         let upload_status = {
+                             let mut processes = process_state.0.lock().unwrap();
+                             if let Some(mutex) = processes.remove(&process_id) {
+                                 let mut guard = mutex.lock().unwrap();
+                                 if let Some(mut child) = guard.take() {
+                                     child.wait().map_err(|e| e.to_string())?
+                                 } else {
+                                     return Err("Upload process handle lost".into());
+                                 }
+                             } else {
+                                 return Err("Build cancelled".into());
+                             }
+                         };
 
                          if !upload_status.success() {
-                             let err = "❌ Upload failed";
-                             window.emit("build-log", err).map_err(|e| e.to_string())?;
-                             writeln!(log_file, "{}", err).map_err(|e| e.to_string())?;
-                             // Don't fail the whole build status, just log error?
-                             // Or mark as failed? Probably fail.
+                             let err_header = "❌ App Store upload failed. Recent logs:";
+                             window.emit("build-log", err_header).map_err(|e| e.to_string())?;
+
+                             for log in recent_upload_logs {
+                                 window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                             }
+
+                             let footer = "Please check the log file for full details and Apple's specific error code.";
+                             window.emit("build-log", footer).map_err(|e| e.to_string())?;
                              window.emit("build-status", "failed").map_err(|e| e.to_string())?;
                              return Err("Upload failed".into());
                          } else {
-                             let succ = "✅ Upload completed successfully";
+                             let succ = "✅ App Store upload completed successfully! Your app is now being processed on App Store Connect.";
                              window.emit("build-log", succ).map_err(|e| e.to_string())?;
                              writeln!(log_file, "{}", succ).map_err(|e| e.to_string())?;
                          }
 
-                    } else {
+                     } else {
                         let err = "❌ IPA file not found for upload";
                         window.emit("build-log", err).map_err(|e| e.to_string())?;
                         writeln!(log_file, "{}", err).map_err(|e| e.to_string())?;
