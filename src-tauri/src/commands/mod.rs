@@ -7,3 +7,4 @@ pub mod permissions;
 pub mod doctor;
 pub mod emulator;
 pub mod notification;
+pub mod keystore;

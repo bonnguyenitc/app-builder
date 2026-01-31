@@ -13,6 +13,7 @@ use commands::permissions::*;
 use commands::doctor::*;
 use commands::emulator::*;
 use commands::notification::*;
+use commands::keystore::*;
 use models::database::init_db;
 use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
@@ -96,7 +97,9 @@ pub fn run() {
             start_recording,
             stop_recording,
             is_device_recording,
-            test_notification
+            test_notification,
+            generate_keystore,
+            show_in_folder
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

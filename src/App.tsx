@@ -9,6 +9,7 @@ import {
   StethoscopeIcon,
   SmartphoneIcon,
   ImagesIcon,
+  KeyIcon,
 } from './components/Icons';
 import appIcon from './assets/app-icon.png';
 
@@ -23,6 +24,7 @@ import { PermissionsManager } from './pages/PermissionsManager';
 import { Doctor } from './pages/Doctor';
 import { EmulatorManager } from './pages/EmulatorManager';
 import { StoreAssetsCreator } from './pages/StoreAssetsCreator';
+import { KeystoreGenerator } from './pages/KeystoreGenerator';
 
 interface NavItemInfo {
   to: string;
@@ -43,6 +45,7 @@ const GENERAL_NAV_ITEMS: NavItemInfo[] = [
   { to: '/history', icon: HistoryIcon, label: 'History' },
   { to: '/icon-generator', icon: ImageIcon, label: 'Icon Generator' },
   { to: '/store-assets', icon: ImagesIcon, label: 'Store Assets' },
+  { to: '/keystore', icon: KeyIcon, label: 'Keystore Generator' },
   { to: '/emulators', icon: SmartphoneIcon, label: 'Emulators' },
   { to: '/doctor', icon: StethoscopeIcon, label: 'Environment Doctor' },
 ];
@@ -164,6 +167,7 @@ function App() {
             <Route path="/history" element={<ReleaseHistory />} />
             <Route path="/icon-generator" element={<IconGenerator />} />
             <Route path="/store-assets" element={<StoreAssetsCreator />} />
+            <Route path="/keystore" element={<KeystoreGenerator />} />
             <Route path="/emulators" element={<EmulatorManager />} />
             <Route path="/doctor" element={<Doctor />} />
             <Route path="/permissions/:projectId" element={<PermissionsManager />} />
