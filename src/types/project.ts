@@ -21,8 +21,8 @@ export interface Project {
     versionCode: number;
   };
   credentials: {
-    appStoreConnectApiKeyId?: string;
-    googlePlayServiceAccountPath?: string;
+    iosId?: string;
+    androidId?: string;
   };
   lastBuild?: BuildHistory;
 }

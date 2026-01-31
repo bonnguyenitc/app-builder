@@ -30,13 +30,20 @@ pub struct AndroidPlatform {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct ProjectCredentials {
+    pub ios_id: Option<String>,
+    pub android_id: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: String,
     pub name: String,
     pub path: String,
     pub ios: IosPlatform,
     pub android: AndroidPlatform,
-    // credentials will be handled separately via Keychain
+    pub credentials: ProjectCredentials,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

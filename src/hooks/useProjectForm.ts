@@ -21,48 +21,50 @@ export const useProjectForm = (
   onSave?: (project: Omit<Project, 'id'>) => void,
 ) => {
   const { credentials } = useCredentials();
+
+  // Initialize states directly from initialData
   const [name, setName] = useState(initialData?.name || '');
   const [path, setPath] = useState(initialData?.path || '');
-  const [iosBundle, setIosBundle] = useState(initialData?.ios.bundleId || '');
-  const [androidBundle, setAndroidBundle] = useState(initialData?.android.bundleId || '');
-  const [iosVersion, setIosVersion] = useState(initialData?.ios.version || '1.0.0');
-  const [androidVersion, setAndroidVersion] = useState(initialData?.android.version || '1.0.0');
-  const [iosBuildNumber, setIosBuildNumber] = useState(initialData?.ios.buildNumber || 1);
+  const [iosBundle, setIosBundle] = useState(initialData?.ios?.bundleId || '');
+  const [androidBundle, setAndroidBundle] = useState(initialData?.android?.bundleId || '');
+  const [iosVersion, setIosVersion] = useState(initialData?.ios?.version || '1.0.0');
+  const [androidVersion, setAndroidVersion] = useState(initialData?.android?.version || '1.0.0');
+  const [iosBuildNumber, setIosBuildNumber] = useState(initialData?.ios?.buildNumber || 1);
   const [androidBuildNumber, setAndroidBuildNumber] = useState(
-    initialData?.android.versionCode || 1,
+    initialData?.android?.versionCode || 1,
   );
-
-  const [iosScheme, setIosScheme] = useState(initialData?.ios.config?.scheme || '');
+  const [iosScheme, setIosScheme] = useState(initialData?.ios?.config?.scheme || '');
   const [iosConfiguration, setIosConfiguration] = useState(
-    initialData?.ios.config?.configuration || 'Release',
+    initialData?.ios?.config?.configuration || 'Release',
   );
   const [iosExportMethod, setIosExportMethod] = useState<
     'development' | 'ad-hoc' | 'app-store' | 'enterprise'
-  >(initialData?.ios.config?.exportMethod || 'development');
+  >(initialData?.ios?.config?.exportMethod || 'development');
 
-  const [selectedIosCredentialId, setSelectedIosCredentialId] = useState<string>('');
-  const [selectedAndroidCredentialId, setSelectedAndroidCredentialId] = useState<string>('');
+  const [selectedIosId, setSelectedIosId] = useState(initialData?.credentials?.iosId || '');
+  const [selectedAndroidId, setSelectedAndroidId] = useState(
+    initialData?.credentials?.androidId || '',
+  );
 
   const iosCredentials = credentials.filter((c) => c.platform === 'ios');
   const androidCredentials = credentials.filter((c) => c.platform === 'android');
 
+  // Sync states when initialData or isOpen changes
   useEffect(() => {
     if (isOpen) {
       setName(initialData?.name || '');
       setPath(initialData?.path || '');
-      setIosBundle(initialData?.ios.bundleId || '');
-      setAndroidBundle(initialData?.android.bundleId || '');
-      setIosVersion(initialData?.ios.version || '1.0.0');
-      setAndroidVersion(initialData?.android.version || '1.0.0');
-      setIosBuildNumber(initialData?.ios.buildNumber || 1);
-      setAndroidBuildNumber(initialData?.android.versionCode || 1);
-
-      setIosScheme(initialData?.ios.config?.scheme || initialData?.name || '');
-      setIosConfiguration(initialData?.ios.config?.configuration || 'Release');
-      setIosExportMethod(initialData?.ios.config?.exportMethod || 'development');
-
-      setSelectedIosCredentialId('');
-      setSelectedAndroidCredentialId('');
+      setIosBundle(initialData?.ios?.bundleId || '');
+      setAndroidBundle(initialData?.android?.bundleId || '');
+      setIosVersion(initialData?.ios?.version || '1.0.0');
+      setAndroidVersion(initialData?.android?.version || '1.0.0');
+      setIosBuildNumber(initialData?.ios?.buildNumber || 1);
+      setAndroidBuildNumber(initialData?.android?.versionCode || 1);
+      setIosScheme(initialData?.ios?.config?.scheme || '');
+      setIosConfiguration(initialData?.ios?.config?.configuration || 'Release');
+      setIosExportMethod(initialData?.ios?.config?.exportMethod || 'development');
+      setSelectedIosId(initialData?.credentials?.iosId || '');
+      setSelectedAndroidId(initialData?.credentials?.androidId || '');
     }
   }, [isOpen, initialData]);
 
@@ -75,7 +77,6 @@ export const useProjectForm = (
       });
       if (selected && typeof selected === 'string') {
         setPath(selected);
-
         try {
           const appInfo = await invoke<AppJsonInfo>('read_native_project_info', {
             projectPath: selected,
@@ -95,7 +96,7 @@ export const useProjectForm = (
           if (appInfo.android_version_code) setAndroidBuildNumber(appInfo.android_version_code);
         } catch (error) {
           console.log('Could not read native project info:', error);
-          if (!name) {
+          if (!name && selected) {
             const folderName = selected.split('/').pop();
             if (folderName) {
               setName(folderName);
@@ -112,36 +113,38 @@ export const useProjectForm = (
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const selectedIosCredential = iosCredentials.find((c) => c.id === selectedIosCredentialId);
+    const iosCred = iosCredentials.find((c) => c.id === selectedIosId);
 
-    const iosConfig =
-      (iosScheme || name) && (iosConfiguration || 'Release')
-        ? {
-            scheme: iosScheme || name,
-            configuration: iosConfiguration || 'Release',
-            teamId: selectedIosCredential?.ios?.teamId || undefined,
-            exportMethod: iosExportMethod,
-            apiKey: selectedIosCredential?.ios?.apiKeyId || undefined,
-            apiIssuer: selectedIosCredential?.ios?.apiIssuerId || undefined,
-          }
-        : undefined;
-
-    onSave?.({
+    // Create the project object for saving
+    const projectData = {
       name,
       path,
       ios: {
         bundleId: iosBundle,
         version: iosVersion,
         buildNumber: iosBuildNumber,
-        config: iosConfig,
+        config: {
+          scheme: iosScheme || name,
+          configuration: iosConfiguration || 'Release',
+          teamId: iosCred?.ios?.teamId || initialData?.ios?.config?.teamId,
+          exportMethod: iosExportMethod,
+          apiKey: iosCred?.ios?.apiKeyId || initialData?.ios?.config?.apiKey,
+          apiIssuer: iosCred?.ios?.apiIssuerId || initialData?.ios?.config?.apiIssuer,
+        },
       },
       android: {
         bundleId: androidBundle,
         version: androidVersion,
         versionCode: androidBuildNumber,
       },
-      credentials: initialData?.credentials || {},
-    });
+      credentials: {
+        iosId: selectedIosId || undefined,
+        androidId: selectedAndroidId || undefined,
+      },
+    };
+
+    console.log('Submitting Project Data:', projectData);
+    onSave?.(projectData);
     onClose?.();
   };
 
@@ -169,10 +172,10 @@ export const useProjectForm = (
       setIosConfiguration,
       iosExportMethod,
       setIosExportMethod,
-      selectedIosCredentialId,
-      setSelectedIosCredentialId,
-      selectedAndroidCredentialId,
-      setSelectedAndroidCredentialId,
+      selectedIosCredentialId: selectedIosId,
+      setSelectedIosCredentialId: setSelectedIosId,
+      selectedAndroidCredentialId: selectedAndroidId,
+      setSelectedAndroidCredentialId: setSelectedAndroidId,
       iosCredentials,
       androidCredentials,
     },

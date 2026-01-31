@@ -118,6 +118,8 @@ fn update_build_json(
     android_package: &str,
     android_version: &str,
     android_version_code: u32,
+    credentials: &crate::models::project::ProjectCredentials,
+    ios_config: Option<&crate::models::project::IosConfig>,
 ) -> Result<(), String> {
     // Use .app-builder/build.json instead of build.json
     let app_builder_dir = Path::new(project_path).join(".app-builder");
@@ -142,7 +144,8 @@ fn update_build_json(
                 "version": ios_version,
                 "buildNumber": ios_build_number.to_string()
             },
-            "name": project_name
+            "name": project_name,
+            "credentials": credentials
         });
 
         let template_content = serde_json::to_string_pretty(&template)
@@ -195,6 +198,14 @@ fn update_build_json(
                 serde_json::json!(android_version_code),
             );
         }
+    }
+
+    // Update credentials
+    json_value["credentials"] = serde_json::to_value(credentials).unwrap_or(serde_json::Value::Null);
+
+    // Update ios config if available
+    if let Some(config) = ios_config {
+        json_value["iosConfig"] = serde_json::to_value(config).unwrap_or(serde_json::Value::Null);
     }
 
     let new_content = serde_json::to_string_pretty(&json_value)
@@ -330,7 +341,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
 pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer FROM projects")
+        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id FROM projects")
         .map_err(|e| e.to_string())?;
 
     let project_iter = stmt
@@ -355,7 +366,7 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                 None
             };
 
-            Ok(Project {
+            let p = Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
@@ -370,7 +381,13 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                     version: row.get(6)?,
                     version_code: row.get(8)?,
                 },
-            })
+                credentials: crate::models::project::ProjectCredentials {
+                    ios_id: row.get(15)?,
+                    android_id: row.get(16)?,
+                },
+            };
+            println!("Loaded project: {} with credentials: {:?}", p.name, p.credentials);
+            Ok(p)
         })
         .map_err(|e| e.to_string())?;
 
@@ -389,6 +406,9 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         return Err("Flutter projects are not supported. Please select a React Native project.".to_string());
     }
 
+    println!("Saving project: {} (ID: {})", project.name, project.id);
+    println!("Project credentials: {:?}", project.credentials);
+
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT OR REPLACE INTO projects (
@@ -397,9 +417,9 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             version_ios, version_android,
             build_number_ios, build_number_android,
             ios_scheme, ios_configuration, ios_team_id, ios_export_method,
-            ios_api_key, ios_api_issuer
+            ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id
         )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
         params![
             project.id,
             project.name,
@@ -416,6 +436,8 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             project.ios.config.as_ref().and_then(|c| c.export_method.as_ref()),
             project.ios.config.as_ref().and_then(|c| c.api_key.as_ref()),
             project.ios.config.as_ref().and_then(|c| c.api_issuer.as_ref()),
+            project.credentials.ios_id,
+            project.credentials.android_id,
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -444,6 +466,8 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         &project.android.bundle_id,
         &project.android.version,
         project.android.version_code,
+        &project.credentials,
+        project.ios.config.as_ref(),
     )?;
 
     Ok(())
