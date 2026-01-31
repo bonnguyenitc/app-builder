@@ -24,6 +24,31 @@ import { Doctor } from './pages/Doctor';
 import { EmulatorManager } from './pages/EmulatorManager';
 import { StoreAssetsCreator } from './pages/StoreAssetsCreator';
 
+interface NavItemInfo {
+  to: string;
+  icon: React.FC<{ size?: number }>;
+  label: string;
+}
+
+const SidebarNavItem: React.FC<NavItemInfo> = ({ to, icon: Icon, label }) => (
+  <NavLink to={to} className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}>
+    <Icon size={18} />
+    <span>{label}</span>
+  </NavLink>
+);
+
+const GENERAL_NAV_ITEMS: NavItemInfo[] = [
+  { to: '/', icon: LayoutGridIcon, label: 'Projects' },
+  { to: '/queue', icon: ClipboardListIcon, label: 'Build Queue' },
+  { to: '/history', icon: HistoryIcon, label: 'History' },
+  { to: '/icon-generator', icon: ImageIcon, label: 'Icon Generator' },
+  { to: '/store-assets', icon: ImagesIcon, label: 'Store Assets' },
+  { to: '/emulators', icon: SmartphoneIcon, label: 'Emulators' },
+  { to: '/doctor', icon: StethoscopeIcon, label: 'Environment Doctor' },
+];
+
+const APP_NAV_ITEMS: NavItemInfo[] = [{ to: '/settings', icon: SettingsIcon, label: 'Settings' }];
+
 function App() {
   const fetchProjects = useProjectStore((state) => state.fetchProjects);
   const fetchHistory = useBuildStore((state) => state.fetchHistory);
@@ -80,66 +105,16 @@ function App() {
 
           <nav className="sidebar-nav">
             <div className="sidebar-header">General</div>
-            <NavLink
-              to="/"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <LayoutGridIcon size={18} />
-              <span>Projects</span>
-            </NavLink>
-            <NavLink
-              to="/queue"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <ClipboardListIcon size={18} />
-              <span>Build Queue</span>
-            </NavLink>
-            <NavLink
-              to="/history"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <HistoryIcon size={18} />
-              <span>History</span>
-            </NavLink>
-            <NavLink
-              to="/icon-generator"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <ImageIcon size={18} />
-              <span>Icon Generator</span>
-            </NavLink>
-            <NavLink
-              to="/store-assets"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <ImagesIcon size={18} />
-              <span>Store Assets</span>
-            </NavLink>
-            <NavLink
-              to="/emulators"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <SmartphoneIcon size={18} />
-              <span>Emulators</span>
-            </NavLink>
-            <NavLink
-              to="/doctor"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <StethoscopeIcon size={18} />
-              <span>Environment Doctor</span>
-            </NavLink>
+            {GENERAL_NAV_ITEMS.map((item) => (
+              <SidebarNavItem key={item.to} {...item} />
+            ))}
 
             <div className="sidebar-header" style={{ marginTop: 'var(--spacing-xl)' }}>
               App
             </div>
-            <NavLink
-              to="/settings"
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <SettingsIcon size={18} />
-              <span>Settings</span>
-            </NavLink>
+            {APP_NAV_ITEMS.map((item) => (
+              <SidebarNavItem key={item.to} {...item} />
+            ))}
           </nav>
 
           {/* Footer branding */}
