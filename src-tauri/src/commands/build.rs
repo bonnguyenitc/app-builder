@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::fs::File;
 use crate::models::project::Project;
 use crate::BuildProcessState;
+use crate::commands::notification::send_all_notifications;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -625,11 +626,22 @@ pub async fn build_project(
                              let footer = "Please check the log file for full details and Apple's specific error code.";
                              window.emit("build-log", footer).map_err(|e| e.to_string())?;
                              window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+
+                             // Send Slack notification on failure
+                             let slack_msg = format!("❌ *{}* (iOS) App Store upload failed!\nVersion: {}\nBuild: {}",
+                                 project.name, project.ios.version, project.ios.build_number);
+                             let _ = send_all_notifications(&project, &slack_msg).await;
+
                              return Err("Upload failed".into());
                          } else {
                              let succ = "✅ App Store upload completed successfully! Your app is now being processed on App Store Connect.";
                              window.emit("build-log", succ).map_err(|e| e.to_string())?;
                              writeln!(log_file, "{}", succ).map_err(|e| e.to_string())?;
+
+                             // Send Slack notification
+                             let slack_msg = format!("🚀 *{}* (iOS) uploaded to App Store successfully!\nVersion: {}\nBuild: {}",
+                                 project.name, project.ios.version, project.ios.build_number);
+                             let _ = send_all_notifications(&project, &slack_msg).await;
                          }
 
                      } else {

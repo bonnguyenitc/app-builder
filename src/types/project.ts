@@ -24,6 +24,21 @@ export interface Project {
     iosId?: string;
     androidId?: string;
   };
+  notifications?: {
+    slack?: {
+      webhookUrl: string;
+      enabled: boolean;
+    };
+    discord?: {
+      webhookUrl: string;
+      enabled: boolean;
+    };
+    telegram?: {
+      botToken: string;
+      chatId: string;
+      enabled: boolean;
+    };
+  };
   lastBuild?: BuildHistory;
 }
 

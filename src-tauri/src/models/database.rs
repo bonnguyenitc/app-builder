@@ -29,7 +29,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
             ios_api_key TEXT,
             ios_api_issuer TEXT,
             ios_credential_id TEXT,
-            android_credential_id TEXT
+            android_credential_id TEXT,
+            slack_notifications TEXT
         )",
         [],
     )?;
@@ -43,6 +44,7 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_api_issuer TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_credential_id TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_credential_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN slack_notifications TEXT", []);
 
     // Create credentials table
     conn.execute(

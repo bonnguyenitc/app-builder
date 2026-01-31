@@ -46,6 +46,31 @@ export const useProjectForm = (
     initialData?.credentials?.androidId || '',
   );
 
+  // Notifications
+  const [slackWebhook, setSlackWebhook] = useState(
+    initialData?.notifications?.slack?.webhookUrl || '',
+  );
+  const [slackEnabled, setSlackEnabled] = useState(
+    initialData?.notifications?.slack?.enabled || false,
+  );
+
+  const [discordWebhook, setDiscordWebhook] = useState(
+    initialData?.notifications?.discord?.webhookUrl || '',
+  );
+  const [discordEnabled, setDiscordEnabled] = useState(
+    initialData?.notifications?.discord?.enabled || false,
+  );
+
+  const [telegramBotToken, setTelegramBotToken] = useState(
+    initialData?.notifications?.telegram?.botToken || '',
+  );
+  const [telegramChatId, setTelegramChatId] = useState(
+    initialData?.notifications?.telegram?.chatId || '',
+  );
+  const [telegramEnabled, setTelegramEnabled] = useState(
+    initialData?.notifications?.telegram?.enabled || false,
+  );
+
   const iosCredentials = credentials.filter((c) => c.platform === 'ios');
   const androidCredentials = credentials.filter((c) => c.platform === 'android');
 
@@ -65,6 +90,14 @@ export const useProjectForm = (
       setIosExportMethod(initialData?.ios?.config?.exportMethod || 'development');
       setSelectedIosId(initialData?.credentials?.iosId || '');
       setSelectedAndroidId(initialData?.credentials?.androidId || '');
+
+      setSlackWebhook(initialData?.notifications?.slack?.webhookUrl || '');
+      setSlackEnabled(initialData?.notifications?.slack?.enabled || false);
+      setDiscordWebhook(initialData?.notifications?.discord?.webhookUrl || '');
+      setDiscordEnabled(initialData?.notifications?.discord?.enabled || false);
+      setTelegramBotToken(initialData?.notifications?.telegram?.botToken || '');
+      setTelegramChatId(initialData?.notifications?.telegram?.chatId || '');
+      setTelegramEnabled(initialData?.notifications?.telegram?.enabled || false);
     }
   }, [isOpen, initialData]);
 
@@ -141,6 +174,21 @@ export const useProjectForm = (
         iosId: selectedIosId || undefined,
         androidId: selectedAndroidId || undefined,
       },
+      notifications: {
+        slack: {
+          webhookUrl: slackWebhook,
+          enabled: slackEnabled,
+        },
+        discord: {
+          webhookUrl: discordWebhook,
+          enabled: discordEnabled,
+        },
+        telegram: {
+          botToken: telegramBotToken,
+          chatId: telegramChatId,
+          enabled: telegramEnabled,
+        },
+      },
     };
 
     console.log('Submitting Project Data:', projectData);
@@ -178,6 +226,20 @@ export const useProjectForm = (
       setSelectedAndroidCredentialId: setSelectedAndroidId,
       iosCredentials,
       androidCredentials,
+      slackWebhook,
+      setSlackWebhook,
+      slackEnabled,
+      setSlackEnabled,
+      discordWebhook,
+      setDiscordWebhook,
+      discordEnabled,
+      setDiscordEnabled,
+      telegramBotToken,
+      setTelegramBotToken,
+      telegramChatId,
+      setTelegramChatId,
+      telegramEnabled,
+      setTelegramEnabled,
     },
     handlers: {
       handleBrowse,

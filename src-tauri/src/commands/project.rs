@@ -341,7 +341,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
 pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id FROM projects")
+        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id, slack_notifications FROM projects")
         .map_err(|e| e.to_string())?;
 
     let project_iter = stmt
@@ -352,6 +352,11 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
             let ios_export_method: Option<String> = row.get(12)?;
             let ios_api_key: Option<String> = row.get(13)?;
             let ios_api_issuer: Option<String> = row.get(14)?;
+            let slack_notifications_json: Option<String> = row.get(17)?;
+
+            let notifications = slack_notifications_json.and_then(|s| {
+                serde_json::from_str(&s).ok()
+            });
 
             let ios_config = if let (Some(scheme), Some(configuration)) = (ios_scheme.clone(), ios_configuration.clone()) {
                 Some(crate::models::project::IosConfig {
@@ -385,6 +390,7 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                     ios_id: row.get(15)?,
                     android_id: row.get(16)?,
                 },
+                notifications,
             };
             println!("Loaded project: {} with credentials: {:?}", p.name, p.credentials);
             Ok(p)
@@ -417,9 +423,10 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             version_ios, version_android,
             build_number_ios, build_number_android,
             ios_scheme, ios_configuration, ios_team_id, ios_export_method,
-            ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id
+            ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id,
+            slack_notifications
         )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
         params![
             project.id,
             project.name,
@@ -438,6 +445,7 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             project.ios.config.as_ref().and_then(|c| c.api_issuer.as_ref()),
             project.credentials.ios_id,
             project.credentials.android_id,
+            serde_json::to_string(&project.notifications).unwrap_or_default(),
         ],
     )
     .map_err(|e| e.to_string())?;

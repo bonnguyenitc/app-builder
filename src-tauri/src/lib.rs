@@ -12,6 +12,7 @@ use commands::icon_generator::*;
 use commands::permissions::*;
 use commands::doctor::*;
 use commands::emulator::*;
+use commands::notification::*;
 use models::database::init_db;
 use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
@@ -94,7 +95,8 @@ pub fn run() {
             simctl_erase_device,
             start_recording,
             stop_recording,
-            is_device_recording
+            is_device_recording,
+            test_notification
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

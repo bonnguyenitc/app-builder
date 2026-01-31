@@ -37,6 +37,36 @@ pub struct ProjectCredentials {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct SlackConfig {
+    pub webhook_url: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DiscordConfig {
+    pub webhook_url: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TelegramConfig {
+    pub bot_token: String,
+    pub chat_id: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationConfig {
+    pub slack: Option<SlackConfig>,
+    pub discord: Option<DiscordConfig>,
+    pub telegram: Option<TelegramConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: String,
     pub name: String,
@@ -44,6 +74,8 @@ pub struct Project {
     pub ios: IosPlatform,
     pub android: AndroidPlatform,
     pub credentials: ProjectCredentials,
+    #[serde(default)]
+    pub notifications: Option<NotificationConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

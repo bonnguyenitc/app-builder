@@ -30,5 +30,6 @@ regex = "1.12.2"
 chrono = "0.4"
 image = "0.25"
 quick-xml = { version = "0.39.0", features = ["serialize"] }
+reqwest = { version = "0.13.1", features = ["json"] }
 
 

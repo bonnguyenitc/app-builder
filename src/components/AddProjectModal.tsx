@@ -6,6 +6,7 @@ import { GeneralInfoSection } from './AddProject/GeneralInfoSection';
 import { PlatformConfigSection } from './AddProject/PlatformConfigSection';
 import { IosBuildSettings } from './AddProject/IosBuildSettings';
 import { AndroidBuildSettings } from './AddProject/AndroidBuildSettings';
+import { NotificationSettings } from './AddProject/NotificationSettings';
 
 interface AddProjectModalProps {
   isOpen: boolean;
@@ -158,6 +159,24 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
             selectedCredentialId={states.selectedAndroidCredentialId}
             setSelectedCredentialId={states.setSelectedAndroidCredentialId}
             credentials={states.androidCredentials}
+          />
+
+          <NotificationSettings
+            projectName={states.name}
+            slackWebhook={states.slackWebhook}
+            setSlackWebhook={states.setSlackWebhook}
+            slackEnabled={states.slackEnabled}
+            setSlackEnabled={states.setSlackEnabled}
+            discordWebhook={states.discordWebhook}
+            setDiscordWebhook={states.setDiscordWebhook}
+            discordEnabled={states.discordEnabled}
+            setDiscordEnabled={states.setDiscordEnabled}
+            telegramBotToken={states.telegramBotToken}
+            setTelegramBotToken={states.setTelegramBotToken}
+            telegramChatId={states.telegramChatId}
+            setTelegramChatId={states.setTelegramChatId}
+            telegramEnabled={states.telegramEnabled}
+            setTelegramEnabled={states.setTelegramEnabled}
           />
 
           {/* Footer Actions */}
