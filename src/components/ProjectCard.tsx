@@ -97,7 +97,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           marginBottom: 'var(--spacing-md)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)',
+            flex: 1,
+            minWidth: 0,
+            marginRight: 'var(--spacing-sm)',
+          }}
+        >
           <div
             style={{
               width: '40px',
@@ -111,12 +120,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               color: 'white',
               fontSize: '16px',
               fontWeight: 700,
+              flexShrink: 0,
             }}
           >
             {project.name.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '2px' }}>
+          <div style={{ minWidth: 0 }}>
+            <h3
+              style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                marginBottom: '2px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={project.name}
+            >
               {project.name}
             </h3>
             <p
@@ -125,13 +145,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 fontSize: '12px',
                 fontFamily:
                   "'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace",
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
+              title={project.ios.bundleId || project.android.bundleId}
             >
               {project.ios.bundleId || project.android.bundleId}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
+        <div style={{ display: 'flex', gap: 'var(--spacing-xs)', flexShrink: 0 }}>
           <button
             onClick={(e) => {
               e.stopPropagation();
