@@ -5,6 +5,7 @@ use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 use plist::Value;
 use regex::Regex;
 
@@ -490,3 +491,56 @@ pub async fn delete_project(state: State<'_, DbState>, id: String) -> Result<(),
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[command]
+pub async fn open_xcode(project_path: String) -> Result<(), String> {
+    let ios_dir = Path::new(&project_path).join("ios");
+    if !ios_dir.exists() {
+        return Err("iOS directory not found".to_string());
+    }
+
+    // Try to find .xcworkspace first, then .xcodeproj
+    let entries = fs::read_dir(&ios_dir).map_err(|e| e.to_string())?;
+    let mut target_path = None;
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if let Some(ext) = path.extension() {
+            if ext == "xcworkspace" {
+                target_path = Some(path);
+                break;
+            } else if ext == "xcodeproj" && target_path.is_none() {
+                target_path = Some(path);
+            }
+        }
+    }
+
+    if let Some(path) = target_path {
+        Command::new("open")
+            .arg(path)
+            .spawn()
+            .map_err(|e| format!("Failed to open Xcode: {}", e))?;
+        Ok(())
+    } else {
+        Err("No Xcode project or workspace found".to_string())
+    }
+}
+
+#[command]
+pub async fn open_android_studio(project_path: String) -> Result<(), String> {
+    let android_dir = Path::new(&project_path).join("android");
+    if !android_dir.exists() {
+        return Err("Android directory not found".to_string());
+    }
+
+    // On macOS, we can use 'open -a "Android Studio" <path>'
+    Command::new("open")
+        .arg("-a")
+        .arg("Android Studio")
+        .arg(android_dir)
+        .spawn()
+        .map_err(|e| format!("Failed to open Android Studio: {}", e))?;
+
+    Ok(())
+}
+

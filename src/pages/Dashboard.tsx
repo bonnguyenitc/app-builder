@@ -15,6 +15,7 @@ import { AddProjectModal } from '../components/AddProjectModal';
 import { DeepCleanModal } from '../components/DeepCleanModal';
 import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
+import { invoke } from '@tauri-apps/api/core';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -103,6 +104,23 @@ export const Dashboard: React.FC = () => {
     if (deletingProject) {
       await deleteProject(deletingProject.id);
       setDeletingProject(undefined);
+    }
+  };
+
+  const handleOpenXcode = async (project: Project) => {
+    try {
+      await invoke('open_xcode', { projectPath: project.path });
+    } catch (err) {
+      console.error('Failed to open Xcode:', err);
+      // You might want to show an alert here if it fails
+    }
+  };
+
+  const handleOpenAndroidStudio = async (project: Project) => {
+    try {
+      await invoke('open_android_studio', { projectPath: project.path });
+    } catch (err) {
+      console.error('Failed to open Android Studio:', err);
     }
   };
 
@@ -240,6 +258,8 @@ export const Dashboard: React.FC = () => {
                   onDelete={() => handleDeleteProject(project)}
                   onPermissions={() => navigate(`/permissions/${project.id}`)}
                   onDeepClean={() => handleDeepClean(project)}
+                  onOpenXcode={() => handleOpenXcode(project)}
+                  onOpenAndroidStudio={() => handleOpenAndroidStudio(project)}
                 />
               </div>
             );

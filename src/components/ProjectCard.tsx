@@ -21,6 +21,8 @@ interface ProjectCardProps {
   onDelete: () => void;
   onPermissions: () => void;
   onDeepClean: () => void;
+  onOpenXcode: () => void;
+  onOpenAndroidStudio: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -31,6 +33,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
   onPermissions,
   onDeepClean,
+  onOpenXcode,
+  onOpenAndroidStudio,
 }) => {
   const [uploadToAppStore, setUploadToAppStore] = useState(() => {
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
@@ -156,34 +160,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         </div>
         <div style={{ display: 'flex', gap: 'var(--spacing-xs)', flexShrink: 0 }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPermissions();
-            }}
-            className="btn btn-ghost"
-            style={{
-              padding: '6px',
-              borderRadius: 'var(--radius-sm)',
-            }}
-            title="Manage Permissions"
-          >
-            <ShieldIcon size={14} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeepClean();
-            }}
-            className="btn btn-ghost"
-            style={{
-              padding: '6px',
-              borderRadius: 'var(--radius-sm)',
-            }}
-            title="Deep Clean (Fix Everything)"
-          >
-            <EraserIcon size={14} />
-          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -396,6 +372,111 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <span>Build Android</span>
             </>
           )}
+        </button>
+      </div>
+
+      {/* Utility Actions */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--spacing-sm)',
+          marginTop: 'var(--spacing-md)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onPermissions}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <ShieldIcon size={12} />
+          <span>Permissions</span>
+        </button>
+        <button
+          onClick={onDeepClean}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <EraserIcon size={12} />
+          <span>Deep Clean</span>
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--spacing-sm)',
+          marginTop: 'var(--spacing-sm)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onOpenXcode}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <AppleIcon size={12} />
+          <span>Xcode</span>
+        </button>
+        <button
+          onClick={onOpenAndroidStudio}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <AndroidIcon size={12} />
+          <span>Studio</span>
         </button>
       </div>
 

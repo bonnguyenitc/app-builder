@@ -101,7 +101,9 @@ pub fn run() {
             test_notification,
             generate_keystore,
             show_in_folder,
-            deep_clean_project
+            deep_clean_project,
+            open_xcode,
+            open_android_studio
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
