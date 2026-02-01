@@ -1,4 +1,5 @@
 import React from 'react';
+import { MinusIcon, PlusIcon } from '../Icons';
 import { inputStyle, labelStyle, sectionStyle } from './AddProject.styles';
 
 interface PlatformConfigSectionProps {
@@ -28,6 +29,30 @@ export const PlatformConfigSection: React.FC<PlatformConfigSectionProps> = ({
   setBuildNumber,
   buildNumberLabel,
 }) => {
+  const [inputValue, setInputValue] = React.useState(buildNumber.toString());
+
+  React.useEffect(() => {
+    setInputValue(buildNumber.toString());
+  }, [buildNumber]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val);
+    const parsed = parseInt(val);
+    if (!isNaN(parsed)) {
+      setBuildNumber(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    if (inputValue === '' || isNaN(parseInt(inputValue))) {
+      setInputValue(buildNumber.toString());
+    }
+  };
+
+  const increment = () => setBuildNumber(buildNumber + 1);
+  const decrement = () => setBuildNumber(Math.max(1, buildNumber - 1));
+
   return (
     <div>
       <div
@@ -72,13 +97,77 @@ export const PlatformConfigSection: React.FC<PlatformConfigSectionProps> = ({
           </div>
           <div>
             <label style={labelStyle}>{buildNumberLabel}</label>
-            <input
-              type="number"
-              style={inputStyle}
-              value={buildNumber}
-              onChange={(e) => setBuildNumber(parseInt(e.target.value) || 0)}
-              placeholder="1"
-            />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)',
+                height: '40px',
+                overflow: 'hidden',
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={decrement}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '100%',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--color-text-secondary)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <MinusIcon size={14} />
+              </button>
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  textAlign: 'center',
+                  background: 'transparent',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'var(--color-text)',
+                  width: '100%',
+                  outline: 'none',
+                  padding: 0,
+                }}
+              />
+              <button
+                type="button"
+                onClick={increment}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '100%',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--color-text-secondary)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <PlusIcon size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
