@@ -118,8 +118,6 @@ fn update_build_json(
     android_package: &str,
     android_version: &str,
     android_version_code: u32,
-    credentials: &crate::models::project::ProjectCredentials,
-    ios_config: Option<&crate::models::project::IosConfig>,
 ) -> Result<(), String> {
     // Use .app-builder/build.json instead of build.json
     let app_builder_dir = Path::new(project_path).join(".app-builder");
@@ -145,7 +143,6 @@ fn update_build_json(
                 "buildNumber": ios_build_number.to_string()
             },
             "name": project_name,
-            "credentials": credentials
         });
 
         let template_content = serde_json::to_string_pretty(&template)
@@ -200,12 +197,13 @@ fn update_build_json(
         }
     }
 
-    // Update credentials
-    json_value["credentials"] = serde_json::to_value(credentials).unwrap_or(serde_json::Value::Null);
 
-    // Update ios config if available
-    if let Some(config) = ios_config {
-        json_value["iosConfig"] = serde_json::to_value(config).unwrap_or(serde_json::Value::Null);
+
+    // Ensure iosConfig, androidConfig, and credentials are not saved
+    if let Some(obj) = json_value.as_object_mut() {
+        obj.remove("iosConfig");
+        obj.remove("androidConfig");
+        obj.remove("credentials");
     }
 
     let new_content = serde_json::to_string_pretty(&json_value)
@@ -474,8 +472,6 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         &project.android.bundle_id,
         &project.android.version,
         project.android.version_code,
-        &project.credentials,
-        project.ios.config.as_ref(),
     )?;
 
     Ok(())
