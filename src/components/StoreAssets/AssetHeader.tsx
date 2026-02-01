@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { PlusIcon, DownloadIcon, SparklesIcon } from '../Icons';
+import { PlusIcon, SparklesIcon } from '../Icons';
 
 interface AssetHeaderProps {
   onFileUpload: (files: FileList | null) => void;

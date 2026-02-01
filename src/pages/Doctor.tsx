@@ -2,13 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { DoctorResult, DoctorCheck } from '../types/doctor';
 import {
-  StethoscopeIcon,
   CheckCircleIcon,
   XCircleIcon,
   AlertCircleIcon,
   LoaderIcon,
   TerminalIcon,
-  SparklesIcon,
   ActivityIcon,
   ShieldCheckIcon,
 } from '../components/Icons';

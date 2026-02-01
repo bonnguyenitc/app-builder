@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CloseIcon, LinkIcon } from '../Icons';
+import { LinkIcon } from '../Icons';
 
 interface DeepLinkModalProps {
   initialUrl: string;

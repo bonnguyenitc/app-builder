@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { AppleIcon, AndroidIcon, UploadIcon, TrashIcon, SmartphoneIcon } from '../Icons';
+import { AppleIcon, AndroidIcon, UploadIcon, TrashIcon } from '../Icons';
 import {
   DEVICE_PRESETS,
   GRADIENT_PRESETS,
