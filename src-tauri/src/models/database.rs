@@ -30,7 +30,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
             ios_api_issuer TEXT,
             ios_credential_id TEXT,
             android_credential_id TEXT,
-            slack_notifications TEXT
+            slack_notifications TEXT,
+            android_build_command TEXT
         )",
         [],
     )?;
@@ -45,6 +46,7 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN ios_credential_id TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_credential_id TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN slack_notifications TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_build_command TEXT", []);
 
     // Create credentials table
     conn.execute(
@@ -74,6 +76,7 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
             timestamp INTEGER NOT NULL,
             logs TEXT,
             release_note TEXT,
+            format TEXT,
             FOREIGN KEY(project_id) REFERENCES projects(id)
         )",
         [],
@@ -81,6 +84,7 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
 
     // Migration for existing databases
     let _ = conn.execute("ALTER TABLE build_history ADD COLUMN release_note TEXT", []);
+    let _ = conn.execute("ALTER TABLE build_history ADD COLUMN format TEXT", []);
 
     Ok(conn)
 }

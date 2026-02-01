@@ -11,7 +11,7 @@ export const useBuild = () => {
     async (
       project: Project,
       platform: 'ios' | 'android',
-      options?: { uploadToAppStore?: boolean; releaseNote?: string },
+      options?: { uploadToAppStore?: boolean; releaseNote?: string; androidFormat?: 'apk' | 'aab' },
     ) => {
       const buildId = Math.random().toString(36).substr(2, 9);
       const initialBuild: BuildHistory = {
@@ -24,6 +24,7 @@ export const useBuild = () => {
         timestamp: Date.now(),
         logs: `Starting ${platform} build for ${project.name}...\n`,
         releaseNote: options?.releaseNote || '',
+        format: platform === 'android' ? options?.androidFormat : undefined,
       };
 
       // Use a temporary record in buildStore

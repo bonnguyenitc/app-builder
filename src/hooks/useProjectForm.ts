@@ -12,6 +12,7 @@ interface AppJsonInfo {
   android_version: string | null;
   ios_build_number: string | null;
   android_version_code: number | null;
+  android_build_command: string | null;
 }
 
 export const useProjectForm = (
@@ -32,6 +33,9 @@ export const useProjectForm = (
   const [iosBuildNumber, setIosBuildNumber] = useState(initialData?.ios?.buildNumber || 1);
   const [androidBuildNumber, setAndroidBuildNumber] = useState(
     initialData?.android?.versionCode || 1,
+  );
+  const [androidBuildCommand, setAndroidBuildCommand] = useState(
+    initialData?.android?.buildCommand || '',
   );
   const [iosScheme, setIosScheme] = useState(initialData?.ios?.config?.scheme || '');
   const [iosConfiguration, setIosConfiguration] = useState(
@@ -85,6 +89,7 @@ export const useProjectForm = (
       setAndroidVersion(initialData?.android?.version || '1.0.0');
       setIosBuildNumber(initialData?.ios?.buildNumber || 1);
       setAndroidBuildNumber(initialData?.android?.versionCode || 1);
+      setAndroidBuildCommand(initialData?.android?.buildCommand || '');
       setIosScheme(initialData?.ios?.config?.scheme || '');
       setIosConfiguration(initialData?.ios?.config?.configuration || 'Release');
       setIosExportMethod(initialData?.ios?.config?.exportMethod || 'development');
@@ -127,6 +132,7 @@ export const useProjectForm = (
             if (!isNaN(parsed)) setIosBuildNumber(parsed);
           }
           if (appInfo.android_version_code) setAndroidBuildNumber(appInfo.android_version_code);
+          if (appInfo.android_build_command) setAndroidBuildCommand(appInfo.android_build_command);
         } catch (error) {
           console.log('Could not read native project info:', error);
           if (!name && selected) {
@@ -169,6 +175,7 @@ export const useProjectForm = (
         bundleId: androidBundle,
         version: androidVersion,
         versionCode: androidBuildNumber,
+        buildCommand: androidBuildCommand || undefined,
       },
       credentials: {
         iosId: selectedIosId || undefined,
@@ -214,6 +221,8 @@ export const useProjectForm = (
       setIosBuildNumber,
       androidBuildNumber,
       setAndroidBuildNumber,
+      androidBuildCommand,
+      setAndroidBuildCommand,
       iosScheme,
       setIosScheme,
       iosConfiguration,

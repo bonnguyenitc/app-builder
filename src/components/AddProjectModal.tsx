@@ -158,6 +158,8 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
           <AndroidBuildSettings
             selectedCredentialId={states.selectedAndroidCredentialId}
             setSelectedCredentialId={states.setSelectedAndroidCredentialId}
+            buildCommand={states.androidBuildCommand}
+            setBuildCommand={states.setAndroidBuildCommand}
             credentials={states.androidCredentials}
           />
 

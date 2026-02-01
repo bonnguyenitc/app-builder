@@ -6,12 +6,16 @@ import { Credential } from '../../types/credential';
 interface AndroidBuildSettingsProps {
   selectedCredentialId: string;
   setSelectedCredentialId: (val: string) => void;
+  buildCommand: string;
+  setBuildCommand: (val: string) => void;
   credentials: Credential[];
 }
 
 export const AndroidBuildSettings: React.FC<AndroidBuildSettingsProps> = ({
   selectedCredentialId,
   setSelectedCredentialId,
+  buildCommand,
+  setBuildCommand,
   credentials,
 }) => {
   return (
@@ -56,6 +60,29 @@ export const AndroidBuildSettings: React.FC<AndroidBuildSettingsProps> = ({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label style={labelStyle}>
+            Custom Build Command
+            <span
+              style={{
+                color: 'var(--color-text-secondary)',
+                fontWeight: 400,
+                marginLeft: '4px',
+                fontSize: '12px',
+              }}
+            >
+              (optional, e.g. ./gradlew assembleRelease)
+            </span>
+          </label>
+          <input
+            type="text"
+            style={inputStyle}
+            placeholder="./gradlew bundleRelease"
+            value={buildCommand}
+            onChange={(e) => setBuildCommand(e.target.value)}
+          />
         </div>
 
         {credentials.length === 0 && (

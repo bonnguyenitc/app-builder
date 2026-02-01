@@ -239,6 +239,22 @@ export const ReleaseHistory: React.FC = () => {
                         </div>
                         <span style={{ fontWeight: 500, textTransform: 'capitalize' }}>
                           {build.platform}
+                          {build.format && (
+                            <span
+                              style={{
+                                marginLeft: '6px',
+                                fontSize: '10px',
+                                opacity: 0.7,
+                                fontWeight: 700,
+                                background: 'rgba(0,0,0,0.1)',
+                                padding: '1px 4px',
+                                borderRadius: '3px',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {build.format}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </td>
@@ -288,6 +304,7 @@ export const ReleaseHistory: React.FC = () => {
                                   invoke('open_build_folder', {
                                     project,
                                     platform: build.platform,
+                                    format: build.format,
                                   }).catch((err) => console.error(err));
                                 });
                               }

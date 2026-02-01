@@ -18,6 +18,7 @@ pub struct AppJsonInfo {
     pub android_version: Option<String>,
     pub ios_build_number: Option<String>,
     pub android_version_code: Option<u32>,
+    pub android_build_command: Option<String>,
 }
 
 // ... existing structs ...
@@ -37,6 +38,8 @@ struct AndroidConfig {
     version: Option<String>,
     #[serde(rename = "versionCode")]
     version_code: Option<u32>,
+    #[serde(rename = "buildCommand")]
+    build_command: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -119,6 +122,7 @@ fn update_build_json(
     android_package: &str,
     android_version: &str,
     android_version_code: u32,
+    android_build_command: Option<&str>,
 ) -> Result<(), String> {
     // Use .app-builder/build.json instead of build.json
     let app_builder_dir = Path::new(project_path).join(".app-builder");
@@ -136,7 +140,8 @@ fn update_build_json(
             "android": {
                 "package": android_package,
                 "version": android_version,
-                "versionCode": android_version_code
+                "versionCode": android_version_code,
+                "buildCommand": android_build_command
             },
             "ios": {
                 "bundleIdentifier": ios_bundle_id,
@@ -195,6 +200,10 @@ fn update_build_json(
                 "versionCode".to_string(),
                 serde_json::json!(android_version_code),
             );
+            obj.insert(
+                "buildCommand".to_string(),
+                serde_json::json!(android_build_command),
+            );
         }
     }
 
@@ -241,6 +250,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
                     android_version: app_json.android.as_ref().and_then(|android| android.version.clone()),
                     ios_build_number: app_json.ios.as_ref().and_then(|ios| ios.build_number.clone()),
                     android_version_code: app_json.android.as_ref().and_then(|android| android.version_code),
+                    android_build_command: app_json.android.as_ref().and_then(|android| android.build_command.clone()),
                 };
                 return Ok(info);
             }
@@ -256,6 +266,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
         android_version: None,
         ios_build_number: None,
         android_version_code: None,
+        android_build_command: None,
     };
 
     // Try to extract project name from path
@@ -340,7 +351,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
 pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id, slack_notifications FROM projects")
+        .prepare("SELECT id, name, path, bundle_id_ios, bundle_id_android, version_ios, version_android, build_number_ios, build_number_android, ios_scheme, ios_configuration, ios_team_id, ios_export_method, ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id, slack_notifications, android_build_command FROM projects")
         .map_err(|e| e.to_string())?;
 
     let project_iter = stmt
@@ -384,6 +395,7 @@ pub async fn list_projects(state: State<'_, DbState>) -> Result<Vec<Project>, St
                     bundle_id: row.get(4)?,
                     version: row.get(6)?,
                     version_code: row.get(8)?,
+                    build_command: row.get(18)?,
                 },
                 credentials: crate::models::project::ProjectCredentials {
                     ios_id: row.get(15)?,
@@ -423,9 +435,9 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             build_number_ios, build_number_android,
             ios_scheme, ios_configuration, ios_team_id, ios_export_method,
             ios_api_key, ios_api_issuer, ios_credential_id, android_credential_id,
-            slack_notifications
+            slack_notifications, android_build_command
         )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)",
         params![
             project.id,
             project.name,
@@ -445,6 +457,7 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
             project.credentials.ios_id,
             project.credentials.android_id,
             serde_json::to_string(&project.notifications).unwrap_or_default(),
+            project.android.build_command.as_ref(),
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -473,6 +486,7 @@ pub async fn save_project(state: State<'_, DbState>, project: Project) -> Result
         &project.android.bundle_id,
         &project.android.version,
         project.android.version_code,
+        project.android.build_command.as_deref(),
     )?;
 
     Ok(())

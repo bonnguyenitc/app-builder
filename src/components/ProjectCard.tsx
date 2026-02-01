@@ -14,7 +14,7 @@ interface ProjectCardProps {
   project: Project;
   onBuild: (
     platform: 'ios' | 'android',
-    options?: { uploadToAppStore?: boolean; releaseNote?: string },
+    options?: { uploadToAppStore?: boolean; releaseNote?: string; androidFormat?: 'apk' | 'aab' },
   ) => void;
   onSelect: () => void;
   onEdit: () => void;
@@ -44,7 +44,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     return localStorage.getItem(`release_note_${project.id}`) || '';
   });
 
+  const [androidFormat, setAndroidFormat] = useState<'apk' | 'aab'>(() => {
+    return (localStorage.getItem(`android_format_${project.id}`) as 'apk' | 'aab') || 'aab';
+  });
+
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleAndroidFormatChange = (format: 'apk' | 'aab') => {
+    setAndroidFormat(format);
+    localStorage.setItem(`android_format_${project.id}`, format);
+  };
 
   const handleUploadChange = (checked: boolean) => {
     setUploadToAppStore(checked);
@@ -345,7 +354,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           onClick={(e) => {
             e.stopPropagation();
             if (canBuild) {
-              onBuild('android', { releaseNote: releaseNote.trim() });
+              onBuild('android', { releaseNote: releaseNote.trim(), androidFormat });
             }
           }}
           disabled={!canBuild}
@@ -373,6 +382,64 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </>
           )}
         </button>
+      </div>
+
+      {/* Android Format Selector */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          marginTop: '12px',
+          gap: '8px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+          Output:
+        </span>
+        <div
+          style={{
+            display: 'flex',
+            background: 'rgba(0,0,0,0.2)',
+            padding: '2px',
+            borderRadius: '6px',
+            border: '1px solid var(--color-border)',
+          }}
+        >
+          <button
+            onClick={() => handleAndroidFormatChange('aab')}
+            style={{
+              padding: '3px 10px',
+              fontSize: '10px',
+              fontWeight: 700,
+              borderRadius: '4px',
+              background: androidFormat === 'aab' ? 'var(--color-success)' : 'transparent',
+              color: androidFormat === 'aab' ? 'white' : 'var(--color-text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            AAB
+          </button>
+          <button
+            onClick={() => handleAndroidFormatChange('apk')}
+            style={{
+              padding: '3px 10px',
+              fontSize: '10px',
+              fontWeight: 700,
+              borderRadius: '4px',
+              background: androidFormat === 'apk' ? 'var(--color-success)' : 'transparent',
+              color: androidFormat === 'apk' ? 'white' : 'var(--color-text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            APK
+          </button>
+        </div>
       </div>
 
       {/* Utility Actions */}

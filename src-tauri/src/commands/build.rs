@@ -13,6 +13,8 @@ pub struct BuildOptions {
     #[serde(rename = "uploadToAppStore")]
     pub upload_to_app_store: Option<bool>,
     pub release_note: Option<String>,
+    #[serde(rename = "androidFormat")]
+    pub android_format: Option<String>,
 }
 
 #[command]
@@ -113,9 +115,21 @@ pub async fn build_project(
                 echo "🔍 Node version: $(node -v 2>/dev/null || echo 'unknown')"
                 echo "🔍 Java path: $(which java 2>/dev/null || echo 'not found')"
 
-                cd '{}' && ./gradlew bundleRelease 2>&1
+                cd '{}' && {} 2>&1
                 "#,
-                android_dir_str
+                android_dir_str,
+                {
+                    let format = options.as_ref().and_then(|o| o.android_format.as_deref()).unwrap_or("aab");
+                    let base_cmd = project.android.build_command.as_deref().unwrap_or(
+                        if format == "apk" { "./gradlew assembleRelease" } else { "./gradlew bundleRelease" }
+                    );
+
+                    if format == "apk" {
+                        base_cmd.replace("bundle", "assemble")
+                    } else {
+                        base_cmd.replace("assemble", "bundle")
+                    }
+                }
             );
 
             let cmd_info = format!("🔧 Running Android build with enhanced environment...");
@@ -188,24 +202,57 @@ pub async fn build_project(
                 window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
 
                 if status.success() {
-                    // Rename the AAB file
-                    let bundle_dir = android_dir.join("app/build/outputs/bundle/release");
-                    let original_aab = bundle_dir.join("app-release.aab");
+                    let format = options.as_ref().and_then(|o| o.android_format.as_deref()).unwrap_or("aab");
 
-                    if original_aab.exists() {
+                    // Paths to check for outputs
+                    let output_paths = if format == "apk" {
+                        vec![
+                            android_dir.join("app/build/outputs/apk/release"),
+                        ]
+                    } else {
+                        vec![
+                            android_dir.join("app/build/outputs/bundle/release"),
+                        ]
+                    };
+
+                    let mut found_file = None;
+                    let extension = if format == "apk" { "apk" } else { "aab" };
+
+                    for path in output_paths {
+                        if !path.exists() { continue; }
+                        if let Ok(entries) = std::fs::read_dir(path) {
+                            for entry in entries.flatten() {
+                                let p = entry.path();
+                                if p.is_file() && p.extension().and_then(|s| s.to_str()) == Some(extension) {
+                                    // Prefer files that don't have "unsigned" in the name if possible
+                                    let filename = p.file_name().unwrap().to_string_lossy();
+                                    if !filename.contains("unsigned") {
+                                        found_file = Some(p);
+                                        break;
+                                    } else if found_file.is_none() {
+                                        found_file = Some(p);
+                                    }
+                                }
+                            }
+                        }
+                        if found_file.is_some() { break; }
+                    }
+
+                    if let Some(original_path) = found_file {
                         let ts = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
                         let new_filename = format!(
-                            "{}_{}_{}_{}.aab",
+                            "{}_{}_{}_{}.{}",
                             project.name.replace(" ", "_"),
                             project.android.version,
                             project.android.version_code,
-                            ts
+                            ts,
+                            extension
                         );
-                        let new_aab_path = bundle_dir.join(&new_filename);
-                        std::fs::rename(&original_aab, &new_aab_path)
-                            .map_err(|e| format!("Failed to rename AAB file: {}", e))?;
+                        let dest_path = original_path.parent().unwrap().join(&new_filename);
+                        std::fs::rename(&original_path, &dest_path)
+                            .map_err(|e| format!("Failed to rename {} file: {}", extension.to_uppercase(), e))?;
 
-                        let rename_msg = format!("✅ AAB renamed to: {}", new_filename);
+                        let rename_msg = format!("✅ {} renamed to: {}", extension.to_uppercase(), new_filename);
                         window.emit("build-log", &rename_msg).map_err(|e| e.to_string())?;
                         writeln!(log_file, "{}", rename_msg).map_err(|e| e.to_string())?;
                     }
@@ -701,12 +748,16 @@ pub async fn cancel_build_process(
 }
 
 #[command]
-pub async fn open_build_folder(project: Project, platform: String) -> Result<(), String> {
+pub async fn open_build_folder(project: Project, platform: String, format: Option<String>) -> Result<(), String> {
     let folder_path = match platform.as_str() {
         "android" => {
              // Standard path for React Native / generic Android Gradle builds
-             std::path::Path::new(&project.path)
-                .join("android/app/build/outputs/bundle/release")
+             let sub_path = if format.as_deref() == Some("apk") {
+                 "android/app/build/outputs/apk/release"
+             } else {
+                 "android/app/build/outputs/bundle/release"
+             };
+             std::path::Path::new(&project.path).join(sub_path)
         },
         "ios" => {
             // iOS builds are now archived and exported to ios/build/

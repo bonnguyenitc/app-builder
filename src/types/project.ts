@@ -19,6 +19,7 @@ export interface Project {
     bundleId: string;
     version: string;
     versionCode: number;
+    buildCommand?: string;
   };
   credentials: {
     iosId?: string;
@@ -53,4 +54,5 @@ export interface BuildHistory {
   logs: string;
   logFilePath?: string; // Path to log file (especially for iOS builds)
   releaseNote: string;
+  format?: string;
 }

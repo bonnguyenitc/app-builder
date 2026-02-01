@@ -16,6 +16,7 @@ export const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 600,
   color: 'var(--color-text)',
+  marginTop: '12px',
 };
 
 export const sectionStyle: React.CSSProperties = {

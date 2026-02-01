@@ -14,8 +14,8 @@ pub struct PaginatedBuildHistory {
 pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory) -> Result<(), String> {
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO build_history (id, project_id, platform, version, build_number, status, timestamp, logs, release_note)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        "INSERT INTO build_history (id, project_id, platform, version, build_number, status, timestamp, logs, release_note, format)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         params![
             history.id,
             history.project_id,
@@ -26,6 +26,7 @@ pub async fn save_build_history(state: State<'_, DbState>, history: BuildHistory
             history.timestamp,
             history.logs,
             history.release_note,
+            history.format,
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -47,7 +48,7 @@ pub async fn list_build_history(state: State<'_, DbState>, page: u32, page_size:
     ).map_err(|e| e.to_string())?;
 
     let mut stmt = conn
-        .prepare("SELECT h.id, h.project_id, h.platform, h.version, h.build_number, h.status, h.timestamp, h.logs, h.release_note
+        .prepare("SELECT h.id, h.project_id, h.platform, h.version, h.build_number, h.status, h.timestamp, h.logs, h.release_note, h.format
                   FROM build_history h
                   INNER JOIN projects p ON h.project_id = p.id
                   ORDER BY h.timestamp DESC
@@ -66,6 +67,7 @@ pub async fn list_build_history(state: State<'_, DbState>, page: u32, page_size:
                 timestamp: row.get(6)?,
                 logs: row.get::<_, Option<String>>(7)?.unwrap_or_default(),
                 release_note: row.get::<_, Option<String>>(8)?.unwrap_or_default(),
+                format: row.get(9)?,
             })
         })
         .map_err(|e| e.to_string())?;

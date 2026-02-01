@@ -26,6 +26,7 @@ pub struct AndroidPlatform {
     pub bundle_id: String,
     pub version: String,
     pub version_code: u32,
+    pub build_command: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,4 +93,5 @@ pub struct BuildHistory {
     pub logs: String,
     #[serde(default)]
     pub release_note: String,
+    pub format: Option<String>,
 }
