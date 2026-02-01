@@ -227,6 +227,52 @@ fn update_build_json(
 
 
 
+pub fn is_expo_project(project_path: &std::path::Path) -> bool {
+    // Check for app.json or app.config.js (Expo config files)
+    let app_json_path = project_path.join("app.json");
+    let app_config_js_path = project_path.join("app.config.js");
+    let app_config_ts_path = project_path.join("app.config.ts");
+
+    // If app.json exists, check if it has "expo" key
+    if app_json_path.exists() {
+        if let Ok(content) = fs::read_to_string(&app_json_path) {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                if json.get("expo").is_some() {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // If app.config.js or app.config.ts exists, it's likely an Expo project
+    if app_config_js_path.exists() || app_config_ts_path.exists() {
+        return true;
+    }
+
+    // Check package.json for "expo" dependency
+    let package_json_path = project_path.join("package.json");
+    if package_json_path.exists() {
+        if let Ok(content) = fs::read_to_string(&package_json_path) {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
+                // Check in dependencies
+                if let Some(deps) = json.get("dependencies") {
+                    if deps.get("expo").is_some() {
+                        return true;
+                    }
+                }
+                // Check in devDependencies
+                if let Some(dev_deps) = json.get("devDependencies") {
+                    if dev_deps.get("expo").is_some() {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 #[command]
 pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInfo, String> {
     // Explicitly reject Flutter projects
@@ -556,5 +602,122 @@ pub async fn open_android_studio(project_path: String) -> Result<(), String> {
         .map_err(|e| format!("Failed to open Android Studio: {}", e))?;
 
     Ok(())
+}
+
+fn is_iterm_available() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .args(&["-Ra", "iTerm"])
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        false
+    }
+}
+
+#[command]
+pub async fn start_metro(project_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&project_path);
+    if !path.exists() {
+        return Err("Project path does not exist".to_string());
+    }
+
+    let is_expo = is_expo_project(path);
+    let start_cmd = if is_expo {
+        "npx expo start"
+    } else {
+        "npx react-native start"
+    };
+
+    #[cfg(target_os = "macos")]
+    {
+        let apple_script = if is_iterm_available() {
+            format!(
+                r#"
+                tell application "iTerm"
+                    if exists window 1 then
+                        tell current window
+                            create tab with default profile
+                            tell current session
+                                write text "cd '{}' && {}"
+                            end tell
+                        end tell
+                    else
+                        create window with default profile
+                        tell current session of current window
+                            write text "cd '{}' && {}"
+                        end tell
+                    end if
+                    activate
+                end tell
+                "#,
+                project_path, start_cmd, project_path, start_cmd
+            )
+        } else {
+            format!(
+                r#"
+                tell application "Terminal"
+                    do script "cd '{}' && {}"
+                    activate
+                end tell
+                "#,
+                project_path, start_cmd
+            )
+        };
+
+        Command::new("osascript")
+            .arg("-e")
+            .arg(apple_script)
+            .spawn()
+            .map_err(|e| format!("Failed to start Metro: {}", e))?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Only macOS is supported for this command".to_string())
+    }
+}
+
+#[command]
+pub async fn open_in_vscode(project_path: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg("-a")
+            .arg("Visual Studio Code")
+            .arg(project_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open VS Code: {}", e))?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Only macOS is supported for this command".to_string())
+    }
+}
+#[command]
+pub async fn open_terminal(project_path: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let terminal_app = if is_iterm_available() { "iTerm" } else { "Terminal" };
+        Command::new("open")
+            .arg("-a")
+            .arg(terminal_app)
+            .arg(project_path)
+            .spawn()
+            .map_err(|e| format!("Failed to open {}: {}", terminal_app, e))?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("Only macOS is supported for this command".to_string())
+    }
 }
 

@@ -194,51 +194,7 @@ pub async fn launch_emulator(id: String, platform: String) -> Result<(), String>
 }
 
 /// Check if the project is an Expo project by looking for Expo-specific files and dependencies
-fn is_expo_project(project_path: &std::path::Path) -> bool {
-    // Check for app.json or app.config.js (Expo config files)
-    let app_json_path = project_path.join("app.json");
-    let app_config_js_path = project_path.join("app.config.js");
-    let app_config_ts_path = project_path.join("app.config.ts");
-
-    // If app.json exists, check if it has "expo" key
-    if app_json_path.exists() {
-        if let Ok(content) = fs::read_to_string(&app_json_path) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                if json.get("expo").is_some() {
-                    return true;
-                }
-            }
-        }
-    }
-
-    // If app.config.js or app.config.ts exists, it's likely an Expo project
-    if app_config_js_path.exists() || app_config_ts_path.exists() {
-        return true;
-    }
-
-    // Check package.json for "expo" dependency
-    let package_json_path = project_path.join("package.json");
-    if package_json_path.exists() {
-        if let Ok(content) = fs::read_to_string(&package_json_path) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                // Check in dependencies
-                if let Some(deps) = json.get("dependencies") {
-                    if deps.get("expo").is_some() {
-                        return true;
-                    }
-                }
-                // Check in devDependencies
-                if let Some(dev_deps) = json.get("devDependencies") {
-                    if dev_deps.get("expo").is_some() {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    false
-}
+use crate::commands::project::is_expo_project;
 
 #[command]
 pub async fn run_app_on_emulator(project_path: String, platform: String, device_id: String, device_name: String) -> Result<(), String> {
@@ -825,4 +781,16 @@ pub async fn is_device_recording(
 ) -> Result<bool, String> {
     let map = state.0.lock().map_err(|_| "Failed to lock recording state")?;
     Ok(map.contains_key(&device_id))
+}
+#[command]
+pub async fn run_app_on_booted_device(project_path: String, platform: String) -> Result<(), String> {
+    let emulators = list_emulators().await?;
+    let booted_device = emulators.into_iter()
+        .find(|e| e.platform == platform && e.state == "Booted");
+
+    if let Some(device) = booted_device {
+        run_app_on_emulator(project_path, platform, device.id, device.name).await
+    } else {
+        Err(format!("No booted {} device found. Please start an emulator/simulator first.", platform))
+    }
 }

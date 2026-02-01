@@ -103,7 +103,11 @@ pub fn run() {
             show_in_folder,
             deep_clean_project,
             open_xcode,
-            open_android_studio
+            open_android_studio,
+            start_metro,
+            open_in_vscode,
+            open_terminal,
+            run_app_on_booted_device
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

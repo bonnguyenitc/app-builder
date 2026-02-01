@@ -7,6 +7,10 @@ import {
   TrashIcon,
   ShieldIcon,
   EraserIcon,
+  RocketIcon,
+  CodeIcon,
+  TerminalIcon,
+  PlayIcon,
 } from './Icons';
 import { Project } from '../types/project';
 
@@ -23,6 +27,10 @@ interface ProjectCardProps {
   onDeepClean: () => void;
   onOpenXcode: () => void;
   onOpenAndroidStudio: () => void;
+  onStartMetro: () => void;
+  onOpenVSCode: () => void;
+  onOpenTerminal: () => void;
+  onRunApp: (platform: 'ios' | 'android') => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -35,6 +43,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onDeepClean,
   onOpenXcode,
   onOpenAndroidStudio,
+  onStartMetro,
+  onOpenVSCode,
+  onOpenTerminal,
+  onRunApp,
 }) => {
   const [uploadToAppStore, setUploadToAppStore] = useState(() => {
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
@@ -224,9 +236,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <AppleIcon size={14} />
           </div>
           <span style={{ flex: 1, fontWeight: 500 }}>iOS</span>
-          <span className="badge badge-primary" style={{ fontSize: '11px', padding: '2px 8px' }}>
-            {project.ios.version} ({project.ios.buildNumber})
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span className="badge badge-primary" style={{ fontSize: '11px', padding: '2px 8px' }}>
+              {project.ios.version} ({project.ios.buildNumber})
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRunApp('ios');
+              }}
+              className="btn btn-ghost"
+              title="Run on Simulator"
+              style={{ padding: '2px', borderRadius: '4px', color: 'var(--color-primary)' }}
+            >
+              <PlayIcon size={12} fill="currentColor" />
+            </button>
+          </div>
         </div>
         <div
           style={{
@@ -240,9 +265,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <AndroidIcon size={14} />
           </div>
           <span style={{ flex: 1, fontWeight: 500 }}>Android</span>
-          <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 8px' }}>
-            {project.android.version} ({project.android.versionCode})
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 8px' }}>
+              {project.android.version} ({project.android.versionCode})
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRunApp('android');
+              }}
+              className="btn btn-ghost"
+              title="Run on Emulator"
+              style={{ padding: '2px', borderRadius: '4px', color: 'var(--color-success)' }}
+            >
+              <PlayIcon size={12} fill="currentColor" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -544,6 +582,80 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         >
           <AndroidIcon size={12} />
           <span>Studio</span>
+        </button>
+        <button
+          onClick={onOpenVSCode}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <CodeIcon size={12} />
+          <span>VS Code</span>
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--spacing-sm)',
+          marginTop: 'var(--spacing-sm)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onStartMetro}
+          className="btn btn-ghost"
+          style={{
+            flex: 1.5,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-primary)',
+            background: 'rgba(0, 122, 255, 0.05)',
+            border: '1px solid rgba(0, 122, 255, 0.2)',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 600,
+          }}
+        >
+          <RocketIcon size={12} />
+          <span>Start Metro</span>
+        </button>
+        <button
+          onClick={onOpenTerminal}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <TerminalIcon size={12} />
+          <span>Terminal</span>
         </button>
       </div>
 

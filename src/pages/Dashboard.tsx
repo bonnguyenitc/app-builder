@@ -124,6 +124,39 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleStartMetro = async (project: Project) => {
+    try {
+      await invoke('start_metro', { projectPath: project.path });
+    } catch (err) {
+      console.error('Failed to start Metro:', err);
+    }
+  };
+
+  const handleOpenVSCode = async (project: Project) => {
+    try {
+      await invoke('open_in_vscode', { projectPath: project.path });
+    } catch (err) {
+      console.error('Failed to open VS Code:', err);
+    }
+  };
+
+  const handleOpenTerminal = async (project: Project) => {
+    try {
+      await invoke('open_terminal', { projectPath: project.path });
+    } catch (err) {
+      console.error('Failed to open Terminal:', err);
+    }
+  };
+
+  const handleRunApp = async (project: Project, platform: 'ios' | 'android') => {
+    try {
+      await invoke('run_app_on_booted_device', { projectPath: project.path, platform });
+    } catch (err) {
+      console.error('Failed to run app:', err);
+      // Maybe set some global error state to show a toast
+    }
+  };
+
   const getProjectWithStatus = (project: Project): Project => {
     const active = activeBuilds[project.id];
     const lastHistory = buildHistory.find((h) => h.projectId === project.id);
@@ -253,13 +286,17 @@ export const Dashboard: React.FC = () => {
                 <ProjectCard
                   project={projectWithStatus}
                   onBuild={(platform, options) => handleBuild(project.id, platform, options)}
-                  onSelect={() => console.log('Selected', project.id)}
+                  onSelect={() => handleStartMetro(project)}
                   onEdit={() => handleEditProject(project)}
                   onDelete={() => handleDeleteProject(project)}
                   onPermissions={() => navigate(`/permissions/${project.id}`)}
                   onDeepClean={() => handleDeepClean(project)}
                   onOpenXcode={() => handleOpenXcode(project)}
                   onOpenAndroidStudio={() => handleOpenAndroidStudio(project)}
+                  onStartMetro={() => handleStartMetro(project)}
+                  onOpenVSCode={() => handleOpenVSCode(project)}
+                  onOpenTerminal={() => handleOpenTerminal(project)}
+                  onRunApp={(platform) => handleRunApp(project, platform)}
                 />
               </div>
             );
