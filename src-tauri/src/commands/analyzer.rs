@@ -17,11 +17,19 @@ pub struct SizeBreakdown {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct LargeFile {
+    pub path: String,
+    pub size: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSizeReport {
     pub total_size: u64,
     pub breakdown: Vec<SizeBreakdown>,
     pub file_type: String,
     pub supports_16k_page_size: Option<bool>,
+    pub large_files: Vec<LargeFile>,
 }
 
 #[command]
@@ -37,6 +45,7 @@ pub async fn analyze_app_size(artifact_path: String) -> Result<AppSizeReport, St
     let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
     let mut breakdown: Vec<SizeBreakdown> = Vec::new();
+    let mut large_files: Vec<LargeFile> = Vec::new();
     let mut supports_16k_page_size = if extension == "apk" || extension == "aab" { Some(true) } else { None };
 
     match extension {
@@ -49,10 +58,14 @@ pub async fn analyze_app_size(artifact_path: String) -> Result<AppSizeReport, St
             let mut native_lib_size = 0;
             let mut other_size = 0;
 
+            let mut all_files: Vec<(String, u64)> = Vec::new();
+
             for i in 0..archive.len() {
                 let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
                 let size = file.size();
                 let name = file.name().to_string(); // Clone name to avoid borrow issues
+
+                all_files.push((name.clone(), size));
 
                 if extension == "apk" || extension == "aab" {
                     if name.ends_with(".dex") {
@@ -108,6 +121,10 @@ pub async fn analyze_app_size(artifact_path: String) -> Result<AppSizeReport, St
                 }
             }
 
+            // Process largest files
+            all_files.sort_by(|a, b| b.1.cmp(&a.1));
+            large_files = all_files.into_iter().take(20).map(|(path, size)| LargeFile { path, size }).collect();
+
             if code_size > 0 {
                 breakdown.push(SizeBreakdown {
                     name: "Code (DEX/JS)".to_string(),
@@ -152,5 +169,6 @@ pub async fn analyze_app_size(artifact_path: String) -> Result<AppSizeReport, St
         breakdown,
         file_type: extension.to_uppercase(),
         supports_16k_page_size,
+        large_files,
     })
 }

@@ -21,6 +21,7 @@ interface AppSizeReport {
   breakdown: SizeBreakdown[];
   fileType: string;
   supports16kPageSize?: boolean;
+  largeFiles?: { path: string; size: number }[];
 }
 
 interface AppSizeAnalyzerProps {
@@ -369,6 +370,97 @@ export const AppSizeAnalyzer: React.FC<AppSizeAnalyzerProps> = ({
                   Proguard/R8 for Android, and optimizing image assets before building.
                 </p>
               </div>
+
+              {/* Largest Files Section */}
+              {report.largeFiles && report.largeFiles.length > 0 && (
+                <div style={{ marginTop: '32px' }}>
+                  <h4
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <FileIcon size={16} /> Largest Files
+                  </h4>
+                  <div
+                    style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255,255,255,0.03)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {report.largeFiles.map((file, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '12px 20px',
+                          borderBottom:
+                            i === report.largeFiles!.length - 1
+                              ? 'none'
+                              : '1px solid rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '6px',
+                              background: 'rgba(255,255,255,0.05)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--color-text-secondary)',
+                              fontSize: '10px',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {i + 1}
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              color: 'var(--color-text-primary)',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                            title={file.path}
+                          >
+                            {file.path}
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: 'var(--color-text-secondary)',
+                            marginLeft: '16px',
+                          }}
+                        >
+                          {formatSize(file.size)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
         </div>
