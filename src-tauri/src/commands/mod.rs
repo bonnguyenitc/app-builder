@@ -10,3 +10,4 @@ pub mod notification;
 pub mod keystore;
 pub mod maintenance;
 pub mod dependencies;
+pub mod analyzer;

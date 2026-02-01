@@ -94,4 +94,6 @@ pub struct BuildHistory {
     #[serde(default)]
     pub release_note: String,
     pub format: Option<String>,
+    pub artifact_path: Option<String>,
+    pub log_file_path: Option<String>,
 }

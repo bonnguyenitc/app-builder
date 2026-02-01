@@ -47,15 +47,15 @@ pub async fn build_project(
 
             // Emit start message
             let start_msg = format!("🚀 Starting Android build for project: {}", project.name);
-            window.emit("build-log", &start_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": start_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", start_msg).map_err(|e| e.to_string())?;
 
             if !android_dir.exists() {
                 let err_msg = format!("❌ Android directory not found at: {:?}", android_dir);
-                window.emit("build-log", &err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
-                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
+                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
                 return Err(err_msg);
             }
 
@@ -63,15 +63,15 @@ pub async fn build_project(
             let gradlew_path = android_dir.join("gradlew");
             if !gradlew_path.exists() {
                 let err_msg = format!("❌ gradlew not found at: {:?}", gradlew_path);
-                window.emit("build-log", &err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
-                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
+                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
                 return Err(err_msg);
             }
 
             let path_msg = format!("📁 Android directory: {:?}", android_dir);
-            window.emit("build-log", &path_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": path_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", path_msg).map_err(|e| e.to_string())?;
 
             // Use /bin/sh -l -c to run in a login shell
@@ -133,7 +133,7 @@ pub async fn build_project(
             );
 
             let cmd_info = format!("🔧 Running Android build with enhanced environment...");
-            window.emit("build-log", &cmd_info).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": cmd_info })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", cmd_info).map_err(|e| e.to_string())?;
 
             let child = Command::new("/bin/sh")
@@ -144,10 +144,10 @@ pub async fn build_project(
                 .spawn()
                 .map_err(|e| {
                     let err_msg = format!("❌ Failed to start build command: {}", e);
-                    let _ = window.emit("build-log", &err_msg);
+                    let _ = window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg }));
                     let _ = writeln!(log_file, "{}", err_msg);
-                    let _ = window.emit("build-log-file", log_file_path.to_str().unwrap());
-                    let _ = window.emit("build-status", "failed");
+                    let _ = window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() }));
+                    let _ = window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id }));
                     err_msg
                 })?;
 
@@ -172,7 +172,7 @@ pub async fn build_project(
                     let reader = BufReader::new(stdout);
                     for line in reader.lines() {
                         if let Ok(line_content) = line {
-                            window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": line_content })).map_err(|e| e.to_string())?;
                             writeln!(log_file, "{}", line_content).map_err(|e| e.to_string())?;
                         }
                     }
@@ -184,7 +184,7 @@ pub async fn build_project(
                     for line in reader.lines() {
                         if let Ok(line_content) = line {
                             let stderr_line = format!("⚠️ {}", line_content);
-                            window.emit("build-log", &stderr_line).map_err(|e| e.to_string())?;
+                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": stderr_line })).map_err(|e| e.to_string())?;
                             writeln!(log_file, "{}", stderr_line).map_err(|e| e.to_string())?;
                         }
                     }
@@ -199,7 +199,7 @@ pub async fn build_project(
                 }
 
                 // Emit log file path so frontend can save it
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
 
                 if status.success() {
                     let format = options.as_ref().and_then(|o| o.android_format.as_deref()).unwrap_or("aab");
@@ -253,29 +253,33 @@ pub async fn build_project(
                             .map_err(|e| format!("Failed to rename {} file: {}", extension.to_uppercase(), e))?;
 
                         let rename_msg = format!("✅ {} renamed to: {}", extension.to_uppercase(), new_filename);
-                        window.emit("build-log", &rename_msg).map_err(|e| e.to_string())?;
+                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": rename_msg })).map_err(|e| e.to_string())?;
                         writeln!(log_file, "{}", rename_msg).map_err(|e| e.to_string())?;
+
+                        // Emit artifact path
+                        window.emit("build-artifact-path", serde_json::json!({ "projectId": project.id, "payload": dest_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
                     }
 
                     let success_msg = "✅ Android build completed successfully";
-                    window.emit("build-log", success_msg).map_err(|e| e.to_string())?;
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": success_msg })).map_err(|e| e.to_string())?;
                     writeln!(log_file, "{}", success_msg).map_err(|e| e.to_string())?;
-                    window.emit("build-status", "success").map_err(|e| e.to_string())?;
+                    window.emit("build-status", serde_json::json!({ "status": "success", "projectId": project.id })).map_err(|e| e.to_string())?;
                     return Ok(());
                 } else {
                     let exit_code = status.code().map(|c| c.to_string()).unwrap_or("unknown".to_string());
                     let error_msg = format!("❌ Build failed with exit code: {}", exit_code);
-                    window.emit("build-log", &error_msg).map_err(|e| e.to_string())?;
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": error_msg })).map_err(|e| e.to_string())?;
                     writeln!(log_file, "{}", error_msg).map_err(|e| e.to_string())?;
-                    window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                    window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                    window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
                     return Err(error_msg);
                 }
             } else {
                 let err_msg = "Failed to get process handle";
-                window.emit("build-log", err_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
-                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
+                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
                 return Err(err_msg.into());
             }
         },
@@ -328,18 +332,18 @@ pub async fn build_project(
 
             // Step 1: Archive
             let archive_msg = format!("📦 Starting iOS archive for scheme: {}", scheme);
-            window.emit("build-log", &archive_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": archive_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", archive_msg).map_err(|e| e.to_string())?;
 
             // Find workspace or project flag
             let build_file_path = if let Some(ref ws_path) = workspace_path {
                 let msg = format!("🔍 Found workspace: {}", ws_path.file_name().unwrap().to_string_lossy());
-                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
                 ws_path.to_str().ok_or("Invalid workspace path")?.to_string()
             } else if let Some(ref proj_path) = project_path {
                 let msg = format!("🔍 Found project: {}", proj_path.file_name().unwrap().to_string_lossy());
-                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
                 proj_path.to_str().ok_or("Invalid project path")?.to_string()
             } else {
@@ -416,26 +420,26 @@ pub async fn build_project(
 
             if !archive_status.success() {
                 let error_header = "❌ Archive failed. Recent logs:";
-                window.emit("build-log", error_header).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": error_header })).map_err(|e| e.to_string())?;
 
                 for log in recent_logs {
-                    window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": format!("  {}", log) })).map_err(|e| e.to_string())?;
                 }
 
                 let final_err = "Check log file for full details.";
-                window.emit("build-log", final_err).map_err(|e| e.to_string())?;
-                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": final_err })).map_err(|e| e.to_string())?;
+                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
                 return Err("Archive failed".into());
             }
 
             let success_msg = "✅ Archive completed successfully";
-            window.emit("build-log", success_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": success_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", success_msg).map_err(|e| e.to_string())?;
 
             // Step 2: Export
             let export_msg = "📤 Starting export...";
-            window.emit("build-log", export_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": export_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", export_msg).map_err(|e| e.to_string())?;
 
             // Create or find export options plist
@@ -444,7 +448,7 @@ pub async fn build_project(
             // If team_id is provided, generate ExportOptions.plist automatically
             if let Some(team_id) = project.ios.config.as_ref().and_then(|c| c.team_id.as_ref()) {
                 let msg = format!("🔧 Generating ExportOptions.plist with Team ID: {}", team_id);
-                window.emit("build-log", &msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
 
                 // Use export_method from config, or default to "development"
@@ -454,7 +458,7 @@ pub async fn build_project(
                     .unwrap_or("development");
 
                 let method_msg = format!("📦 Export method: {}", export_method);
-                window.emit("build-log", &method_msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": method_msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", method_msg).map_err(|e| e.to_string())?;
 
                 let plist_content = format!(
@@ -484,7 +488,7 @@ pub async fn build_project(
             } else {
                 // Look for existing export options plist
                 let msg = "🔍 Looking for existing ExportOptions.plist...";
-                window.emit("build-log", msg).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": msg })).map_err(|e| e.to_string())?;
                 writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
 
                 let export_plist_names: Vec<String> = vec![
@@ -564,19 +568,19 @@ pub async fn build_project(
 
             if !export_status.success() {
                 let error_header = "❌ Export failed. Recent logs:";
-                window.emit("build-log", error_header).map_err(|e| e.to_string())?;
+                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": error_header })).map_err(|e| e.to_string())?;
 
                 for log in recent_export_logs {
-                    window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": format!("  {}", log) })).map_err(|e| e.to_string())?;
                 }
 
-                window.emit("build-status", "failed").map_err(|e| e.to_string())?;
-                window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
                 return Err("Export failed".into());
             }
 
             let final_msg = "✅ Export completed successfully";
-            window.emit("build-log", final_msg).map_err(|e| e.to_string())?;
+            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": final_msg })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", final_msg).map_err(|e| e.to_string())?;
 
             // Step 3: Upload to App Store (Optional)
@@ -586,7 +590,7 @@ pub async fn build_project(
                     project.ios.config.as_ref().and_then(|c| c.api_issuer.as_ref())
                  ) {
                     let upload_msg = "🚀 Starting upload to App Store...";
-                    window.emit("build-log", upload_msg).map_err(|e| e.to_string())?;
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": upload_msg })).map_err(|e| e.to_string())?;
                     writeln!(log_file, "{}", upload_msg).map_err(|e| e.to_string())?;
 
                     // Find IPA file
@@ -604,7 +608,7 @@ pub async fn build_project(
                      if let Some(ipa_file) = ipa_path {
                          let ipa_path_str = ipa_file.to_str().unwrap();
                          let file_msg = format!("Found IPA: {}", ipa_path_str);
-                         window.emit("build-log", &file_msg).map_err(|e| e.to_string())?;
+                         window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": file_msg })).map_err(|e| e.to_string())?;
                          writeln!(log_file, "{}", file_msg).map_err(|e| e.to_string())?;
 
                          let upload_cmd = format!(
@@ -638,7 +642,7 @@ pub async fn build_project(
 
                                 let lower_line = line_content.to_lowercase();
                                 if lower_line.contains("error:") || lower_line.contains("warning:") {
-                                    window.emit("build-log", &line_content).map_err(|e| e.to_string())?;
+                                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": line_content })).map_err(|e| e.to_string())?;
                                 }
 
                                 if recent_upload_logs.len() >= 20 {
@@ -664,15 +668,15 @@ pub async fn build_project(
 
                          if !upload_status.success() {
                              let err_header = "❌ App Store upload failed. Recent logs:";
-                             window.emit("build-log", err_header).map_err(|e| e.to_string())?;
+                             window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_header })).map_err(|e| e.to_string())?;
 
                              for log in recent_upload_logs {
-                                 window.emit("build-log", &format!("  {}", log)).map_err(|e| e.to_string())?;
+                                 window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": format!("  {}", log) })).map_err(|e| e.to_string())?;
                              }
 
                              let footer = "Please check the log file for full details and Apple's specific error code.";
-                             window.emit("build-log", footer).map_err(|e| e.to_string())?;
-                             window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+                             window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": footer })).map_err(|e| e.to_string())?;
+                             window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
 
                              // Send Slack notification on failure
                              let slack_msg = format!("❌ *{}* (iOS) App Store upload failed!\nVersion: {}\nBuild: {}",
@@ -682,7 +686,7 @@ pub async fn build_project(
                              return Err("Upload failed".into());
                          } else {
                              let succ = "✅ App Store upload completed successfully! Your app is now being processed on App Store Connect.";
-                             window.emit("build-log", succ).map_err(|e| e.to_string())?;
+                             window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": succ })).map_err(|e| e.to_string())?;
                              writeln!(log_file, "{}", succ).map_err(|e| e.to_string())?;
 
                              // Send Slack notification
@@ -693,24 +697,40 @@ pub async fn build_project(
 
                      } else {
                         let err = "❌ IPA file not found for upload";
-                        window.emit("build-log", err).map_err(|e| e.to_string())?;
+                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err })).map_err(|e| e.to_string())?;
                         writeln!(log_file, "{}", err).map_err(|e| e.to_string())?;
                     }
                  } else {
                      let msg = "⚠️ Upload requested but API Key or Issuer missing in project settings.";
-                     window.emit("build-log", msg).map_err(|e| e.to_string())?;
+                     window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": msg })).map_err(|e| e.to_string())?;
                      writeln!(log_file, "{}", msg).map_err(|e| e.to_string())?;
                  }
             }
 
             // Emit log file path for frontend to save
-            window.emit("build-log-file", log_file_path.to_str().unwrap()).map_err(|e| e.to_string())?;
-            window.emit("build-status", "success").map_err(|e| e.to_string())?;
+            window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+
+            // Find IPA file for artifact path
+            let mut ipa_path = None;
+            if let Ok(entries) = std::fs::read_dir(&build_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                     if path.extension().and_then(|s| s.to_str()) == Some("ipa") {
+                        ipa_path = Some(path);
+                        break;
+                    }
+                }
+            }
+            if let Some(ipa) = ipa_path {
+                window.emit("build-artifact-path", serde_json::json!({ "projectId": project.id, "payload": ipa.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+            }
+
+            window.emit("build-status", serde_json::json!({ "status": "success", "projectId": project.id })).map_err(|e| e.to_string())?;
 
             return Ok(());
         },
         _ => {
-            window.emit("build-status", "failed").map_err(|e| e.to_string())?;
+            window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
             return Err(format!("Unsupported platform: {}", platform));
         }
     }

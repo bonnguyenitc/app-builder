@@ -16,6 +16,7 @@ use commands::notification::*;
 use commands::keystore::*;
 use commands::maintenance::*;
 use commands::dependencies::*;
+use crate::commands::analyzer::analyze_app_size;
 use models::database::init_db;
 use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
@@ -112,7 +113,8 @@ pub fn run() {
             get_dependencies,
             install_dependencies,
             add_dependency,
-            remove_dependency
+            remove_dependency,
+            analyze_app_size
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

@@ -13,8 +13,10 @@ import {
   AppleIcon,
   AndroidIcon,
   TerminalIcon,
+  ActivityIcon,
 } from '../components/Icons';
 import { BuildHistory } from '../types/project';
+import { AppSizeAnalyzer } from '../components/AppSizeAnalyzer';
 
 const LogModal = ({ build, onClose }: { build: BuildHistory; onClose: () => void }) => {
   const handleOpenExternal = () => {
@@ -157,6 +159,7 @@ export const ReleaseHistory: React.FC = () => {
   const { buildHistory, currentPage, pageSize, totalItems, fetchHistory } = useBuildStore();
   const { projects } = useProjectStore();
   const [viewingBuild, setViewingBuild] = useState<BuildHistory | null>(null);
+  const [analyzingBuild, setAnalyzingBuild] = useState<BuildHistory | null>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -479,7 +482,23 @@ export const ReleaseHistory: React.FC = () => {
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                            {build.status === 'success' && (
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              {build.artifactPath && (
+                                <button
+                                  className="btn btn-ghost"
+                                  onClick={() => setAnalyzingBuild(build)}
+                                  title="Analyze Artifact Size"
+                                  style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    padding: 0,
+                                    color: 'var(--color-primary)',
+                                    background: 'rgba(0, 122, 255, 0.05)',
+                                  }}
+                                >
+                                  <ActivityIcon size={16} />
+                                </button>
+                              )}
                               <button
                                 className="btn btn-ghost"
                                 onClick={() => {
@@ -497,7 +516,7 @@ export const ReleaseHistory: React.FC = () => {
                               >
                                 <FolderIcon size={16} />
                               </button>
-                            )}
+                            </div>
                             <button
                               className="btn btn-ghost"
                               onClick={() => setViewingBuild(build)}
@@ -561,6 +580,14 @@ export const ReleaseHistory: React.FC = () => {
       )}
 
       {viewingBuild && <LogModal build={viewingBuild} onClose={() => setViewingBuild(null)} />}
+
+      {analyzingBuild && analyzingBuild.artifactPath && (
+        <AppSizeAnalyzer
+          artifactPath={analyzingBuild.artifactPath}
+          appName={projects.find((p) => p.id === analyzingBuild.projectId)?.name || 'Unknown'}
+          onClose={() => setAnalyzingBuild(null)}
+        />
+      )}
 
       <style>{`
         .table-row-hover:hover td {

@@ -31,28 +31,47 @@ export const useBuild = () => {
       startBuildStore(project.id, initialBuild);
 
       // Initial log update in case the store update hasn't settled
-      const unlistenLogs = await listen<string>('build-log', (event) => {
+      const unlistenLogs = await listen<any>('build-log', (event) => {
+        const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
+        if (data.projectId !== project.id) return;
+
         updateBuild(project.id, (prev) => ({
           ...prev,
-          logs: prev.logs + event.payload + '\n',
+          logs: prev.logs + (data.payload || '') + '\n',
         }));
       });
 
-      const unlistenLogFile = await listen<string>('build-log-file', (event) => {
+      const unlistenLogFile = await listen<any>('build-log-file', (event) => {
+        const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
+        if (data.projectId !== project.id) return;
+
         updateBuild(project.id, (prev) => ({
           ...prev,
-          logFilePath: event.payload,
+          logFilePath: data.payload,
         }));
       });
 
-      const unlistenStatus = await listen<'success' | 'failed'>('build-status', async (event) => {
+      const unlistenArtifactPath = await listen<any>('build-artifact-path', (event) => {
+        const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
+        if (data.projectId !== project.id) return;
+
+        updateBuild(project.id, (prev) => ({
+          ...prev,
+          artifactPath: data.payload,
+        }));
+      });
+
+      const unlistenStatus = await listen<any>('build-status', async (event) => {
+        const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
+        if (data.projectId !== project.id) return;
+
         // Get the current build state from the store to ensure we have all logs
         const currentBuild = useBuildStore.getState().activeBuilds[project.id];
         if (!currentBuild) return;
 
         const finalBuild: BuildHistory = {
           ...currentBuild,
-          status: event.payload,
+          status: data.status,
           timestamp: Date.now(),
         };
 
@@ -67,6 +86,7 @@ export const useBuild = () => {
 
         unlistenLogs();
         unlistenLogFile();
+        unlistenArtifactPath();
         unlistenStatus();
       });
 
@@ -92,6 +112,7 @@ export const useBuild = () => {
         }
         unlistenLogs();
         unlistenLogFile();
+        unlistenArtifactPath();
         unlistenStatus();
       }
     },

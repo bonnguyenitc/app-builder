@@ -159,9 +159,11 @@ export const Dashboard: React.FC = () => {
   const getProjectWithStatus = (project: Project): Project => {
     const active = activeBuilds[project.id];
     const lastHistory = buildHistory.find((h) => h.projectId === project.id);
+
+    // Create a merged project object that prioritizes active build info
     return {
       ...project,
-      status: active ? 'building' : lastHistory?.status === 'success' ? 'success' : 'idle',
+      lastBuild: active || lastHistory || undefined,
     };
   };
 

@@ -85,6 +85,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     // Migration for existing databases
     let _ = conn.execute("ALTER TABLE build_history ADD COLUMN release_note TEXT", []);
     let _ = conn.execute("ALTER TABLE build_history ADD COLUMN format TEXT", []);
+    let _ = conn.execute("ALTER TABLE build_history ADD COLUMN artifact_path TEXT", []);
+    let _ = conn.execute("ALTER TABLE build_history ADD COLUMN log_file_path TEXT", []);
 
     Ok(conn)
 }

@@ -55,4 +55,5 @@ export interface BuildHistory {
   logFilePath?: string; // Path to log file (especially for iOS builds)
   releaseNote: string;
   format?: string;
+  artifactPath?: string;
 }
