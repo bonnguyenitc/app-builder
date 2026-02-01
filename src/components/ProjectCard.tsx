@@ -11,6 +11,7 @@ import {
   CodeIcon,
   TerminalIcon,
   PlayIcon,
+  PackageIcon,
 } from './Icons';
 import { Project } from '../types/project';
 
@@ -31,6 +32,7 @@ interface ProjectCardProps {
   onOpenVSCode: () => void;
   onOpenTerminal: () => void;
   onRunApp: (platform: 'ios' | 'android') => void;
+  onDependencies: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -47,6 +49,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onOpenVSCode,
   onOpenTerminal,
   onRunApp,
+  onDependencies,
 }) => {
   const [uploadToAppStore, setUploadToAppStore] = useState(() => {
     return localStorage.getItem(`upload_to_appstore_${project.id}`) === 'true';
@@ -656,6 +659,27 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         >
           <TerminalIcon size={12} />
           <span>Terminal</span>
+        </button>
+        <button
+          onClick={onDependencies}
+          className="btn btn-ghost"
+          style={{
+            flex: 1,
+            fontSize: '11px',
+            padding: '4px var(--spacing-xs)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            height: '28px',
+            color: 'var(--color-text-secondary)',
+            background: 'var(--color-sidebar)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <PackageIcon size={12} />
+          <span>Packages</span>
         </button>
       </div>
 

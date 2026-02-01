@@ -9,3 +9,4 @@ pub mod emulator;
 pub mod notification;
 pub mod keystore;
 pub mod maintenance;
+pub mod dependencies;

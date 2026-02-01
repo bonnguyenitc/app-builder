@@ -15,6 +15,7 @@ use commands::emulator::*;
 use commands::notification::*;
 use commands::keystore::*;
 use commands::maintenance::*;
+use commands::dependencies::*;
 use models::database::init_db;
 use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
@@ -107,7 +108,11 @@ pub fn run() {
             start_metro,
             open_in_vscode,
             open_terminal,
-            run_app_on_booted_device
+            run_app_on_booted_device,
+            get_dependencies,
+            install_dependencies,
+            add_dependency,
+            remove_dependency
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

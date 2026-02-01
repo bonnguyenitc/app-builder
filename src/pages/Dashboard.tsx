@@ -297,6 +297,7 @@ export const Dashboard: React.FC = () => {
                   onOpenVSCode={() => handleOpenVSCode(project)}
                   onOpenTerminal={() => handleOpenTerminal(project)}
                   onRunApp={(platform) => handleRunApp(project, platform)}
+                  onDependencies={() => navigate(`/dependencies/${project.id}`)}
                 />
               </div>
             );

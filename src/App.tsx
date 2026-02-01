@@ -25,6 +25,7 @@ import { Doctor } from './pages/Doctor';
 import { EmulatorManager } from './pages/EmulatorManager';
 import { StoreAssetsCreator } from './pages/StoreAssetsCreator';
 import { KeystoreGenerator } from './pages/KeystoreGenerator';
+import { DependencyManager } from './pages/DependencyManager';
 
 interface NavItemInfo {
   to: string;
@@ -171,6 +172,7 @@ function App() {
             <Route path="/emulators" element={<EmulatorManager />} />
             <Route path="/doctor" element={<Doctor />} />
             <Route path="/permissions/:projectId" element={<PermissionsManager />} />
+            <Route path="/dependencies/:projectId" element={<DependencyManager />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
