@@ -1,12 +1,11 @@
 import React, { useRef } from 'react';
-import { AppleIcon, AndroidIcon, UploadIcon, TrashIcon } from '../Icons';
+import { AppleIcon, AndroidIcon, UploadIcon, TrashIcon, SmartphoneIcon } from '../Icons';
 import {
   DEVICE_PRESETS,
   GRADIENT_PRESETS,
   DevicePreset,
   BackgroundType,
 } from '../../constants/storeAssets';
-import { sectionTitleStyle } from './StoreAssets.styles';
 
 interface AssetSidebarProps {
   selectedDevice: DevicePreset;
@@ -42,31 +41,49 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
   return (
     <aside
       style={{
-        width: '280px',
+        width: '300px',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: '20px',
         overflowY: 'auto',
+        paddingRight: '4px',
+        animation: 'fadeInLeft 0.5s ease-out',
       }}
     >
-      <div className="card" style={{ padding: '1rem' }}>
-        <h3 style={sectionTitleStyle}>Device Size</h3>
-        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem' }}>
+      {/* Device Configuration */}
+      <div
+        className="card"
+        style={{ padding: '20px', borderRadius: '20px', border: '1px solid var(--color-border)' }}
+      >
+        <h3
+          style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            color: 'var(--color-text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '16px',
+          }}
+        >
+          Device Profile
+        </h3>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <button
             className={`btn ${selectedDevice.platform === 'ios' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '6px 12px', fontSize: '12px', gap: '4px' }}
+            style={{ flex: 1, padding: '8px', fontSize: '12px', gap: '6px', borderRadius: '10px' }}
             onClick={() => setSelectedDevice(iosDevices[0])}
           >
-            <AppleIcon size={12} />
+            <AppleIcon size={14} />
             iOS
           </button>
           <button
             className={`btn ${selectedDevice.platform === 'android' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '6px 12px', fontSize: '12px', gap: '4px' }}
+            style={{ flex: 1, padding: '8px', fontSize: '12px', gap: '6px', borderRadius: '10px' }}
             onClick={() => setSelectedDevice(androidDevices[0])}
           >
-            <AndroidIcon size={12} />
+            <AndroidIcon size={14} />
             Android
           </button>
         </div>
@@ -79,57 +96,80 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
           }}
           className="input"
           style={{
+            width: '100%',
             padding: '10px 12px',
             fontSize: '13px',
+            borderRadius: '10px',
+            background: 'var(--color-sidebar)',
             cursor: 'pointer',
           }}
         >
           {(selectedDevice.platform === 'ios' ? iosDevices : androidDevices).map((device) => (
             <option key={device.id} value={device.id}>
-              {device.name} ({device.width}×{device.height}){device.required ? ' ⭐' : ''}
+              {device.name} {device.required ? '★' : ''}
             </option>
           ))}
         </select>
 
         <div
           style={{
-            marginTop: '0.75rem',
-            padding: '8px 10px',
-            background: 'rgba(0,0,0,0.05)',
-            borderRadius: 'var(--radius-sm)',
+            marginTop: '16px',
+            padding: '12px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '12px',
             fontSize: '11px',
-            color: 'var(--color-text-secondary)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Size:</span>
-            <strong>
-              {selectedDevice.width}×{selectedDevice.height}px
-            </strong>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              color: 'var(--color-text-secondary)',
+              marginBottom: '4px',
+            }}
+          >
+            <span>Dimensions:</span>
+            <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>
+              {selectedDevice.width} × {selectedDevice.height}
+            </span>
           </div>
           {selectedDevice.required && (
-            <div style={{ marginTop: '4px', color: 'var(--color-warning)' }}>
-              ⭐ Required for submission
+            <div style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
+              ★ Mandatory submission size
             </div>
           )}
         </div>
       </div>
 
-      <div className="card" style={{ padding: '1rem' }}>
-        <h3 style={sectionTitleStyle}>Background</h3>
+      {/* Canvas Controls */}
+      <div
+        className="card"
+        style={{ padding: '20px', borderRadius: '20px', border: '1px solid var(--color-border)' }}
+      >
+        <h3
+          style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            color: 'var(--color-text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '16px',
+          }}
+        >
+          Canvas Style
+        </h3>
 
-        {/* Background Type Toggle */}
-        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           <button
             className={`btn ${backgroundType === 'gradient' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '6px 12px', fontSize: '12px' }}
+            style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '10px' }}
             onClick={() => setBackgroundType('gradient')}
           >
             Gradient
           </button>
           <button
             className={`btn ${backgroundType === 'custom' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ flex: 1, padding: '6px 12px', fontSize: '12px' }}
+            style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '10px' }}
             onClick={() => bgInputRef.current?.click()}
           >
             <UploadIcon size={12} />
@@ -137,7 +177,6 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
           </button>
         </div>
 
-        {/* Hidden file input for background upload */}
         <input
           ref={bgInputRef}
           type="file"
@@ -146,67 +185,47 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
           onChange={(e) => onBackgroundUpload(e.target.files)}
         />
 
-        {/* Custom Background Preview */}
-        {backgroundType === 'custom' && customBackgroundUrl && (
-          <div style={{ marginBottom: '0.75rem' }}>
+        {backgroundType === 'custom' && customBackgroundUrl ? (
+          <div style={{ marginBottom: '16px' }}>
             <div
               style={{
                 position: 'relative',
                 width: '100%',
                 aspectRatio: '16/9',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '12px',
                 overflow: 'hidden',
                 border: '2px solid var(--color-primary)',
               }}
             >
               <img
                 src={customBackgroundUrl}
-                alt="Custom background"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
+                alt="Bg"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
               <button
                 onClick={onClearBackground}
                 style={{
                   position: 'absolute',
-                  top: '4px',
-                  right: '4px',
+                  top: '6px',
+                  right: '6px',
                   width: '24px',
                   height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--color-danger)',
-                  color: '#fff',
+                  borderRadius: '8px',
+                  background: 'var(--color-error)',
+                  color: 'white',
                   border: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                 }}
-                title="Remove custom background"
               >
                 <TrashIcon size={12} />
               </button>
             </div>
-            <p
-              style={{
-                fontSize: '11px',
-                color: 'var(--color-text-secondary)',
-                marginTop: '4px',
-                textAlign: 'center',
-              }}
-            >
-              Click to change or remove background
-            </p>
           </div>
-        )}
-
-        {/* Gradient Presets (show when gradient is selected or no custom background) */}
-        {(backgroundType === 'gradient' || !customBackgroundUrl) && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
             {GRADIENT_PRESETS.map((preset, index) => (
               <button
                 key={preset.name}
@@ -218,18 +237,22 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
                 style={{
                   width: '100%',
                   aspectRatio: '1',
-                  borderRadius: 'var(--radius-sm)',
-                  background: `linear-gradient(145deg, ${preset.colors.join(', ')})`,
+                  borderRadius: '8px',
+                  background: `linear-gradient(135deg, ${preset.colors.join(', ')})`,
                   border:
                     backgroundType === 'gradient' && selectedGradient === index
-                      ? '2px solid var(--color-primary)'
+                      ? '2px solid white'
                       : '2px solid transparent',
                   cursor: 'pointer',
-                  transition: 'transform 0.15s',
+                  transition: 'all 0.2s',
                   transform:
                     backgroundType === 'gradient' && selectedGradient === index
-                      ? 'scale(1.08)'
+                      ? 'scale(1.1)'
                       : 'scale(1)',
+                  boxShadow:
+                    backgroundType === 'gradient' && selectedGradient === index
+                      ? '0 4px 12px rgba(0,0,0,0.3)'
+                      : 'none',
                 }}
               />
             ))}
@@ -237,9 +260,24 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
         )}
       </div>
 
-      <div className="card" style={{ padding: '1rem' }}>
-        <h3 style={sectionTitleStyle}>Text Color</h3>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      {/* Typography Controls */}
+      <div
+        className="card"
+        style={{ padding: '20px', borderRadius: '20px', border: '1px solid var(--color-border)' }}
+      >
+        <h3
+          style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            color: 'var(--color-text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '16px',
+          }}
+        >
+          Typography Color
+        </h3>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {['#ffffff', '#000000', '#1d1d1f', '#f5f5f7'].map((color) => (
             <button
               key={color}
@@ -247,31 +285,42 @@ export const AssetSidebar: React.FC<AssetSidebarProps> = ({
               style={{
                 width: '32px',
                 height: '32px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 backgroundColor: color,
                 border:
                   textColor === color
                     ? '2px solid var(--color-primary)'
-                    : `2px solid ${color === '#ffffff' ? '#ddd' : 'transparent'}`,
+                    : `1px solid rgba(255,255,255,0.1)`,
                 cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             />
           ))}
-          <input
-            type="color"
-            value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
-            style={{
-              width: '32px',
-              height: '32px',
-              border: 'none',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => setTextColor(e.target.value)}
+              style={{
+                width: '32px',
+                height: '32px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                padding: 0,
+                background: 'transparent',
+              }}
+            />
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeInLeft {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
     </aside>
   );
 };

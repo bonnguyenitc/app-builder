@@ -9,6 +9,8 @@ import {
   AppleIcon,
   AndroidIcon,
   SparklesIcon,
+  RefreshCwIcon,
+  LoaderIcon,
 } from '../components/Icons';
 import { IconGenerationOptions, IconGenerationResult } from '../types/icon';
 
@@ -25,17 +27,11 @@ export const IconGenerator: React.FC = () => {
     try {
       const selected = await open({
         multiple: false,
-        filters: [
-          {
-            name: 'Image',
-            extensions: ['png', 'jpg', 'jpeg'],
-          },
-        ],
+        filters: [{ name: 'Image', extensions: ['png', 'jpg', 'jpeg'] }],
       });
 
       if (selected && typeof selected === 'string') {
         setSelectedImage(selected);
-        // Convert file path to asset URL for Tauri
         const assetUrl = convertFileSrc(selected);
         setImagePreview(assetUrl);
         setError(null);
@@ -58,21 +54,17 @@ export const IconGenerator: React.FC = () => {
       setError('Please select an image first');
       return;
     }
-
     if (platforms.length === 0) {
       setError('Please select at least one platform');
       return;
     }
 
-    // Select output directory
     const outputPath = await open({
       directory: true,
       multiple: false,
     });
 
-    if (!outputPath || typeof outputPath !== 'string') {
-      return;
-    }
+    if (!outputPath || typeof outputPath !== 'string') return;
 
     setIsGenerating(true);
     setError(null);
@@ -120,375 +112,474 @@ export const IconGenerator: React.FC = () => {
   };
 
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <h1
-          style={{
-            fontSize: '28px',
-            fontWeight: 700,
-            marginBottom: '4px',
-            color: 'var(--color-primary)',
-          }}
-        >
-          App Icon Generator
-        </h1>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-          Generate app icons in all required sizes for iOS and Android from a single image
-        </p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-lg)' }}>
-        {/* Left Column - Upload & Configuration */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          {/* Upload Section */}
-          <div className="card">
-            <div
+    <div
+      className="page-container"
+      style={{
+        padding: 'var(--spacing-2xl)',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        maxWidth: '1600px',
+        margin: '0 auto',
+      }}
+    >
+      {/* Premium Header */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+          flexShrink: 0,
+          animation: 'fadeInDown 0.5s ease-out',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--spacing-md)',
+                backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                color: 'var(--color-primary)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
               }}
             >
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Source Image</h3>
-              {selectedImage && (
-                <button
-                  className="btn btn-ghost"
-                  onClick={handleReset}
-                  style={{ fontSize: '12px', padding: '4px 8px' }}
-                >
-                  Reset
-                </button>
-              )}
+              Studio tools
+            </span>
+          </div>
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 800,
+              color: 'var(--color-text)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Icon Suite
+          </h1>
+        </div>
+
+        {selectedImage && !isGenerating && (
+          <button
+            className="btn btn-ghost"
+            onClick={handleReset}
+            style={{
+              height: '38px',
+              borderRadius: '10px',
+              fontSize: '13px',
+              color: 'var(--color-text-tertiary)',
+            }}
+          >
+            <RefreshCwIcon size={14} />
+            <span>Reset Canvas</span>
+          </button>
+        )}
+      </header>
+
+      {/* Main Content Area - Fixed in viewport */}
+      <div
+        style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1fr',
+          gap: '24px',
+          minHeight: 0,
+          animation: 'fadeIn 0.6s ease',
+        }}
+      >
+        {/* Left Side: Upload & Platforms */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0 }}>
+          {/* Source Image Card - Takes available space */}
+          <div
+            className="card"
+            style={{
+              padding: '24px',
+              borderRadius: '24px',
+              border: '1px solid var(--color-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              flex: 1,
+              minHeight: 0,
+              animation: 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both',
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '4px' }}>
+                Source Asset
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>
+                Main artwork for generation.
+              </p>
             </div>
 
             <div
               onClick={handleImageSelect}
               style={{
                 border: '2px dashed var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                padding: 'var(--spacing-2xl)',
+                borderRadius: '20px',
+                padding: '20px',
                 textAlign: 'center',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                backgroundColor: 'var(--color-bg-secondary)',
-                minHeight: '200px',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                backgroundColor: 'var(--color-sidebar)',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flex: 1,
+                minHeight: 0,
+                position: 'relative',
+                overflow: 'hidden',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-primary)';
-                e.currentTarget.style.backgroundColor = 'rgba(0, 122, 255, 0.05)';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 122, 255, 0.03)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-border)';
-                e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                e.currentTarget.style.backgroundColor = 'var(--color-sidebar)';
               }}
             >
               {imagePreview ? (
-                <div>
+                <div style={{ textAlign: 'center' }}>
                   <img
                     src={imagePreview}
-                    alt="Selected icon"
+                    alt="Preview"
                     style={{
-                      maxWidth: '180px',
-                      maxHeight: '180px',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    }}
-                    onError={() => {
-                      console.error('Image failed to load');
-                      setError('Failed to load image preview');
+                      maxWidth: '100%',
+                      maxHeight: '200px',
+                      borderRadius: '24px',
+                      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.3)',
+                      objectFit: 'contain',
                     }}
                   />
                   <p
                     style={{
-                      marginTop: 'var(--spacing-md)',
+                      marginTop: '16px',
                       fontSize: '12px',
-                      color: 'var(--color-text-secondary)',
+                      fontWeight: 600,
+                      color: 'var(--color-primary)',
                     }}
                   >
-                    Click to change image
+                    Replace Artwork
                   </p>
                 </div>
               ) : (
-                <div>
-                  <div
+                <>
+                  <ImageIcon
+                    size={40}
+                    style={{ color: 'var(--color-text-tertiary)', marginBottom: '16px' }}
+                  />
+                  <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>
+                    Select Image
+                  </h4>
+                  <p
                     style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: 'var(--radius-lg)',
-                      background: 'linear-gradient(135deg, var(--color-primary) 0%, #5856d6 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto var(--spacing-md)',
+                      fontSize: '12px',
+                      color: 'var(--color-text-tertiary)',
+                      maxWidth: '200px',
+                      lineHeight: 1.5,
                     }}
                   >
-                    <ImageIcon size={32} color="white" />
-                  </div>
-                  <p style={{ fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>
-                    Click to select an image
+                    PNG/JPG recommended (1024x1024)
                   </p>
-                  <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                    PNG or JPG • Recommended: 1024×1024 or larger
-                  </p>
-                </div>
+                </>
               )}
             </div>
-
-            {selectedImage && (
-              <div
-                style={{
-                  marginTop: 'var(--spacing-sm)',
-                  padding: 'var(--spacing-sm)',
-                  backgroundColor: 'var(--color-bg-tertiary)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '11px',
-                  color: 'var(--color-text-secondary)',
-                  fontFamily: 'monospace',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {selectedImage}
-              </div>
-            )}
           </div>
 
-          {/* Platform Selection */}
-          <div className="card">
-            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
-              Target Platforms
-            </h3>
-
-            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+          {/* Platforms Card - Fixed height at bottom */}
+          <div
+            className="card"
+            style={{
+              padding: '24px',
+              borderRadius: '24px',
+              border: '1px solid var(--color-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              flexShrink: 0,
+              animation: 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both',
+            }}
+          >
+            <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Targets</h3>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
-                className={`btn ${platforms.includes('ios') ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => togglePlatform('ios')}
                 style={{
                   flex: 1,
+                  height: '52px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--color-border)',
+                  background: platforms.includes('ios')
+                    ? 'rgba(0, 122, 255, 0.08)'
+                    : 'var(--color-sidebar)',
+                  color: platforms.includes('ios')
+                    ? 'var(--color-primary)'
+                    : 'var(--color-text-tertiary)',
+                  borderColor: platforms.includes('ios')
+                    ? 'var(--color-primary)'
+                    : 'var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
                 }}
               >
-                <AppleIcon size={18} />
-                <span>iOS</span>
+                <AppleIcon size={18} /> iOS
               </button>
               <button
-                className={`btn ${platforms.includes('android') ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => togglePlatform('android')}
                 style={{
                   flex: 1,
+                  height: '52px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--color-border)',
+                  background: platforms.includes('android')
+                    ? 'rgba(52, 199, 89, 0.08)'
+                    : 'var(--color-sidebar)',
+                  color: platforms.includes('android')
+                    ? 'var(--color-success)'
+                    : 'var(--color-text-tertiary)',
+                  borderColor: platforms.includes('android')
+                    ? 'var(--color-success)'
+                    : 'var(--color-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
+                  gap: '10px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
                 }}
               >
-                <AndroidIcon size={18} />
-                <span>Android</span>
+                <AndroidIcon size={18} /> Android
               </button>
             </div>
-
-            {platforms.length > 0 && (
-              <div
-                style={{
-                  marginTop: 'var(--spacing-md)',
-                  padding: 'var(--spacing-sm)',
-                  backgroundColor: 'var(--color-bg-secondary)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: '12px',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                {platforms.includes('ios') && <div>✓ iOS: AppIcon.appiconset (18 sizes)</div>}
-                {platforms.includes('android') && (
-                  <div>
-                    ✓ Android: 15 icons
-                    <div style={{ marginLeft: '16px', fontSize: '11px', opacity: 0.8 }}>
-                      • ic_launcher (5 sizes)
-                      <br />
-                      • ic_launcher_round (5 sizes)
-                      <br />• ic_launcher_foreground (5 sizes)
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Android Icon Name Input */}
             {platforms.includes('android') && (
-              <div style={{ marginTop: 'var(--spacing-md)' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    marginBottom: '4px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  Android Icon Name
-                </label>
-                <input
-                  type="text"
-                  value={androidIconName}
-                  onChange={(e) => setAndroidIconName(e.target.value)}
-                  placeholder="ic_launcher"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    fontSize: '13px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-bg-primary)',
-                    color: 'var(--color-text-primary)',
-                  }}
-                />
-              </div>
+              <input
+                type="text"
+                className="input"
+                value={androidIconName}
+                onChange={(e) => setAndroidIconName(e.target.value)}
+                placeholder="Android Icon Name (ic_launcher)"
+                style={{
+                  height: '44px',
+                  borderRadius: '10px',
+                  background: 'var(--color-sidebar)',
+                  fontSize: '14px',
+                }}
+              />
             )}
+            <button
+              className="btn btn-primary"
+              onClick={handleGenerate}
+              disabled={!selectedImage || platforms.length === 0 || isGenerating}
+              style={{ height: '52px', borderRadius: '14px', fontSize: '15px', fontWeight: 700 }}
+            >
+              {isGenerating ? (
+                <LoaderIcon size={18} className="animate-spin" />
+              ) : (
+                <SparklesIcon size={18} />
+              )}
+              <span>{isGenerating ? 'Generating...' : 'Start Generation'}</span>
+            </button>
           </div>
-
-          {/* Generate Button */}
-          <button
-            className="btn btn-primary"
-            onClick={handleGenerate}
-            disabled={!selectedImage || platforms.length === 0 || isGenerating}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: 'var(--spacing-md)',
-              fontSize: '15px',
-            }}
-          >
-            <SparklesIcon size={18} />
-            <span>{isGenerating ? 'Generating...' : 'Generate Icons'}</span>
-          </button>
         </div>
 
-        {/* Right Column - Results */}
-        <div className="card" style={{ height: 'fit-content' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: 'var(--spacing-md)' }}>
-            {result?.success ? 'Generation Complete' : 'Output'}
+        {/* Right Side: Results - Scrollable internally if needed but fixed in viewport */}
+        <div
+          className="card"
+          style={{
+            padding: '24px',
+            borderRadius: '24px',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            overflow: 'hidden',
+            animation: 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both',
+          }}
+        >
+          <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>
+            Process Output
           </h3>
 
-          {error && (
-            <div
-              style={{
-                padding: 'var(--spacing-md)',
-                backgroundColor: 'rgba(255, 59, 48, 0.1)',
-                border: '1px solid var(--color-error)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: 'var(--spacing-md)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 'var(--spacing-sm)',
-              }}
-            >
-              <XCircleIcon size={20} color="var(--color-error)" style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '13px', color: 'var(--color-error)' }}>{error}</span>
-            </div>
-          )}
-
-          {result?.success && (
-            <div>
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            {error && (
               <div
                 style={{
-                  padding: 'var(--spacing-md)',
-                  backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                  border: '1px solid var(--color-success)',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: 'var(--spacing-md)',
+                  background: 'rgba(255, 59, 48, 0.08)',
+                  border: '1px solid rgba(255, 59, 48, 0.2)',
+                  padding: '16px',
+                  borderRadius: '16px',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--spacing-sm)',
+                  gap: '10px',
+                  marginBottom: '20px',
                 }}
               >
-                <CheckCircleIcon size={20} color="var(--color-success)" />
-                <span style={{ fontSize: '13px', color: 'var(--color-success)' }}>
-                  {result.message}
+                <XCircleIcon size={18} style={{ color: 'var(--color-error)', flexShrink: 0 }} />
+                <span style={{ color: 'var(--color-error)', fontSize: '13px', fontWeight: 500 }}>
+                  {error}
                 </span>
               </div>
+            )}
 
-              <div
-                style={{
-                  padding: 'var(--spacing-md)',
-                  backgroundColor: 'var(--color-bg-secondary)',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: 'var(--spacing-md)',
-                }}
-              >
-                <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                  <strong>Output:</strong>
+            {result?.success ? (
+              <div style={{ animation: 'fadeIn 0.5s ease' }}>
+                <div
+                  style={{
+                    background: 'rgba(52, 199, 89, 0.08)',
+                    border: '1px solid rgba(52, 199, 89, 0.2)',
+                    padding: '24px',
+                    borderRadius: '20px',
+                    textAlign: 'center',
+                    marginBottom: '24px',
+                  }}
+                >
                   <div
                     style={{
-                      marginTop: '4px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: 'var(--color-success)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 12px',
+                    }}
+                  >
+                    <CheckCircleIcon size={20} color="white" />
+                  </div>
+                  <h4
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 800,
+                      color: 'var(--color-success)',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    Done!
+                  </h4>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                    Assets exported successfully.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    background: 'var(--color-sidebar)',
+                    padding: '16px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--color-border)',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      color: 'var(--color-text-tertiary)',
+                      textTransform: 'uppercase',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    Location
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--color-text-secondary)',
                       fontFamily: 'monospace',
-                      fontSize: '11px',
                       wordBreak: 'break-all',
+                      padding: '10px',
+                      background: 'rgba(0,0,0,0.2)',
+                      borderRadius: '10px',
                     }}
                   >
                     {result.output_path}
                   </div>
                 </div>
+
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleOpenOutputFolder}
+                  style={{
+                    width: '100%',
+                    height: '48px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                  }}
+                >
+                  <FolderIcon size={18} /> Reveal Assets
+                </button>
               </div>
-
-              <button
-                className="btn btn-secondary"
-                onClick={handleOpenOutputFolder}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                <FolderIcon size={18} />
-                <span>Open Output Folder</span>
-              </button>
-            </div>
-          )}
-
-          {!result && !error && (
-            <div
-              style={{
-                padding: 'var(--spacing-2xl)',
-                textAlign: 'center',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
+            ) : !isGenerating ? (
               <div
                 style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: 'var(--radius-lg)',
-                  background: 'var(--color-bg-secondary)',
+                  flex: 1,
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto var(--spacing-md)',
+                  opacity: 0.4,
                 }}
               >
-                <SparklesIcon size={28} />
+                <SparklesIcon size={40} style={{ marginBottom: '16px' }} />
+                <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px' }}>Ready</h4>
+                <p style={{ fontSize: '12px', textAlign: 'center', maxWidth: '180px' }}>
+                  Waiting for configuration...
+                </p>
               </div>
-              <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
-                Ready to Generate
-              </h4>
-              <p style={{ fontSize: '12px' }}>
-                Select an image and choose platforms to get started
-              </p>
-            </div>
-          )}
+            ) : (
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <LoaderIcon
+                  size={40}
+                  className="animate-spin"
+                  style={{ color: 'var(--color-primary)', marginBottom: '16px' }}
+                />
+                <h4 style={{ fontSize: '16px', fontWeight: 700 }}>Synthesizing...</h4>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };

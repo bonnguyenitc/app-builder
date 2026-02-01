@@ -104,28 +104,24 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
               deviceId: emulator.id,
               packageName: selectedPackageName,
             });
-            alert(`Successfully uninstalled ${selectedPackageName}`);
             break;
           case 'clearData':
             await invoke('adb_clear_app_data', {
               deviceId: emulator.id,
               packageName: selectedPackageName,
             });
-            alert(`Successfully cleared data for ${selectedPackageName}`);
             break;
           case 'forceStop':
             await invoke('adb_force_stop_app', {
               deviceId: emulator.id,
               packageName: selectedPackageName,
             });
-            alert(`Successfully stopped ${selectedPackageName}`);
             break;
           case 'restart':
             await invoke('adb_restart_app', {
               deviceId: emulator.id,
               packageName: selectedPackageName,
             });
-            alert(`Successfully restarted ${selectedPackageName}`);
             break;
           case 'logcat':
             await invoke('adb_open_logcat', {
@@ -134,13 +130,12 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
             });
             break;
           case 'screenshot':
-            const filePath = await save({
+            const f1 = await save({
               defaultPath: `screenshot_${Date.now()}.png`,
               filters: [{ name: 'PNG Image', extensions: ['png'] }],
             });
-            if (filePath) {
-              await invoke('adb_take_screenshot', { deviceId: emulator.id, savePath: filePath });
-              alert(`Screenshot saved to ${filePath}`);
+            if (f1) {
+              await invoke('adb_take_screenshot', { deviceId: emulator.id, savePath: f1 });
             }
             break;
         }
@@ -152,41 +147,30 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
               deviceId: emulator.id,
               bundleId: selectedPackageName,
             });
-            alert(`Successfully uninstalled ${selectedPackageName}`);
             break;
           case 'forceStop':
             await invoke('simctl_terminate_app', {
               deviceId: emulator.id,
               bundleId: selectedPackageName,
             });
-            alert(`Successfully terminated ${selectedPackageName}`);
             break;
           case 'restart':
             await invoke('simctl_restart_app', {
               deviceId: emulator.id,
               bundleId: selectedPackageName,
             });
-            alert(`Successfully restarted ${selectedPackageName}`);
             break;
           case 'screenshot':
-            const filePath = await save({
+            const f2 = await save({
               defaultPath: `screenshot_ios_${Date.now()}.png`,
               filters: [{ name: 'PNG Image', extensions: ['png'] }],
             });
-            if (filePath) {
-              await invoke('simctl_take_screenshot', { deviceId: emulator.id, savePath: filePath });
-              alert(`Screenshot saved to ${filePath}`);
+            if (f2) {
+              await invoke('simctl_take_screenshot', { deviceId: emulator.id, savePath: f2 });
             }
             break;
           case 'erase':
-            if (
-              confirm(
-                'Are you sure you want to Erase all content and settings? This cannot be undone.',
-              )
-            ) {
-              await invoke('simctl_erase_device', { deviceId: emulator.id });
-              alert('Device erased successfully');
-            }
+            await invoke('simctl_erase_device', { deviceId: emulator.id });
             break;
         }
       }
@@ -291,16 +275,24 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 'var(--spacing-md)',
+        padding: '16px 20px',
+        borderRadius: '20px',
+        border: '1px solid var(--color-border)',
         overflow: 'visible',
-        zIndex: showToolsMenu ? 50 : 1,
+        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        zIndex: showToolsMenu ? 100 : 1,
+        background: isBooted
+          ? 'linear-gradient(135deg, var(--color-card) 0%, rgba(52, 199, 89, 0.03) 100%)'
+          : 'var(--color-card)',
+        boxShadow: isBooted ? '0 8px 32px rgba(0,0,0,0.1)' : 'none',
       }}
     >
-      <div style={{ overflow: 'hidden', marginRight: '8px' }}>
+      <div style={{ flex: 1, overflow: 'hidden', marginRight: '16px' }}>
         <div
           style={{
-            fontWeight: 600,
-            marginBottom: '4px',
+            fontWeight: 700,
+            fontSize: '15px',
+            marginBottom: '6px',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -310,230 +302,189 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
           }}
           title={emulator.name}
         >
-          {emulator.name}{' '}
-          <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', fontWeight: 400 }}>
-            ({emulator.version})
-          </span>
+          {emulator.name}
           {isRecording && (
             <span
               className="animate-pulse"
               style={{
-                width: '8px',
-                height: '8px',
+                width: '10px',
+                height: '10px',
                 borderRadius: '50%',
                 background: 'var(--color-error)',
                 display: 'inline-block',
-                boxShadow: '0 0 5px var(--color-error)',
+                boxShadow: '0 0 8px var(--color-error)',
               }}
-              title="Recording in progress..."
             />
           )}
         </div>
         <div
           style={{
-            fontSize: '12px',
+            fontSize: '13px',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            color: 'var(--color-text-secondary)',
+            gap: '10px',
           }}
         >
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: isBooted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
-            }}
-          />
-          {isLaunching ? 'Booting...' : emulator.state}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: isBooted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+                boxShadow: isBooted ? '0 0 6px var(--color-success)' : 'none',
+              }}
+            />
+            <span
+              style={{
+                color: isBooted ? 'var(--color-success)' : 'var(--color-text-tertiary)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                fontSize: '11px',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {isLaunching ? 'Booting...' : emulator.state}
+            </span>
+          </div>
+          <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
+            • {emulator.version}
+          </span>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-        {!isBooted && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              className="btn btn-secondary"
-              onClick={() => onLaunch(emulator)}
-              disabled={isLaunching}
-              style={{ fontSize: '13px', padding: '6px 12px', gap: '6px' }}
-            >
-              <PlayIcon size={14} />
-              {isLaunching ? '...' : 'Boot'}
-            </button>
-            {!isAndroid && (
-              <div style={{ position: 'relative' }} ref={menuRef}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowToolsMenu(!showToolsMenu)}
-                  style={{ fontSize: '13px', padding: '6px 10px' }}
-                >
-                  <MoreVerticalIcon size={16} />
-                </button>
-                {showToolsMenu && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      marginTop: '4px',
-                      background: 'var(--color-bg-primary)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: 'var(--shadow-xl)',
-                      zIndex: 1000,
-                      minWidth: '180px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <button
-                      onClick={() => handleEmulatorAction('erase')}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--color-error)',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <EraserIcon size={14} /> Wipe Device
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        {isBooted && (
+
+      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+        {!isBooted ? (
+          <button
+            className="btn btn-secondary"
+            onClick={() => onLaunch(emulator)}
+            disabled={isLaunching}
+            style={{
+              height: '40px',
+              padding: '0 16px',
+              borderRadius: '12px',
+              background: 'var(--color-sidebar)',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            <PlayIcon size={16} />
+            <span>{isLaunching ? 'Booting' : 'Boot'}</span>
+          </button>
+        ) : (
           <>
             <button
               className="btn btn-secondary"
               onClick={() => onDeepLink(emulator)}
-              title="Open Deep Link"
-              style={{ fontSize: '13px', padding: '6px 12px', gap: '6px' }}
+              style={{ height: '40px', width: '40px', padding: 0, borderRadius: '12px' }}
+              title="Deep Link"
             >
-              <LinkIcon size={14} /> Link
+              <LinkIcon size={18} />
             </button>
             <button
               className="btn btn-primary"
               onClick={() => onRun(emulator)}
               disabled={!canRun}
-              title={!canRun ? 'Select a project first' : 'Run App'}
               style={{
-                fontSize: '13px',
-                padding: '6px 12px',
-                gap: '6px',
-                opacity: canRun ? 1 : 0.5,
+                height: '40px',
+                padding: '0 16px',
+                borderRadius: '12px',
+                opacity: canRun ? 1 : 0.4,
+                boxShadow: '0 4px 12px rgba(0, 122, 255, 0.2)',
               }}
             >
-              <SmartphoneIcon size={14} /> Run
+              <SmartphoneIcon size={16} />
+              <span style={{ fontWeight: 700 }}>Run</span>
             </button>
-
-            <div style={{ position: 'relative' }} ref={menuRef}>
-              <button
-                className={showToolsMenu ? 'btn btn-primary' : 'btn btn-secondary'}
-                onClick={() => setShowToolsMenu(!showToolsMenu)}
-                title="Emulator Tools"
-                style={{
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  transition: 'all 0.2s ease',
-                  background: showToolsMenu ? 'var(--color-primary)' : undefined,
-                  color: showToolsMenu ? 'white' : undefined,
-                }}
-              >
-                <MoreVerticalIcon size={16} />
-              </button>
-
-              {showToolsMenu && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    marginTop: '8px',
-                    background: 'var(--glass-bg-strong)',
-                    backdropFilter: 'var(--glass-blur)',
-                    WebkitBackdropFilter: 'var(--glass-blur)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-xl)',
-                    zIndex: 1000,
-                    minWidth: '220px',
-                    overflow: 'hidden',
-                    padding: '4px',
-                  }}
-                >
-                  {toolsMenuItems.map((item) =>
-                    item.id === 'divider' ? (
-                      <div
-                        key={item.id}
-                        style={{
-                          height: '1px',
-                          background: 'var(--color-border)',
-                          margin: '4px 8px',
-                          opacity: 0.5,
-                        }}
-                      />
-                    ) : (
-                      <button
-                        key={item.id}
-                        onClick={() => handleEmulatorAction(item.id)}
-                        disabled={toolLoading !== null}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: 'none',
-                          background: 'transparent',
-                          color: item.color,
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          cursor: toolLoading !== null ? 'wait' : 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.15s',
-                          borderRadius: 'var(--radius-sm)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'var(--color-primary-light)';
-                        }}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '6px',
-                            background: `${item.color}15`,
-                            color: item.color,
-                          }}
-                        >
-                          {toolLoading === item.id ? (
-                            <span style={{ fontSize: '10px' }}>⏳</span>
-                          ) : (
-                            item.icon
-                          )}
-                        </div>
-                        {item.label}
-                      </button>
-                    ),
-                  )}
-                </div>
-              )}
-            </div>
           </>
         )}
+
+        <div style={{ position: 'relative' }} ref={menuRef}>
+          <button
+            className="btn btn-ghost"
+            onClick={() => setShowToolsMenu(!showToolsMenu)}
+            style={{
+              height: '40px',
+              width: '40px',
+              padding: 0,
+              borderRadius: '12px',
+              background: showToolsMenu ? 'var(--color-sidebar)' : 'transparent',
+            }}
+          >
+            <MoreVerticalIcon size={20} />
+          </button>
+
+          {showToolsMenu && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                background: '#15181E',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '18px',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+                zIndex: 1000,
+                minWidth: '220px',
+                padding: '6px',
+                animation: 'fadeInDown 0.2s ease-out',
+              }}
+            >
+              {toolsMenuItems.map((item, idx) =>
+                item.id === 'divider' ? (
+                  <div
+                    key={idx}
+                    style={{ height: '1px', background: '#222', margin: '6px 12px' }}
+                  />
+                ) : (
+                  <button
+                    key={item.id}
+                    onClick={() => handleEmulatorAction(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      width: '100%',
+                      padding: '10px 14px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: item.color,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      borderRadius: '12px',
+                      textAlign: 'left',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '8px',
+                        background: `${item.color}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {toolLoading === item.id ? (
+                        <RefreshCwIcon size={14} className="animate-spin" />
+                      ) : (
+                        item.icon
+                      )}
+                    </div>
+                    {item.label}
+                  </button>
+                ),
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

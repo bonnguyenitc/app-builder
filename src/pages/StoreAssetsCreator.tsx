@@ -56,28 +56,57 @@ export const StoreAssetsCreator = () => {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{
+        padding: 'var(--spacing-2xl)',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        maxWidth: '1800px',
+        margin: '0 auto',
+        position: 'relative',
+      }}
     >
-      {/* Drag overlay */}
+      {/* Premium Drag Overlay */}
       {isDragging && (
         <div
           style={{
             position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(0, 122, 255, 0.15)',
-            border: '3px dashed var(--color-primary)',
-            borderRadius: 'var(--radius-lg)',
+            inset: '32px',
+            backgroundColor: 'rgba(0, 122, 255, 0.05)',
+            border: '4px dashed var(--color-primary)',
+            borderRadius: '40px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 100,
-            backdropFilter: 'blur(4px)',
+            zIndex: 1000,
+            backdropFilter: 'blur(20px)',
+            animation: 'fadeIn 0.3s ease',
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <UploadIcon size={48} style={{ color: 'var(--color-primary)', marginBottom: '1rem' }} />
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-              Drop screenshots here
+            <div
+              style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '40px',
+                background: 'var(--color-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+                boxShadow: '0 20px 40px rgba(0, 122, 255, 0.3)',
+              }}
+            >
+              <UploadIcon size={64} style={{ color: 'white' }} />
+            </div>
+            <h2 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--color-primary)' }}>
+              Release Artwork
+            </h2>
+            <p
+              style={{ color: 'var(--color-text-secondary)', fontSize: '18px', marginTop: '12px' }}
+            >
+              Drop your screenshots to import them into the studio.
             </p>
           </div>
         </div>
@@ -90,7 +119,15 @@ export const StoreAssetsCreator = () => {
         isExporting={isExporting}
       />
 
-      <div style={{ display: 'flex', gap: '1.5rem', flex: 1, minHeight: 0, marginTop: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '32px',
+          flex: 1,
+          minHeight: 0,
+          animation: 'fadeIn 0.6s ease 0.2s both',
+        }}
+      >
         <AssetSidebar
           selectedDevice={selectedDevice}
           setSelectedDevice={setSelectedDevice}
@@ -105,7 +142,18 @@ export const StoreAssetsCreator = () => {
           onClearBackground={clearCustomBackground}
         />
 
-        <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', paddingBottom: '1rem' }}>
+        <main
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: 'var(--color-sidebar)',
+            borderRadius: '32px',
+            border: '1px solid var(--color-border)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <AssetPreview
             assets={assets}
             selectedDevice={selectedDevice}
@@ -117,8 +165,26 @@ export const StoreAssetsCreator = () => {
             backgroundType={backgroundType}
             customBackgroundUrl={customBackgroundUrl}
           />
-        </div>
+        </main>
       </div>
+
+      <style>{`
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

@@ -8,6 +8,8 @@ import {
   FolderIcon,
   SparklesIcon,
   LoaderIcon,
+  ShieldCheckIcon,
+  InfoIcon,
 } from '../components/Icons';
 
 export const KeystoreGenerator: React.FC = () => {
@@ -54,8 +56,6 @@ export const KeystoreGenerator: React.FC = () => {
       setResult(null);
       setOutputPath(path);
 
-      // Construct DName
-      // CN=XX, OU=XX, O=XX, L=XX, ST=XX, C=XX
       const dnameParts = [];
       if (firstName) dnameParts.push(`CN=${firstName}`);
       if (unit) dnameParts.push(`OU=${unit}`);
@@ -95,246 +95,261 @@ export const KeystoreGenerator: React.FC = () => {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Page Header */}
-      <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, var(--color-primary) 0%, #5856d6 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
-            <KeyIcon size={24} color="white" />
-          </div>
-          <div>
-            <h1
-              style={{
-                fontSize: '28px',
-                fontWeight: 700,
-                color: 'var(--color-text)',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Keystore Generator
-            </h1>
-            <p
-              style={{
-                color: 'var(--color-text-secondary)',
-                fontSize: '14px',
-                marginTop: '4px',
-              }}
-            >
-              Create secure cryptographic keys for signing your Android applications
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div
+    <div
+      className="page-container"
+      style={{
+        padding: 'var(--spacing-2xl)',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        maxWidth: '1200px',
+        margin: '0 auto',
+      }}
+    >
+      {/* Premium Header */}
+      <header
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 3fr)',
-          gap: 'var(--spacing-lg)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '32px',
+          flexShrink: 0,
+          animation: 'fadeInDown 0.5s ease-out',
         }}
       >
-        {/* Left Column - Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          <div className="card">
-            <div
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span
               style={{
-                marginBottom: 'var(--spacing-lg)',
-                paddingBottom: 'var(--spacing-md)',
-                borderBottom: '1px solid var(--color-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                color: 'var(--color-primary)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
               }}
             >
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Key Details</h3>
-              <span className="badge badge-primary">Required</span>
+              Security Suite
+            </span>
+          </div>
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: 800,
+              color: 'var(--color-text)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Keystore Foundry
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px', marginTop: '4px' }}>
+            Forge secure cryptographic identities for Android application signing.
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: 'var(--color-sidebar)',
+            padding: '12px 24px',
+            borderRadius: '16px',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <ShieldCheckIcon size={20} style={{ color: 'var(--color-success)' }} />
+          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+            FIPS Compliant RSA
+          </span>
+        </div>
+      </header>
+
+      {/* Main Content Area - Single Viewport Layout */}
+      <div
+        style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1fr',
+          gap: '32px',
+          minHeight: 0,
+          animation: 'fadeIn 0.6s ease',
+        }}
+      >
+        {/* Left Column - Form (Scrollable internally) */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+            overflowY: 'auto',
+            paddingRight: '8px',
+            minHeight: 0,
+          }}
+        >
+          {/* Key Credentials Section */}
+          <section
+            className="card"
+            style={{
+              padding: '24px',
+              borderRadius: '24px',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: 'rgba(0, 122, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <KeyIcon size={20} style={{ color: 'var(--color-primary)' }} />
+              </div>
+              <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Primary Identity</h3>
             </div>
 
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: 'var(--spacing-md)',
-                marginBottom: 'var(--spacing-md)',
+                gap: '20px',
+                marginBottom: '20px',
               }}
             >
               <div className="form-group">
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: 'var(--color-text)',
-                  }}
-                >
-                  Key Alias
-                </label>
+                <label className="input-label">Key Alias</label>
                 <input
                   type="text"
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   className="input"
-                  placeholder="e.g. upload"
+                  placeholder="e.g. production_key"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
-
               <div className="form-group">
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: 'var(--color-text)',
-                  }}
-                >
-                  Password
-                </label>
+                <label className="input-label">Master Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input"
-                  placeholder="Strong password"
+                  placeholder="••••••••••••"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: 'var(--color-text)',
-                  }}
-                >
-                  Validity (Years)
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="form-group">
+                <label className="input-label">Validity Period (Years)</label>
                 <input
                   type="number"
                   value={validity / 365}
                   onChange={(e) => setValidity(Math.floor(parseFloat(e.target.value) * 365))}
                   className="input"
-                  placeholder="25"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
-                <span
+                <p
                   style={{
                     fontSize: '11px',
-                    color: 'var(--color-text-secondary)',
-                    marginTop: '4px',
-                    display: 'block',
+                    color: 'var(--color-text-tertiary)',
+                    marginTop: '6px',
                   }}
                 >
-                  Google recommends 25+ years
-                </span>
+                  Standard industry recommendation is 25+ years.
+                </p>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: 'var(--color-text)',
-                  }}
-                >
-                  Key Size
-                </label>
+              <div className="form-group">
+                <label className="input-label">Cipher Strength</label>
                 <select
                   value={keysize}
                   onChange={(e) => setKeysize(parseInt(e.target.value))}
                   className="input"
-                  style={{ appearance: 'none', cursor: 'pointer' }}
+                  style={{
+                    background: 'var(--color-sidebar)',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <option value={2048}>2048 bits (Standard)</option>
-                  <option value={4096}>4096 bits (High Security)</option>
+                  <option value={2048}>RSA 2048-bit (Standard)</option>
+                  <option value={4096}>RSA 4096-bit (Paranoid)</option>
                 </select>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="card">
+          {/* Certificate Information Section */}
+          <section
+            className="card"
+            style={{
+              padding: '24px',
+              borderRadius: '24px',
+              border: '1px solid var(--color-border)',
+            }}
+          >
             <div
-              style={{
-                marginBottom: 'var(--spacing-lg)',
-                paddingBottom: 'var(--spacing-md)',
-                borderBottom: '1px solid var(--color-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}
             >
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Certificate Details</h3>
-              <span
-                className="badge badge-secondary"
-                style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text-secondary)' }}
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: 'rgba(52, 199, 89, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                Optional
-              </span>
+                <ShieldCheckIcon size={20} style={{ color: 'var(--color-success)' }} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Certificate Subject</h3>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                  Metadata embedded within the signature.
+                </p>
+              </div>
             </div>
 
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: 'var(--spacing-md)',
-                marginBottom: 'var(--spacing-md)',
+                gap: '20px',
+                marginBottom: '20px',
               }}
             >
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  First & Last Name
-                </label>
+              <div className="form-group">
+                <label className="input-label">Common Name (CN)</label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="input"
-                  placeholder="John Doe"
+                  placeholder="Full Name"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  Organizational Unit
-                </label>
+              <div className="form-group">
+                <label className="input-label">Organization (O)</label>
                 <input
                   type="text"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
                   className="input"
-                  placeholder="Engineering"
+                  placeholder="Company Name"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
             </div>
@@ -343,87 +358,48 @@ export const KeystoreGenerator: React.FC = () => {
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: 'var(--spacing-md)',
-                marginBottom: 'var(--spacing-md)',
+                gap: '20px',
+                marginBottom: '20px',
               }}
             >
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  Organization
-                </label>
+              <div className="form-group">
+                <label className="input-label">Org. Unit (OU)</label>
                 <input
                   type="text"
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
                   className="input"
-                  placeholder="Company Inc."
+                  placeholder="e.g. IT, Mobile"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  City / Locality
-                </label>
+              <div className="form-group">
+                <label className="input-label">Locality (L)</label>
                 <input
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="input"
-                  placeholder="San Francisco"
+                  placeholder="City"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
             </div>
 
-            <div
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)' }}
-            >
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  State / Province
-                </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="form-group">
+                <label className="input-label">State / Prov. (ST)</label>
                 <input
                   type="text"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   className="input"
-                  placeholder="California"
+                  placeholder="State"
+                  style={{ background: 'var(--color-sidebar)', borderRadius: '12px' }}
                 />
               </div>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginBottom: '6px',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  Country Code
-                </label>
+              <div className="form-group">
+                <label className="input-label">Country Code (C)</label>
                 <input
                   type="text"
                   value={country}
@@ -431,158 +407,171 @@ export const KeystoreGenerator: React.FC = () => {
                   className="input"
                   placeholder="US"
                   maxLength={2}
-                  style={{ textTransform: 'uppercase' }}
+                  style={{
+                    background: 'var(--color-sidebar)',
+                    borderRadius: '12px',
+                    textTransform: 'uppercase',
+                  }}
                 />
               </div>
             </div>
-          </div>
+          </section>
 
+          {/* Action Button */}
           <button
-            className={`btn btn-primary btn-lg ${isGenerating || !password || !alias ? 'opacity-70' : ''}`}
+            className="btn btn-primary"
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || !password || !alias}
             style={{
-              marginTop: 'var(--spacing-sm)',
-              boxShadow: 'var(--shadow-glow)',
+              height: '56px',
+              borderRadius: '18px',
+              fontSize: '16px',
+              fontWeight: 700,
+              marginTop: '4px',
+              boxShadow: '0 12px 24px rgba(0, 122, 255, 0.2)',
+              flexShrink: 0,
             }}
           >
             {isGenerating ? (
-              <LoaderIcon className="animate-spin" size={20} />
+              <LoaderIcon size={20} className="animate-spin" />
             ) : (
               <SparklesIcon size={20} />
             )}
-            <span>{isGenerating ? 'Generating Secure Keys...' : 'Generate and Save Keystore'}</span>
+            <span>{isGenerating ? 'Synthesizing RSA Entropy...' : 'Generate Secure Keystore'}</span>
           </button>
         </div>
 
-        {/* Right Column - Status */}
+        {/* Right Column - Status & Output */}
         <div
           className="card"
-          style={{ height: 'fit-content', position: 'sticky', top: 'var(--spacing-lg)' }}
+          style={{
+            padding: '32px',
+            borderRadius: '28px',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            overflow: 'hidden',
+          }}
         >
-          <h3
-            style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              marginBottom: 'var(--spacing-md)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            Generation Status
-            {isGenerating && <span className="status-dot warning animate-pulse" />}
+          <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px' }}>
+            Foundry Output
           </h3>
 
           {error && (
             <div
               style={{
-                padding: 'var(--spacing-md)',
-                backgroundColor: 'rgba(255, 59, 48, 0.05)',
-                border: '1px solid var(--color-error)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: 'var(--spacing-md)',
+                background: 'rgba(255, 59, 48, 0.08)',
+                border: '1px solid rgba(255, 59, 48, 0.2)',
+                padding: '20px',
+                borderRadius: '18px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: 'var(--spacing-md)',
-                animation: 'fadeIn 0.3s ease-out',
+                gap: '12px',
+                marginBottom: '24px',
+                animation: 'fadeIn 0.3s ease',
               }}
             >
-              <div style={{ color: 'var(--color-error)', marginTop: '2px' }}>
-                <XCircleIcon size={20} />
-              </div>
+              <XCircleIcon size={20} style={{ color: 'var(--color-error)' }} />
               <div>
                 <div
                   style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
                     color: 'var(--color-error)',
+                    fontSize: '15px',
+                    fontWeight: 700,
                     marginBottom: '4px',
                   }}
                 >
-                  Generation Failed
+                  Operation Blocked
                 </div>
-                <div
-                  style={{
-                    fontSize: '13px',
-                    color: 'var(--color-text-secondary)',
-                    lineHeight: '1.4',
-                  }}
-                >
+                <div style={{ color: 'var(--color-error)', fontSize: '13px', opacity: 0.8 }}>
                   {error}
                 </div>
               </div>
             </div>
           )}
 
-          {result && (
-            <div className="animate-in fade-in duration-500">
+          {result ? (
+            <div
+              style={{
+                animation: 'fadeIn 0.5s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+              }}
+            >
               <div
                 style={{
-                  background:
-                    'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
+                  background: 'rgba(52, 199, 89, 0.08)',
                   border: '1px solid rgba(52, 199, 89, 0.2)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--spacing-md)',
-                  marginBottom: 'var(--spacing-lg)',
+                  padding: '32px 24px',
+                  borderRadius: '24px',
                   textAlign: 'center',
+                  marginBottom: '32px',
                 }}
               >
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
                     background: 'var(--color-success)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto var(--spacing-sm)',
-                    boxShadow: '0 4px 10px rgba(52, 199, 89, 0.3)',
+                    margin: '0 auto 16px',
+                    boxShadow: '0 8px 16px rgba(52, 199, 89, 0.3)',
                   }}
                 >
-                  <CheckCircleIcon size={24} color="white" />
+                  <CheckCircleIcon size={28} color="white" />
                 </div>
                 <h4
                   style={{
-                    fontSize: '16px',
-                    fontWeight: 600,
+                    fontSize: '22px',
+                    fontWeight: 800,
                     color: 'var(--color-text)',
-                    marginBottom: '4px',
+                    marginBottom: '8px',
                   }}
                 >
-                  Success!
+                  Identity Secured
                 </h4>
-                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                  Keystore generated successfully
+                <p
+                  style={{ fontSize: '14px', color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}
+                >
+                  Your cryptographic keystore has been successfully minted and stored.
                 </p>
               </div>
 
-              <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <label
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: 'var(--color-text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: '8px',
-                    display: 'block',
-                  }}
-                >
-                  Saved Location
-                </label>
+              <div
+                style={{
+                  background: 'var(--color-sidebar)',
+                  padding: '24px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--color-border)',
+                  flex: 1,
+                  marginBottom: '24px',
+                }}
+              >
                 <div
                   style={{
-                    padding: 'var(--spacing-md)',
-                    background: 'var(--color-bg)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    fontSize: '12px',
-                    color: 'var(--color-text)',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: 'var(--color-text-tertiary)',
+                    textTransform: 'uppercase',
+                    marginBottom: '12px',
+                  }}
+                >
+                  Artifact Path
+                </div>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--color-text-secondary)',
+                    fontFamily: '"SF Mono", monospace',
                     wordBreak: 'break-all',
-                    lineHeight: '1.5',
+                    lineHeight: 1.6,
+                    padding: '12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    borderRadius: '12px',
                   }}
                 >
                   {outputPath}
@@ -592,69 +581,128 @@ export const KeystoreGenerator: React.FC = () => {
               <button
                 className="btn btn-secondary"
                 onClick={handleOpenOutputFolder}
-                style={{ width: '100%' }}
+                style={{ height: '52px', borderRadius: '16px', fontSize: '15px', fontWeight: 700 }}
               >
                 <FolderIcon size={18} />
-                <span>Show in Finder</span>
+                <span>Open Folder</span>
               </button>
             </div>
-          )}
-
-          {!result && !error && (
-            <div style={{ padding: 'var(--spacing-xl) 0', textAlign: 'center', opacity: 0.6 }}>
-              {isGenerating ? (
+          ) : isGenerating ? (
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <div style={{ marginBottom: '24px', position: 'relative' }}>
                 <div
                   style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    border: '4px solid rgba(255,255,255,0.05)',
+                    borderTopColor: 'var(--color-primary)',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 'var(--spacing-md)',
+                    justifyContent: 'center',
                   }}
                 >
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      border: '3px solid var(--color-border)',
-                      borderTopColor: 'var(--color-primary)',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                  />
-                  <p style={{ fontSize: '13px' }}>Generating strong keys...</p>
+                  <KeyIcon size={32} style={{ color: 'var(--color-primary)', opacity: 0.5 }} />
                 </div>
-              ) : (
-                <>
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: 'var(--radius-full)',
-                      background: 'var(--color-bg)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto var(--spacing-md)',
-                    }}
-                  >
-                    <KeyIcon size={32} color="var(--color-text-secondary)" />
-                  </div>
-                  <p
-                    style={{
-                      fontSize: '13px',
-                      color: 'var(--color-text-secondary)',
-                      lineHeight: '1.5',
-                    }}
-                  >
-                    Your private key is essential for app signing. <br />
-                    Keep it safe and never share it.
-                  </p>
-                </>
-              )}
+              </div>
+              <h4 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>
+                Minting Keys
+              </h4>
+              <p
+                style={{
+                  fontSize: '14px',
+                  color: 'var(--color-text-tertiary)',
+                  textAlign: 'center',
+                  maxWidth: '240px',
+                }}
+              >
+                Gathering entropy for secure RSA keypair generation...
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0.6,
+              }}
+            >
+              <div
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '32px',
+                  background: 'var(--color-sidebar)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '24px',
+                }}
+              >
+                <InfoIcon size={32} style={{ opacity: 0.3 }} />
+              </div>
+              <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '8px' }}>
+                Ready to Mint
+              </h4>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--color-text-tertiary)',
+                  textAlign: 'center',
+                  maxWidth: '240px',
+                }}
+              >
+                Complete the identity form and choose a location to generate your key.
+              </p>
             </div>
           )}
         </div>
       </div>
+
+      <style>{`
+        .input-label {
+          display: block;
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--color-text-tertiary);
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };

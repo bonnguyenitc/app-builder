@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { PlusIcon, DownloadIcon } from '../Icons';
+import { PlusIcon, DownloadIcon, SparklesIcon } from '../Icons';
 
 interface AssetHeaderProps {
   onFileUpload: (files: FileList | null) => void;
@@ -17,17 +17,62 @@ export const AssetHeader: React.FC<AssetHeaderProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <header className="page-header" style={{ flexShrink: 0 }}>
+    <header
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexShrink: 0,
+        animation: 'fadeInDown 0.5s ease-out',
+      }}
+    >
       <div>
-        <h1 className="page-title">Store Assets Creator</h1>
-        <p className="page-subtitle" style={{ marginBottom: '1rem' }}>
-          Create stunning App Store & Play Store screenshots
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <span
+            style={{
+              backgroundColor: 'rgba(0, 122, 255, 0.1)',
+              color: 'var(--color-primary)',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Studio tools
+          </span>
+        </div>
+        <h1
+          style={{
+            fontSize: '28px',
+            fontWeight: 800,
+            color: 'var(--color-text)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Asset Studio
+        </h1>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginTop: '4px' }}>
+          Design and export high-impact store screenshots with precision.
         </p>
       </div>
-      <div className="header-actions" style={{ display: 'flex', gap: '1rem' }}>
-        <button className="btn btn-secondary btn-lg" onClick={() => fileInputRef.current?.click()}>
+
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <button
+          className="btn btn-secondary"
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            height: '44px',
+            padding: '0 20px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: 600,
+          }}
+        >
           <PlusIcon size={16} />
-          Add Screenshots
+          <span>Add Source</span>
         </button>
         <input
           ref={fileInputRef}
@@ -38,16 +83,36 @@ export const AssetHeader: React.FC<AssetHeaderProps> = ({
           onChange={(e) => onFileUpload(e.target.files)}
         />
         <button
-          className="btn btn-primary btn-lg"
+          className="btn btn-primary"
           onClick={onExport}
           disabled={assetCount === 0 || isExporting}
+          style={{
+            height: '44px',
+            padding: '0 24px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: 700,
+            boxShadow: assetCount > 0 ? '0 8px 16px rgba(0, 122, 255, 0.2)' : 'none',
+          }}
         >
           {isExporting ? (
-            <span>Exporting...</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                className="animate-spin"
+                style={{
+                  width: '14px',
+                  height: '14px',
+                  border: '2px solid white',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                }}
+              />
+              <span>Exporting</span>
+            </div>
           ) : (
             <>
-              <DownloadIcon size={16} />
-              Export All ({assetCount})
+              <SparklesIcon size={16} />
+              <span>Export {assetCount} Assets</span>
             </>
           )}
         </button>

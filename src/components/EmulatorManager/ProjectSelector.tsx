@@ -14,26 +14,44 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
 }) => {
   return (
     <div
-      className="card"
-      style={{ marginBottom: 'var(--spacing-xl)', padding: 'var(--spacing-lg)' }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '6px 6px 6px 16px',
+        background: 'var(--color-sidebar)',
+        borderRadius: '16px',
+        border: '1px solid var(--color-border)',
+      }}
     >
-      <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', fontWeight: 600 }}>
-        Select Project to Run
+      <label
+        style={{
+          fontSize: '13px',
+          fontWeight: 700,
+          color: 'var(--color-text-secondary)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Target Project:
       </label>
       <select
         value={selectedProjectId}
         onChange={(e) => setSelectedProjectId(e.target.value)}
         style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '10px',
-          borderRadius: 'var(--radius-md)',
+          minWidth: '200px',
+          padding: '10px 14px',
+          borderRadius: '12px',
           border: '1px solid var(--color-border)',
-          background: 'var(--color-bg-secondary)',
-          color: 'var(--color-text-primary)',
+          background: 'var(--color-card)',
+          color: 'var(--color-text)',
+          fontSize: '14px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          outline: 'none',
+          transition: 'all 0.2s ease',
         }}
       >
-        <option value="">-- Select Project --</option>
+        <option value="">-- Choose Application --</option>
         {projects.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name}
@@ -41,9 +59,16 @@ export const ProjectSelector: React.FC<ProjectSelectorProps> = ({
         ))}
       </select>
       {!selectedProjectId && (
-        <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--color-warning)' }}>
-          * Select a project to enable "Run App" button
-        </p>
+        <div
+          style={{
+            paddingRight: '10px',
+            animation: 'pulse 2s infinite',
+          }}
+        >
+          <span style={{ fontSize: '18px' }} title="Selection required to run apps">
+            ⚠️
+          </span>
+        </div>
       )}
     </div>
   );

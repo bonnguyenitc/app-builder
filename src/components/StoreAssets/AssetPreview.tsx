@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { UploadIcon, TrashIcon, PlusIcon } from '../Icons';
+import { TrashIcon, PlusIcon, ImageIcon } from '../Icons';
 import { AssetItem } from '../../hooks/useStoreAssets';
 import { DevicePreset, BackgroundType } from '../../constants/storeAssets';
 
@@ -31,41 +31,46 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   if (assets.length === 0) {
     return (
       <div
-        className="card"
         style={{
           height: '100%',
-          minHeight: '400px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          border: '2px dashed var(--color-border)',
-          background: 'var(--color-bg-secondary)',
+          background: 'rgba(255, 255, 255, 0.01)',
+          borderRadius: '32px',
+          animation: 'fadeIn 0.8s ease',
         }}
       >
         <div
           style={{
             width: '80px',
             height: '80px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--color-primary), #5856d6)',
+            borderRadius: '24px',
+            background: 'var(--color-sidebar)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1.5rem',
+            marginBottom: '24px',
           }}
         >
-          <UploadIcon size={36} style={{ color: '#fff' }} />
+          <ImageIcon size={40} style={{ opacity: 0.2 }} />
         </div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-          No screenshots yet
+        <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
+          Studio Canvas Empty
         </h3>
-        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
-          Drag and drop your app screenshots here
+        <p
+          style={{ color: 'var(--color-text-tertiary)', marginBottom: '32px', textAlign: 'center' }}
+        >
+          Import screenshots to begin design orchestration.
         </p>
-        <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>
-          <PlusIcon size={16} />
-          Choose Screenshots
+        <button
+          className="btn btn-primary"
+          onClick={() => fileInputRef.current?.click()}
+          style={{ borderRadius: '12px', padding: '0 24px', height: '48px' }}
+        >
+          <PlusIcon size={18} />
+          <span>Import Artwork</span>
         </button>
         <input
           ref={fileInputRef}
@@ -83,17 +88,17 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
     <div
       style={{
         display: 'flex',
-        gap: '3rem',
+        gap: '40px',
         overflowX: 'auto',
         overflowY: 'hidden',
-        padding: '3rem',
-        height: 'calc(100vh - 280px)',
-        minHeight: '400px',
+        padding: '40px 60px',
+        height: '100%',
         alignItems: 'center',
         justifyContent: 'flex-start',
+        background: '#08090A',
       }}
     >
-      {assets.map((asset) => (
+      {assets.map((asset, index) => (
         <div
           key={asset.id}
           style={{
@@ -101,24 +106,23 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
             height: '100%',
             aspectRatio: `${selectedDevice.width} / ${selectedDevice.height}`,
             position: 'relative',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.25)',
-            borderRadius: '2rem',
-            // Define a scale factor based on container height to make fonts responsive
-            fontSize: 'min(2vw, 16px)',
+            borderRadius: '24px',
+            animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s both`,
           }}
         >
+          {/* Action Overlay */}
           <button
             onClick={() => onRemove(asset.id)}
             style={{
               position: 'absolute',
-              top: '-15px',
-              right: '-15px',
+              top: '-12px',
+              right: '-12px',
               width: '36px',
               height: '36px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-danger)',
+              borderRadius: '12px',
+              backgroundColor: 'var(--color-error)',
               color: '#fff',
-              border: '3px solid var(--color-bg-primary)',
+              border: '4px solid #08090A',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -127,7 +131,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
               boxShadow: '0 8px 16px rgba(255, 59, 48, 0.3)',
             }}
           >
-            <TrashIcon size={18} />
+            <TrashIcon size={16} />
           </button>
 
           <div
@@ -138,14 +142,16 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                 backgroundType === 'custom' && customBackgroundUrl
                   ? `url(${customBackgroundUrl})`
                   : gradientStyle,
-              backgroundSize: '100% 100%',
+              backgroundSize: 'cover',
               backgroundPosition: 'center',
               borderRadius: 'inherit',
               position: 'relative',
               overflow: 'hidden',
+              boxShadow: '0 40px 80px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.05)',
             }}
           >
-            {/* Text Overlay - Positioned exactly as in canvasUtils (top: 8%) */}
+            {/* Typography - Restored to original proportions but with high-end style */}
             <div
               style={{
                 position: 'absolute',
@@ -154,7 +160,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                 right: 0,
                 textAlign: 'center',
                 padding: '0 8%',
-                zIndex: 5,
+                zIndex: 10,
               }}
             >
               <input
@@ -167,129 +173,120 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                   border: 'none',
                   textAlign: 'center',
                   color: textColor,
-                  fontSize: '1.2rem',
-                  fontWeight: 700,
+                  fontSize: '1.4rem', // Restored closer to original (1.2rem)
+                  fontWeight: 800,
                   display: 'block',
                   outline: 'none',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  textShadow: textColor === '#ffffff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                  letterSpacing: '-0.025em',
+                  textShadow: textColor === '#ffffff' ? '0 2px 8px rgba(0,0,0,0.4)' : 'none',
+                  lineHeight: 1.2,
                 }}
-                placeholder="Enter title..."
+                placeholder="MAIN HEADLINE"
               />
-              <input
-                type="text"
+              <textarea
                 value={asset.subtitle}
                 onChange={(e) => onUpdate(asset.id, 'subtitle', e.target.value)}
+                rows={2}
                 style={{
                   width: '100%',
                   background: 'transparent',
                   border: 'none',
                   textAlign: 'center',
                   color: textColor,
-                  fontSize: '0.8rem',
+                  fontSize: '0.95rem', // Restored closer to original (0.8rem)
+                  fontWeight: 600,
                   opacity: 0.85,
                   display: 'block',
                   outline: 'none',
-                  marginTop: '0.2rem',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  textShadow: textColor === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
+                  marginTop: '12px',
+                  resize: 'none',
+                  lineHeight: 1.4,
+                  textShadow: textColor === '#ffffff' ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
                 }}
-                placeholder="Enter subtitle..."
+                placeholder="Secondary description..."
               />
             </div>
 
-            {/* Device Frame - Using DEVICE_PRESETS ratio */}
+            {/* Device Frame - Strictly restoring original 70-72% horizontal ratio for visual balance */}
             <div
               style={{
                 position: 'absolute',
-                bottom: selectedDevice.isTablet ? '6%' : '5%',
+                bottom: selectedDevice.isTablet ? '6%' : '5%', // Restored original 5%
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: selectedDevice.isTablet ? '72%' : '70%',
+                width: selectedDevice.isTablet ? '72%' : '70%', // Restored original 70% width
                 aspectRatio: `${selectedDevice.width} / ${selectedDevice.height}`,
-                backgroundColor: selectedDevice.platform === 'ios' ? '#1c1c1e' : '#202124',
-                borderRadius: selectedDevice.isTablet ? '5.5%' : '2.5rem',
-                padding: '1%',
+                backgroundColor: '#111',
+                borderRadius: selectedDevice.isTablet ? '5%' : '2rem',
+                padding: '1.5%',
                 boxSizing: 'border-box',
-                boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.6)',
+                border: '1px solid #333',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                zIndex: 5,
               }}
             >
-              {/* Screen Area - Exactly matching device ratio */}
               <div
                 style={{
                   width: '100%',
                   height: '100%',
-                  borderRadius: selectedDevice.isTablet ? '4.5%' : '2rem',
+                  borderRadius: selectedDevice.isTablet ? '4.5%' : '1.75rem',
                   overflow: 'hidden',
                   position: 'relative',
-                  backgroundColor: '#333',
+                  background: '#000',
                 }}
               >
                 <img
                   src={asset.imageSrc}
-                  alt="Screenshot"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
+                  alt="Preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
 
-                {/* Dynamic Island (iOS Phone only) */}
-                {selectedDevice.platform === 'ios' && !selectedDevice.isTablet && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '1.5%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '28%',
-                      aspectRatio: '1 / 0.3',
-                      backgroundColor: '#000',
-                      borderRadius: '50px',
-                    }}
-                  />
-                )}
-
-                {/* Camera hole (Android Phone only) */}
-                {selectedDevice.platform === 'android' && !selectedDevice.isTablet && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '1.5%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '3.5%',
-                      aspectRatio: '1',
-                      backgroundColor: '#1a1a1a',
-                      borderRadius: '50%',
-                    }}
-                  />
-                )}
-
-                {/* Home Indicator (iOS only) */}
+                {/* Visual Indicators */}
                 {selectedDevice.platform === 'ios' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '2%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: selectedDevice.isTablet ? '12%' : '35%',
-                      height: selectedDevice.isTablet ? '6px' : '5px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                      borderRadius: '50px',
-                    }}
-                  />
+                  <>
+                    {!selectedDevice.isTablet && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '1.5%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '28%',
+                          height: '3%',
+                          background: '#000',
+                          borderRadius: '50px',
+                        }}
+                      />
+                    )}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '2%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '35%',
+                        height: '4px',
+                        background: 'rgba(255,255,255,0.4)',
+                        borderRadius: '50px',
+                      }}
+                    />
+                  </>
                 )}
               </div>
             </div>
           </div>
         </div>
       ))}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
