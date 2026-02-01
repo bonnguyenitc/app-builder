@@ -25,3 +25,43 @@ export const sectionStyle: React.CSSProperties = {
   borderRadius: 'var(--radius-md)',
   border: '1px solid var(--color-border)',
 };
+
+export const modalLayout: React.CSSProperties = {
+  display: 'flex',
+  height: '500px', // Fixed height for consistency
+  overflow: 'hidden',
+};
+
+export const sidebarStyle: React.CSSProperties = {
+  width: '200px',
+  background: 'var(--color-bg)',
+  borderRight: '1px solid var(--color-border)',
+  padding: 'var(--spacing-md) var(--spacing-sm)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+};
+
+export const sidebarItemStyle = (active: boolean): React.CSSProperties => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  padding: '10px 12px',
+  borderRadius: 'var(--radius-md)',
+  fontSize: '13px',
+  fontWeight: active ? 600 : 500,
+  color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+  background: active ? 'var(--color-primary-light)' : 'transparent',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  border: 'none',
+  width: '100%',
+  textAlign: 'left',
+});
+
+export const contentAreaStyle: React.CSSProperties = {
+  flex: 1,
+  padding: 'var(--spacing-lg)',
+  overflowY: 'auto',
+  background: 'var(--color-surface)',
+};

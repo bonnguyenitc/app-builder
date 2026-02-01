@@ -1,5 +1,5 @@
 import React from 'react';
-import { SettingsIcon, KeyIcon } from '../Icons';
+import { KeyIcon } from '../Icons';
 import { inputStyle, labelStyle, sectionStyle } from './AddProject.styles';
 import { Credential } from '../../types/credential';
 
@@ -27,19 +27,7 @@ export const IosBuildSettings: React.FC<IosBuildSettingsProps> = ({
   credentials,
 }) => {
   return (
-    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--spacing-sm)',
-          marginBottom: 'var(--spacing-md)',
-        }}
-      >
-        <SettingsIcon size={16} style={{ color: 'var(--color-primary)' }} />
-        <h3 style={{ fontSize: '14px', fontWeight: 600 }}>iOS Build Configuration</h3>
-      </div>
-
+    <div style={{ marginBottom: 'var(--spacing-md)' }}>
       <div style={sectionStyle}>
         <div
           style={{

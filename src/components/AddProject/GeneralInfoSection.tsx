@@ -1,5 +1,5 @@
 import React from 'react';
-import { SparklesIcon, FolderIcon } from '../Icons';
+import { FolderIcon } from '../Icons';
 import { inputStyle, labelStyle, sectionStyle } from './AddProject.styles';
 
 interface GeneralInfoSectionProps {
@@ -18,19 +18,7 @@ export const GeneralInfoSection: React.FC<GeneralInfoSectionProps> = ({
   onBrowse,
 }) => {
   return (
-    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--spacing-sm)',
-          marginBottom: 'var(--spacing-md)',
-        }}
-      >
-        <SparklesIcon size={16} style={{ color: 'var(--color-primary)' }} />
-        <h3 style={{ fontSize: '14px', fontWeight: 600 }}>Basic Information</h3>
-      </div>
-
+    <div style={{ marginBottom: '0' }}>
       <div style={sectionStyle}>
         <div style={{ marginBottom: 'var(--spacing-md)' }}>
           <label style={labelStyle}>Project Name</label>
