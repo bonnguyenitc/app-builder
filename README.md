@@ -45,8 +45,9 @@
   - [Store Assets Creator](#5-store-assets-creator)
   - [App Icon Generator](#6-app-icon-generator)
   - [Keystore Creator](#7-keystore-creator)
-  - [Credentials Configuration](#8-configure-credentials)
-  - [Building](#9-build-ios)
+  - [App Size Analyzer](#8-app-size-analyzer)
+  - [Credentials Configuration](#9-configure-credentials)
+  - [Building](#10-build-ios)
 - [Project Structure](#-project-structure)
 - [Roadmap](#-roadmap)
 
@@ -68,12 +69,14 @@ It requires **no special configuration**—you set up your project environment a
 - **Deep Clean:** One-click maintenance to wipe `node_modules`, `Pods`, and artifacts.
 - **Auto-Discovery:** Automatically reads `Info.plist`, `build.gradle`.
 - **Notifications:** Real-time build status updates via Slack, Discord, and Telegram.
+- **Open IDE:** Launch Xcode or Android Studio directly from the dashboard.
 
 ### 🛠️ Essential Tools
 
 - **Store Assets Creator:** Design App Store & Play Store screenshots.
 - **App Icon Generator:** Create all icon sizes for iOS/Android from a single image.
 - **Keystore Generator:** Distinct visual tool to create Android signing keys.
+- **App Size Analyzer:** Inspect APK/AAB size and check 16KB page support.
 - **Emulator Manager:** Boot and run apps on simulators/emulators.
 
 ### 🔨 iOS Automation
@@ -229,7 +232,16 @@ Easily create Android release keystores without CLI tools.
 2. Fill in the keystore details (Alias, Passwords, Validity).
 3. Click **Generate Keystore** and save the `.jks` or `.keystore` file.
 
-### 8. Configure Credentials
+### 8. App Size Analyzer
+
+Analyze your Android binaries to optimize size and compatibility.
+
+1. Go to **App Size Analysis**.
+2. Upload an `.apk` or `.aab` file.
+3. View file size breakdown (Dex, Resources, Native Libs).
+4. **16KB Page Alignment:** Automatically verifies if native libraries support Android 15+.
+
+### 9. Configure Credentials
 
 <p align="center">
   <img src="screenshots/credential.png" alt="Credentials Configuration" width="100%" style="border-radius: 8px" />
@@ -288,7 +300,7 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 - Paste the full content of the **JSON Key file**.
 </details>
 
-### 9. Build iOS
+### 10. Build iOS
 
 1. Select Project → Click **Build iOS** (Apple Icon).
 2. **Scheme:** Usually your app name.
@@ -296,17 +308,18 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. **Export Method:** `app-store` (for uploading) or `ad-hoc` (for testing).
 5. **Upload to App Store:** Check this to auto-upload after build.
 
-### 10. Build Android
+### 11. Build Android
 
 1. Select Project → Click **Build Android**.
-2. Enter **Release Notes**.
-3. Toggle **Upload to Play Store** (Coming soon).
+2. **Format:** Select `AAB` (Bundle) or `APK`.
+3. Enter **Release Notes**.
+4. Toggle **Upload to Play Store** (Coming soon).
 
 <p align="center">
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 11. View Build History
+### 12. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -333,6 +346,8 @@ Track all your builds and releases in the History page.
 - [x] **Feature:** Keystore Generator.
 - [x] **Feature:** Discord/Slack/Telegram Notifications.
 - [x] **Feature:** Deep Clean maintenance.
+- [x] **Feature:** App Size Analyzer (16KB support).
+- [x] **Feature:** Open in IDE (Xcode / Android Studio).
 
 ---
 
