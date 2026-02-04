@@ -204,38 +204,65 @@ pub async fn build_project(
                 if status.success() {
                     let format = options.as_ref().and_then(|o| o.android_format.as_deref()).unwrap_or("aab");
 
-                    // Paths to check for outputs
-                    let output_paths = if format == "apk" {
-                        vec![
-                            android_dir.join("app/build/outputs/apk/release"),
-                        ]
+                    // Base output directory - we'll search recursively from here
+                    let base_output_dir = if format == "apk" {
+                        android_dir.join("app/build/outputs/apk")
                     } else {
-                        vec![
-                            android_dir.join("app/build/outputs/bundle/release"),
-                        ]
+                        android_dir.join("app/build/outputs/bundle")
                     };
 
-                    let mut found_file = None;
+                    let mut found_file: Option<std::path::PathBuf> = None;
                     let extension = if format == "apk" { "apk" } else { "aab" };
 
-                    for path in output_paths {
-                        if !path.exists() { continue; }
-                        if let Ok(entries) = std::fs::read_dir(path) {
+                    // Log the search paths for debugging
+                    let search_msg = format!("🔍 Searching for {} file in: {:?}", extension.to_uppercase(), base_output_dir);
+                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": search_msg })).map_err(|e| e.to_string())?;
+                    writeln!(log_file, "{}", search_msg).map_err(|e| e.to_string())?;
+
+                    // Recursive function to find files
+                    fn find_files_recursive(
+                        dir: &std::path::Path,
+                        extension: &str,
+                        log_file: &mut File,
+                    ) -> Vec<std::path::PathBuf> {
+                        let mut results = Vec::new();
+                        if let Ok(entries) = std::fs::read_dir(dir) {
                             for entry in entries.flatten() {
-                                let p = entry.path();
-                                if p.is_file() && p.extension().and_then(|s| s.to_str()) == Some(extension) {
-                                    // Prefer files that don't have "unsigned" in the name if possible
-                                    let filename = p.file_name().unwrap().to_string_lossy();
-                                    if !filename.contains("unsigned") {
-                                        found_file = Some(p);
-                                        break;
-                                    } else if found_file.is_none() {
-                                        found_file = Some(p);
+                                let path = entry.path();
+                                if path.is_dir() {
+                                    // Recursively search subdirectories (but not too deep)
+                                    results.extend(find_files_recursive(&path, extension, log_file));
+                                } else if path.is_file() {
+                                    if path.extension().and_then(|s| s.to_str()) == Some(extension) {
+                                        let _ = writeln!(log_file, "   ✅ Found: {:?}", path);
+                                        results.push(path);
                                     }
                                 }
                             }
                         }
-                        if found_file.is_some() { break; }
+                        results
+                    }
+
+                    if base_output_dir.exists() {
+                        let all_files = find_files_recursive(&base_output_dir, extension, &mut log_file);
+
+                        // Prefer signed files over unsigned
+                        for file in &all_files {
+                            let filename = file.file_name().unwrap().to_string_lossy();
+                            if !filename.contains("unsigned") {
+                                found_file = Some(file.clone());
+                                break;
+                            }
+                        }
+
+                        // If no signed file found, use the first one (even if unsigned)
+                        if found_file.is_none() && !all_files.is_empty() {
+                            found_file = Some(all_files[0].clone());
+                        }
+                    } else {
+                        let not_found_msg = format!("   ⚠️ Output directory does not exist: {:?}", base_output_dir);
+                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": not_found_msg })).map_err(|e| e.to_string())?;
+                        writeln!(log_file, "{}", not_found_msg).map_err(|e| e.to_string())?;
                     }
 
                     if let Some(original_path) = found_file {
@@ -258,6 +285,11 @@ pub async fn build_project(
 
                         // Emit artifact path
                         window.emit("build-artifact-path", serde_json::json!({ "projectId": project.id, "payload": dest_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                    } else {
+                        // Warn that file was not found for renaming
+                        let warn_msg = format!("⚠️ No {} file found to rename in: {:?}", extension.to_uppercase(), base_output_dir);
+                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": warn_msg })).map_err(|e| e.to_string())?;
+                        writeln!(log_file, "{}", warn_msg).map_err(|e| e.to_string())?;
                     }
 
                     let success_msg = "✅ Android build completed successfully";
