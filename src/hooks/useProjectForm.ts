@@ -37,6 +37,12 @@ export const useProjectForm = (
   const [androidBuildCommand, setAndroidBuildCommand] = useState(
     initialData?.android?.buildCommand || '',
   );
+  const [firebaseAppId, setFirebaseAppId] = useState(
+    initialData?.android?.config?.firebaseAppId || '',
+  );
+  const [distributionGroups, setDistributionGroups] = useState(
+    initialData?.android?.config?.distributionGroups || '',
+  );
   const [iosScheme, setIosScheme] = useState(initialData?.ios?.config?.scheme || '');
   const [iosConfiguration, setIosConfiguration] = useState(
     initialData?.ios?.config?.configuration || 'Release',
@@ -90,6 +96,8 @@ export const useProjectForm = (
       setIosBuildNumber(initialData?.ios?.buildNumber || 1);
       setAndroidBuildNumber(initialData?.android?.versionCode || 1);
       setAndroidBuildCommand(initialData?.android?.buildCommand || '');
+      setFirebaseAppId(initialData?.android?.config?.firebaseAppId || '');
+      setDistributionGroups(initialData?.android?.config?.distributionGroups || '');
       setIosScheme(initialData?.ios?.config?.scheme || '');
       setIosConfiguration(initialData?.ios?.config?.configuration || 'Release');
       setIosExportMethod(initialData?.ios?.config?.exportMethod || 'development');
@@ -176,6 +184,10 @@ export const useProjectForm = (
         version: androidVersion,
         versionCode: androidBuildNumber,
         buildCommand: androidBuildCommand || undefined,
+        config: {
+          firebaseAppId: firebaseAppId || undefined,
+          distributionGroups: distributionGroups || undefined,
+        },
       },
       credentials: {
         iosId: selectedIosId || undefined,
@@ -223,6 +235,10 @@ export const useProjectForm = (
       setAndroidBuildNumber,
       androidBuildCommand,
       setAndroidBuildCommand,
+      firebaseAppId,
+      setFirebaseAppId,
+      distributionGroups,
+      setDistributionGroups,
       iosScheme,
       setIosScheme,
       iosConfiguration,

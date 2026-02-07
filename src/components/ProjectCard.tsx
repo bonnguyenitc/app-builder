@@ -19,7 +19,12 @@ interface ProjectCardProps {
   project: Project;
   onBuild: (
     platform: 'ios' | 'android',
-    options?: { uploadToAppStore?: boolean; releaseNote?: string; androidFormat?: 'apk' | 'aab' },
+    options?: {
+      uploadToAppStore?: boolean;
+      releaseNote?: string;
+      androidFormat?: 'apk' | 'aab';
+      sendToAppDistribution?: boolean;
+    },
   ) => void;
   onSelect: () => void;
   onEdit: () => void;
@@ -63,11 +68,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     return (localStorage.getItem(`android_format_${project.id}`) as 'apk' | 'aab') || 'aab';
   });
 
+  const [sendToAppDistribution, setSendToAppDistribution] = useState(() => {
+    return localStorage.getItem(`send_to_app_distribution_${project.id}`) === 'true';
+  });
+
   const [isHovered, setIsHovered] = useState(false);
 
   const handleAndroidFormatChange = (format: 'apk' | 'aab') => {
     setAndroidFormat(format);
     localStorage.setItem(`android_format_${project.id}`, format);
+  };
+
+  const handleSendToAppDistributionChange = (checked: boolean) => {
+    setSendToAppDistribution(checked);
+    localStorage.setItem(`send_to_app_distribution_${project.id}`, String(checked));
   };
 
   const handleUploadChange = (checked: boolean) => {
@@ -315,10 +329,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         />
       </div>
 
-      {/* Upload Checkbox */}
-      <div style={{ marginBottom: 'var(--spacing-md)' }}>
+      {/* Upload Checkboxes Row */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--spacing-sm)',
+          marginBottom: 'var(--spacing-md)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Upload to App Store (iOS) */}
         <label
           style={{
+            flex: 1,
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--spacing-sm)',
@@ -328,9 +351,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             color: hasIosCredentials ? 'var(--color-text)' : 'var(--color-text-secondary)',
             padding: 'var(--spacing-sm)',
             borderRadius: 'var(--radius-sm)',
-            transition: 'background-color var(--transition-fast)',
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           <input
             type="checkbox"
@@ -345,13 +366,40 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
           />
           <span style={{ fontWeight: 500 }}>
-            Upload to App Store{' '}
+            App Store{' '}
             {!hasIosCredentials && (
-              <span style={{ fontSize: '11px', opacity: 0.7 }}>
-                (Configure API credentials first)
-              </span>
+              <span style={{ fontSize: '10px', opacity: 0.7 }}>(No credentials)</span>
             )}
           </span>
+        </label>
+
+        {/* Send to App Distribution (Android) */}
+        <label
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)',
+            fontSize: '13px',
+            cursor: 'pointer',
+            userSelect: 'none',
+            color: 'var(--color-text)',
+            padding: 'var(--spacing-sm)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={sendToAppDistribution}
+            onChange={(e) => handleSendToAppDistributionChange(e.target.checked)}
+            style={{
+              cursor: 'pointer',
+              width: '16px',
+              height: '16px',
+              accentColor: 'var(--color-success)',
+            }}
+          />
+          <span style={{ fontWeight: 500 }}>App Distribution</span>
         </label>
       </div>
 
@@ -395,7 +443,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           onClick={(e) => {
             e.stopPropagation();
             if (canBuild) {
-              onBuild('android', { releaseNote: releaseNote.trim(), androidFormat });
+              onBuild('android', {
+                releaseNote: releaseNote.trim(),
+                androidFormat,
+                sendToAppDistribution,
+              });
             }
           }}
           disabled={!canBuild}
@@ -431,7 +483,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           display: 'flex',
           justifyContent: 'flex-end',
           alignItems: 'center',
-          marginTop: '12px',
+          marginTop: '10px',
           gap: '8px',
         }}
         onClick={(e) => e.stopPropagation()}

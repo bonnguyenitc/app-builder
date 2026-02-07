@@ -15,6 +15,8 @@ pub struct BuildOptions {
     pub release_note: Option<String>,
     #[serde(rename = "androidFormat")]
     pub android_format: Option<String>,
+    #[serde(rename = "sendToAppDistribution")]
+    pub send_to_app_distribution: Option<bool>,
 }
 
 #[command]
@@ -203,69 +205,18 @@ pub async fn build_project(
 
                 if status.success() {
                     let format = options.as_ref().and_then(|o| o.android_format.as_deref()).unwrap_or("aab");
-
-                    // Base output directory - we'll search recursively from here
-                    let base_output_dir = if format == "apk" {
-                        android_dir.join("app/build/outputs/apk")
-                    } else {
-                        android_dir.join("app/build/outputs/bundle")
-                    };
-
-                    let mut found_file: Option<std::path::PathBuf> = None;
                     let extension = if format == "apk" { "apk" } else { "aab" };
 
-                    // Log the search paths for debugging
-                    let search_msg = format!("🔍 Searching for {} file in: {:?}", extension.to_uppercase(), base_output_dir);
-                    window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": search_msg })).map_err(|e| e.to_string())?;
-                    writeln!(log_file, "{}", search_msg).map_err(|e| e.to_string())?;
-
-                    // Recursive function to find files
-                    fn find_files_recursive(
-                        dir: &std::path::Path,
-                        extension: &str,
-                        log_file: &mut File,
-                    ) -> Vec<std::path::PathBuf> {
-                        let mut results = Vec::new();
-                        if let Ok(entries) = std::fs::read_dir(dir) {
-                            for entry in entries.flatten() {
-                                let path = entry.path();
-                                if path.is_dir() {
-                                    // Recursively search subdirectories (but not too deep)
-                                    results.extend(find_files_recursive(&path, extension, log_file));
-                                } else if path.is_file() {
-                                    if path.extension().and_then(|s| s.to_str()) == Some(extension) {
-                                        let _ = writeln!(log_file, "   ✅ Found: {:?}", path);
-                                        results.push(path);
-                                    }
-                                }
-                            }
-                        }
-                        results
-                    }
-
-                    if base_output_dir.exists() {
-                        let all_files = find_files_recursive(&base_output_dir, extension, &mut log_file);
-
-                        // Prefer signed files over unsigned
-                        for file in &all_files {
-                            let filename = file.file_name().unwrap().to_string_lossy();
-                            if !filename.contains("unsigned") {
-                                found_file = Some(file.clone());
-                                break;
-                            }
-                        }
-
-                        // If no signed file found, use the first one (even if unsigned)
-                        if found_file.is_none() && !all_files.is_empty() {
-                            found_file = Some(all_files[0].clone());
-                        }
+                    // Direct path to the built artifact
+                    let artifact_file = if format == "apk" {
+                        android_dir.join("app/build/outputs/apk/release/app-release.apk")
                     } else {
-                        let not_found_msg = format!("   ⚠️ Output directory does not exist: {:?}", base_output_dir);
-                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": not_found_msg })).map_err(|e| e.to_string())?;
-                        writeln!(log_file, "{}", not_found_msg).map_err(|e| e.to_string())?;
-                    }
+                        android_dir.join("app/build/outputs/bundle/release/app-release.aab")
+                    };
 
-                    if let Some(original_path) = found_file {
+                    let mut artifact_path: Option<std::path::PathBuf> = None;
+
+                    if artifact_file.exists() {
                         let ts = chrono::Local::now().format("%Y%m%d_%H%M%S").to_string();
                         let new_filename = format!(
                             "{}_{}_{}_{}.{}",
@@ -275,8 +226,8 @@ pub async fn build_project(
                             ts,
                             extension
                         );
-                        let dest_path = original_path.parent().unwrap().join(&new_filename);
-                        std::fs::rename(&original_path, &dest_path)
+                        let dest_path = artifact_file.parent().unwrap().join(&new_filename);
+                        std::fs::rename(&artifact_file, &dest_path)
                             .map_err(|e| format!("Failed to rename {} file: {}", extension.to_uppercase(), e))?;
 
                         let rename_msg = format!("✅ {} renamed to: {}", extension.to_uppercase(), new_filename);
@@ -285,16 +236,90 @@ pub async fn build_project(
 
                         // Emit artifact path
                         window.emit("build-artifact-path", serde_json::json!({ "projectId": project.id, "payload": dest_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+
+                        artifact_path = Some(dest_path);
                     } else {
-                        // Warn that file was not found for renaming
-                        let warn_msg = format!("⚠️ No {} file found to rename in: {:?}", extension.to_uppercase(), base_output_dir);
+                        // Warn that file was not found
+                        let warn_msg = format!("⚠️ No {} file found at: {:?}", extension.to_uppercase(), artifact_file);
                         window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": warn_msg })).map_err(|e| e.to_string())?;
                         writeln!(log_file, "{}", warn_msg).map_err(|e| e.to_string())?;
                     }
 
+
                     let success_msg = "✅ Android build completed successfully";
                     window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": success_msg })).map_err(|e| e.to_string())?;
                     writeln!(log_file, "{}", success_msg).map_err(|e| e.to_string())?;
+
+                    // Upload to Firebase App Distribution if enabled
+                    if let Some(true) = options.as_ref().and_then(|o| o.send_to_app_distribution) {
+                        if let (Some(artifact), Some(config)) = (&artifact_path, &project.android.config) {
+                            if let Some(firebase_app_id) = &config.firebase_app_id {
+                                let upload_msg = "📤 Uploading to Firebase App Distribution...";
+                                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": upload_msg })).map_err(|e| e.to_string())?;
+                                writeln!(log_file, "{}", upload_msg).map_err(|e| e.to_string())?;
+
+                                let artifact_str = artifact.to_str().unwrap_or_default();
+                                let groups = config.distribution_groups.as_deref().unwrap_or("");
+                                let release_notes = options.as_ref()
+                                    .and_then(|o| o.release_note.as_deref())
+                                    .unwrap_or("");
+
+                                // Build firebase command
+                                let firebase_cmd = format!(
+                                    r#"
+                                    [ -f "$HOME/.zshrc" ] && source "$HOME/.zshrc" >/dev/null 2>&1 || true
+                                    [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc" >/dev/null 2>&1 || true
+                                    export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.npm-global/bin:$PATH"
+                                    firebase appdistribution:distribute '{}' --app '{}' {} {} 2>&1
+                                    "#,
+                                    artifact_str.replace("'", "'\\''"),
+                                    firebase_app_id.replace("'", "'\\''"),
+                                    if !groups.is_empty() { format!("--groups '{}'", groups.replace("'", "'\\''")) } else { String::new() },
+                                    if !release_notes.is_empty() { format!("--release-notes '{}'", release_notes.replace("'", "'\\''")) } else { String::new() }
+                                );
+                                let firebase_output = Command::new("/bin/sh")
+                                    .args(&["-c", &firebase_cmd])
+                                    .output();
+
+                                match firebase_output {
+                                    Ok(output) => {
+                                        let stdout = String::from_utf8_lossy(&output.stdout);
+                                        let stderr = String::from_utf8_lossy(&output.stderr);
+
+                                        // Log firebase output
+                                        for line in stdout.lines() {
+                                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": line })).map_err(|e| e.to_string())?;
+                                            writeln!(log_file, "{}", line).map_err(|e| e.to_string())?;
+                                        }
+
+                                        if output.status.success() {
+                                            let upload_success = "✅ Successfully uploaded to Firebase App Distribution!";
+                                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": upload_success })).map_err(|e| e.to_string())?;
+                                            writeln!(log_file, "{}", upload_success).map_err(|e| e.to_string())?;
+                                        } else {
+                                            let upload_fail = format!("❌ Firebase upload failed: {}", stderr);
+                                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": upload_fail })).map_err(|e| e.to_string())?;
+                                            writeln!(log_file, "{}", upload_fail).map_err(|e| e.to_string())?;
+                                        }
+                                    }
+                                    Err(e) => {
+                                        let err_msg = format!("❌ Failed to run firebase command: {}", e);
+                                        window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg })).map_err(|e| e.to_string())?;
+                                        writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
+                                    }
+                                }
+                            } else {
+                                let warn = "⚠️ App Distribution enabled but Firebase App ID not configured";
+                                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": warn })).map_err(|e| e.to_string())?;
+                                writeln!(log_file, "{}", warn).map_err(|e| e.to_string())?;
+                            }
+                        } else {
+                            let warn = "⚠️ App Distribution enabled but artifact path or config not available";
+                            window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": warn })).map_err(|e| e.to_string())?;
+                            writeln!(log_file, "{}", warn).map_err(|e| e.to_string())?;
+                        }
+                    }
+
                     window.emit("build-status", serde_json::json!({ "status": "success", "projectId": project.id })).map_err(|e| e.to_string())?;
                     return Ok(());
                 } else {

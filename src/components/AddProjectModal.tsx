@@ -209,6 +209,10 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
                     buildCommand={states.androidBuildCommand}
                     setBuildCommand={states.setAndroidBuildCommand}
                     credentials={states.androidCredentials}
+                    firebaseAppId={states.firebaseAppId}
+                    setFirebaseAppId={states.setFirebaseAppId}
+                    distributionGroups={states.distributionGroups}
+                    setDistributionGroups={states.setDistributionGroups}
                   />
                 </div>
               )}

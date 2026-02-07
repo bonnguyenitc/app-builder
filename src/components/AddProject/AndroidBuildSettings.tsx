@@ -9,6 +9,10 @@ interface AndroidBuildSettingsProps {
   buildCommand: string;
   setBuildCommand: (val: string) => void;
   credentials: Credential[];
+  firebaseAppId: string;
+  setFirebaseAppId: (val: string) => void;
+  distributionGroups: string;
+  setDistributionGroups: (val: string) => void;
 }
 
 export const AndroidBuildSettings: React.FC<AndroidBuildSettingsProps> = ({
@@ -17,6 +21,10 @@ export const AndroidBuildSettings: React.FC<AndroidBuildSettingsProps> = ({
   buildCommand,
   setBuildCommand,
   credentials,
+  firebaseAppId,
+  setFirebaseAppId,
+  distributionGroups,
+  setDistributionGroups,
 }) => {
   return (
     <div style={{ marginBottom: 'var(--spacing-md)' }}>
@@ -71,6 +79,72 @@ export const AndroidBuildSettings: React.FC<AndroidBuildSettingsProps> = ({
             value={buildCommand}
             onChange={(e) => setBuildCommand(e.target.value)}
           />
+        </div>
+
+        {/* Firebase App Distribution Section */}
+        <div
+          style={{
+            marginTop: 'var(--spacing-md)',
+            paddingTop: 'var(--spacing-md)',
+            borderTop: '1px solid var(--color-border)',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: 'var(--spacing-sm)',
+              color: 'var(--color-text)',
+            }}
+          >
+            🔥 Firebase App Distribution
+          </p>
+
+          <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+            <label style={labelStyle}>
+              Firebase App ID
+              <span
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  fontWeight: 400,
+                  marginLeft: '4px',
+                  fontSize: '12px',
+                }}
+              >
+                (e.g., 1:1234567890:android:0a1b2c3d4e5f)
+              </span>
+            </label>
+            <input
+              type="text"
+              style={inputStyle}
+              placeholder="1:1234567890:android:0a1b2c3d4e5f67890"
+              value={firebaseAppId}
+              onChange={(e) => setFirebaseAppId(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>
+              Distribution Groups
+              <span
+                style={{
+                  color: 'var(--color-text-secondary)',
+                  fontWeight: 400,
+                  marginLeft: '4px',
+                  fontSize: '12px',
+                }}
+              >
+                (comma-separated, e.g., qa-team, testers)
+              </span>
+            </label>
+            <input
+              type="text"
+              style={inputStyle}
+              placeholder="qa-team, trusted-testers"
+              value={distributionGroups}
+              onChange={(e) => setDistributionGroups(e.target.value)}
+            />
+          </div>
         </div>
 
         {credentials.length === 0 && (

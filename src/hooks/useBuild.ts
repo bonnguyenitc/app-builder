@@ -11,7 +11,12 @@ export const useBuild = () => {
     async (
       project: Project,
       platform: 'ios' | 'android',
-      options?: { uploadToAppStore?: boolean; releaseNote?: string; androidFormat?: 'apk' | 'aab' },
+      options?: {
+        uploadToAppStore?: boolean;
+        releaseNote?: string;
+        androidFormat?: 'apk' | 'aab';
+        sendToAppDistribution?: boolean;
+      },
     ) => {
       const buildId = Math.random().toString(36).substr(2, 9);
       const initialBuild: BuildHistory = {
@@ -74,6 +79,8 @@ export const useBuild = () => {
           status: data.status,
           timestamp: Date.now(),
         };
+
+        // Firebase App Distribution upload is now handled in Rust backend
 
         clearActive(project.id);
         addToHistory(finalBuild);

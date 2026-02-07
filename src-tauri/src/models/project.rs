@@ -22,11 +22,19 @@ pub struct IosPlatform {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct AndroidConfig {
+    pub firebase_app_id: Option<String>,
+    pub distribution_groups: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AndroidPlatform {
     pub bundle_id: String,
     pub version: String,
     pub version_code: u32,
     pub build_command: Option<String>,
+    pub config: Option<AndroidConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

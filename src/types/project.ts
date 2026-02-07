@@ -20,6 +20,10 @@ export interface Project {
     version: string;
     versionCode: number;
     buildCommand?: string;
+    config?: {
+      firebaseAppId?: string; // Firebase App ID for App Distribution (e.g., 1:1234567890:android:0a1b2c3d4e5f67890)
+      distributionGroups?: string; // Comma-separated tester groups (e.g., "qa-team, trusted-testers")
+    };
   };
   credentials: {
     iosId?: string;

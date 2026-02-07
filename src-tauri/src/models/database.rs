@@ -47,6 +47,8 @@ pub fn init_db(app_handle: &AppHandle) -> Result<Connection> {
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_credential_id TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN slack_notifications TEXT", []);
     let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_build_command TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_firebase_app_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE projects ADD COLUMN android_distribution_groups TEXT", []);
 
     // Create credentials table
     conn.execute(
