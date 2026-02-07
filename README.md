@@ -87,6 +87,7 @@ It requires **no special configuration**—you set up your project environment a
 ### 🤖 Android Automation
 
 - **Build AAB/APK:** Direct Gradle execution management.
+- **Firebase App Distribution:** Automatic upload to Firebase for beta testing after successful builds.
 
 ### 📊 Monitoring & History
 
@@ -313,13 +314,46 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 1. Select Project → Click **Build Android**.
 2. **Format:** Select `AAB` (Bundle) or `APK`.
 3. Enter **Release Notes**.
-4. Toggle **Upload to Play Store** (Coming soon).
+4. Toggle **App Distribution** to auto-upload to Firebase after build.
+5. Toggle **Upload to Play Store** (Coming soon).
 
 <p align="center">
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
 
-### 12. View Build History
+### 12. Firebase App Distribution Setup
+
+To enable automatic upload to Firebase App Distribution:
+
+#### Prerequisites
+
+1. **Install Firebase CLI:**
+
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. **Login to Firebase:**
+   ```bash
+   firebase login
+   ```
+
+#### Configuration
+
+1. Go to **Project Settings** → **Android** tab → **Build Config**.
+2. Enter your **Firebase App ID** (format: `1:1234567890:android:abcdef123456`).
+3. Optionally add **Distribution Groups** (comma-separated: `qa-team, testers`).
+
+#### Usage
+
+1. When building Android, check **App Distribution**.
+2. After the build succeeds, the artifact will automatically upload to Firebase.
+3. Testers in your distribution groups will receive the new build.
+
+> [!TIP]
+> Find your Firebase App ID in [Firebase Console](https://console.firebase.google.com/) → Project Settings → General → Your apps → App ID.
+
+### 13. View Build History
 
 Track all your builds and releases in the History page.
 
@@ -337,7 +371,7 @@ Track all your builds and releases in the History page.
 - [x] **System:** Queue Management, History, Secure Credentials.
 - [ ] **Android:** Upload AAB to Google Play Store (In Progress).
 - [ ] **Feature:** CI/CD Pipeline integration hooks.
-- [ ] **Feature:** Firebase App Distribution support.
+- [x] **Feature:** Firebase App Distribution support.
 - [x] **Feature:** Native Permissions Manager (Android/iOS).
 - [x] **Feature:** Environment Helper (Doctor/Fixer).
 - [x] **Feature:** Emulator Manager (Boot/Run).
