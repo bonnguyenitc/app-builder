@@ -5,9 +5,10 @@ use std::process::Command;
 use tauri::command;
 use image::{DynamicImage, ImageFormat};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IconSize {
-    pub size: u32,
+    pub size: String,       // e.g., "60x60", "83.5x83.5"
+    pub expected_size: u32, // actual pixel size, e.g., 180
     pub scale: u32,
     pub idiom: String,
     pub filename: String,
@@ -29,46 +30,60 @@ pub struct IconGenerationOptions {
     pub android_icon_name: Option<String>, // Default: ic_launcher
 }
 
-// iOS icon sizes based on Apple's requirements
+// iOS icon sizes based on Apple's requirements and the template format
+// Filenames use the expected_size directly (e.g., "180.png", "80.png")
 fn get_ios_icon_sizes() -> Vec<IconSize> {
     vec![
-        // iPhone Notification
-        IconSize { size: 20, scale: 2, idiom: "iphone".to_string(), filename: "Icon-20@2x.png".to_string() },
-        IconSize { size: 20, scale: 3, idiom: "iphone".to_string(), filename: "Icon-20@3x.png".to_string() },
+        // iPhone App - 60x60
+        IconSize { size: "60x60".to_string(), expected_size: 180, scale: 3, idiom: "iphone".to_string(), filename: "180.png".to_string() },
+        IconSize { size: "60x60".to_string(), expected_size: 120, scale: 2, idiom: "iphone".to_string(), filename: "120.png".to_string() },
 
-        // iPhone Settings
-        IconSize { size: 29, scale: 2, idiom: "iphone".to_string(), filename: "Icon-29@2x.png".to_string() },
-        IconSize { size: 29, scale: 3, idiom: "iphone".to_string(), filename: "Icon-29@3x.png".to_string() },
+        // iPhone Spotlight - 40x40
+        IconSize { size: "40x40".to_string(), expected_size: 80, scale: 2, idiom: "iphone".to_string(), filename: "80.png".to_string() },
+        IconSize { size: "40x40".to_string(), expected_size: 120, scale: 3, idiom: "iphone".to_string(), filename: "120.png".to_string() },
 
-        // iPhone Spotlight
-        IconSize { size: 40, scale: 2, idiom: "iphone".to_string(), filename: "Icon-40@2x.png".to_string() },
-        IconSize { size: 40, scale: 3, idiom: "iphone".to_string(), filename: "Icon-40@3x.png".to_string() },
+        // iPhone Legacy App - 57x57
+        IconSize { size: "57x57".to_string(), expected_size: 57, scale: 1, idiom: "iphone".to_string(), filename: "57.png".to_string() },
+        IconSize { size: "57x57".to_string(), expected_size: 114, scale: 2, idiom: "iphone".to_string(), filename: "114.png".to_string() },
 
-        // iPhone App
-        IconSize { size: 60, scale: 2, idiom: "iphone".to_string(), filename: "Icon-60@2x.png".to_string() },
-        IconSize { size: 60, scale: 3, idiom: "iphone".to_string(), filename: "Icon-60@3x.png".to_string() },
+        // iPhone Settings - 29x29
+        IconSize { size: "29x29".to_string(), expected_size: 29, scale: 1, idiom: "iphone".to_string(), filename: "29.png".to_string() },
+        IconSize { size: "29x29".to_string(), expected_size: 58, scale: 2, idiom: "iphone".to_string(), filename: "58.png".to_string() },
+        IconSize { size: "29x29".to_string(), expected_size: 87, scale: 3, idiom: "iphone".to_string(), filename: "87.png".to_string() },
 
-        // iPad Notification
-        IconSize { size: 20, scale: 1, idiom: "ipad".to_string(), filename: "Icon-20.png".to_string() },
-        IconSize { size: 20, scale: 2, idiom: "ipad".to_string(), filename: "Icon-20@2x-ipad.png".to_string() },
+        // iPhone Notification - 20x20
+        IconSize { size: "20x20".to_string(), expected_size: 40, scale: 2, idiom: "iphone".to_string(), filename: "40.png".to_string() },
+        IconSize { size: "20x20".to_string(), expected_size: 60, scale: 3, idiom: "iphone".to_string(), filename: "60.png".to_string() },
 
-        // iPad Settings
-        IconSize { size: 29, scale: 1, idiom: "ipad".to_string(), filename: "Icon-29.png".to_string() },
-        IconSize { size: 29, scale: 2, idiom: "ipad".to_string(), filename: "Icon-29@2x-ipad.png".to_string() },
+        // App Store / iOS Marketing - 1024x1024
+        IconSize { size: "1024x1024".to_string(), expected_size: 1024, scale: 1, idiom: "ios-marketing".to_string(), filename: "1024.png".to_string() },
 
-        // iPad Spotlight
-        IconSize { size: 40, scale: 1, idiom: "ipad".to_string(), filename: "Icon-40.png".to_string() },
-        IconSize { size: 40, scale: 2, idiom: "ipad".to_string(), filename: "Icon-40@2x-ipad.png".to_string() },
+        // iPad Spotlight - 40x40
+        IconSize { size: "40x40".to_string(), expected_size: 40, scale: 1, idiom: "ipad".to_string(), filename: "40.png".to_string() },
+        IconSize { size: "40x40".to_string(), expected_size: 80, scale: 2, idiom: "ipad".to_string(), filename: "80.png".to_string() },
 
-        // iPad App
-        IconSize { size: 76, scale: 1, idiom: "ipad".to_string(), filename: "Icon-76.png".to_string() },
-        IconSize { size: 76, scale: 2, idiom: "ipad".to_string(), filename: "Icon-76@2x.png".to_string() },
+        // iPad Legacy Spotlight - 50x50
+        IconSize { size: "50x50".to_string(), expected_size: 50, scale: 1, idiom: "ipad".to_string(), filename: "50.png".to_string() },
+        IconSize { size: "50x50".to_string(), expected_size: 100, scale: 2, idiom: "ipad".to_string(), filename: "100.png".to_string() },
 
-        // iPad Pro App
-        IconSize { size: 83, scale: 2, idiom: "ipad".to_string(), filename: "Icon-83.5@2x.png".to_string() },
+        // iPad Legacy App - 72x72
+        IconSize { size: "72x72".to_string(), expected_size: 72, scale: 1, idiom: "ipad".to_string(), filename: "72.png".to_string() },
+        IconSize { size: "72x72".to_string(), expected_size: 144, scale: 2, idiom: "ipad".to_string(), filename: "144.png".to_string() },
 
-        // App Store
-        IconSize { size: 1024, scale: 1, idiom: "ios-marketing".to_string(), filename: "Icon-1024.png".to_string() },
+        // iPad App - 76x76
+        IconSize { size: "76x76".to_string(), expected_size: 76, scale: 1, idiom: "ipad".to_string(), filename: "76.png".to_string() },
+        IconSize { size: "76x76".to_string(), expected_size: 152, scale: 2, idiom: "ipad".to_string(), filename: "152.png".to_string() },
+
+        // iPad Pro App - 83.5x83.5
+        IconSize { size: "83.5x83.5".to_string(), expected_size: 167, scale: 2, idiom: "ipad".to_string(), filename: "167.png".to_string() },
+
+        // iPad Settings - 29x29
+        IconSize { size: "29x29".to_string(), expected_size: 29, scale: 1, idiom: "ipad".to_string(), filename: "29.png".to_string() },
+        IconSize { size: "29x29".to_string(), expected_size: 58, scale: 2, idiom: "ipad".to_string(), filename: "58.png".to_string() },
+
+        // iPad Notification - 20x20
+        IconSize { size: "20x20".to_string(), expected_size: 20, scale: 1, idiom: "ipad".to_string(), filename: "20.png".to_string() },
+        IconSize { size: "20x20".to_string(), expected_size: 40, scale: 2, idiom: "ipad".to_string(), filename: "40.png".to_string() },
     ]
 }
 
@@ -147,15 +162,16 @@ fn generate_ios_contents_json(sizes: &[IconSize]) -> String {
     let mut images = Vec::new();
 
     for size in sizes {
-        let _actual_size = size.size * size.scale;
         images.push(format!(
             r#"    {{
-      "size": "{}x{}",
-      "idiom": "{}",
+      "size": "{}",
+      "expected-size": "{}",
       "filename": "{}",
+      "folder": "Assets.xcassets/AppIcon.appiconset/",
+      "idiom": "{}",
       "scale": "{}x"
     }}"#,
-            size.size, size.size, size.idiom, size.filename, size.scale
+            size.size, size.expected_size, size.filename, size.idiom, size.scale
         ));
     }
 
@@ -163,11 +179,7 @@ fn generate_ios_contents_json(sizes: &[IconSize]) -> String {
         r#"{{
   "images": [
 {}
-  ],
-  "info": {{
-    "version": 1,
-    "author": "app-builder"
-  }}
+  ]
 }}"#,
         images.join(",\n")
     )
@@ -212,8 +224,7 @@ pub async fn generate_app_icons(options: IconGenerationOptions) -> Result<IconGe
 
         // Generate each icon size
         for icon_size in &icon_sizes {
-            let actual_size = icon_size.size * icon_size.scale;
-            let resized = resize_image(&img, actual_size);
+            let resized = resize_image(&img, icon_size.expected_size);
             let output_file = ios_output.join(&icon_size.filename);
 
             resized.save_with_format(&output_file, ImageFormat::Png)
