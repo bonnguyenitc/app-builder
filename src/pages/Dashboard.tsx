@@ -6,12 +6,14 @@ import {
   AlertCircleIcon,
   TrashIcon,
   EraserIcon,
+  TerminalIcon,
 } from '../components/Icons';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../stores/projectStore';
 import { useBuildStore } from '../stores/buildStore';
 import { ProjectCard } from '../components/ProjectCard';
 import { AddProjectModal } from '../components/AddProjectModal';
+import { CreateProjectModal } from '../components/CreateProjectModal';
 import { DeepCleanModal } from '../components/DeepCleanModal';
 import { Project } from '../types/project';
 import { useBuild } from '../hooks/useBuild';
@@ -19,10 +21,11 @@ import { invoke } from '@tauri-apps/api/core';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, addProject, updateProject, deleteProject, error, clearError } =
+  const { projects, addProject, updateProject, deleteProject, fetchProjects, error, clearError } =
     useProjectStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
   const [deletingProject, setDeletingProject] = useState<Project | undefined>(undefined);
   const [cleaningProject, setCleaningProject] = useState<Project | undefined>(undefined);
@@ -222,21 +225,40 @@ export const Dashboard: React.FC = () => {
             Manage and develop your mobile applications in one place.
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={handleAddProject}
-          style={{
-            height: '46px',
-            borderRadius: '14px',
-            padding: '0 24px',
-            boxShadow: '0 8px 16px rgba(0, 122, 255, 0.15)',
-            fontSize: '15px',
-            fontWeight: 600,
-          }}
-        >
-          <PlusIcon size={20} />
-          <span>New Project</span>
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setIsCreateModalOpen(true)}
+            style={{
+              height: '46px',
+              borderRadius: '14px',
+              padding: '0 20px',
+              fontSize: '14px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <TerminalIcon size={18} />
+            <span>Create Project</span>
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleAddProject}
+            style={{
+              height: '46px',
+              borderRadius: '14px',
+              padding: '0 24px',
+              boxShadow: '0 8px 16px rgba(0, 122, 255, 0.15)',
+              fontSize: '15px',
+              fontWeight: 600,
+            }}
+          >
+            <PlusIcon size={20} />
+            <span>Add Project</span>
+          </button>
+        </div>
       </header>
 
       {/* Search & Actions Bar */}
@@ -423,6 +445,14 @@ export const Dashboard: React.FC = () => {
         isOpen={!!cleaningProject}
         project={cleaningProject || null}
         onClose={() => setCleaningProject(undefined)}
+      />
+
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onProjectCreated={() => {
+          fetchProjects();
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

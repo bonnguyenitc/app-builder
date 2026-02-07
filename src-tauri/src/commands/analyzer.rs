@@ -45,7 +45,7 @@ pub async fn analyze_app_size(artifact_path: String) -> Result<AppSizeReport, St
     let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
     let mut breakdown: Vec<SizeBreakdown> = Vec::new();
-    let mut large_files: Vec<LargeFile> = Vec::new();
+    let large_files: Vec<LargeFile>;
     let mut supports_16k_page_size = if extension == "apk" || extension == "aab" { Some(true) } else { None };
 
     match extension {

@@ -1,6 +1,6 @@
-use tauri::{command, Window, Emitter, State};
+use tauri::{command, Window, Emitter};
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::fs;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
@@ -115,22 +115,22 @@ async fn run_package_command(
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
 
-    let window_clone = window.clone();
-    let stdout_handle = std::thread::spawn(move || {
+    let window_clone_stdout = window.clone();
+    std::thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             if let Ok(l) = line {
-                let _ = window_clone.emit("dep-manager-log", l);
+                let _ = window_clone_stdout.emit("dep-manager-log", l);
             }
         }
     });
 
-    let window_clone = window.clone();
-    let stderr_handle = std::thread::spawn(move || {
+    let window_clone_stderr = window.clone();
+    std::thread::spawn(move || {
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
             if let Ok(l) = line {
-                let _ = window_clone.emit("dep-manager-log", format!("⚠️ {}", l));
+                let _ = window_clone_stderr.emit("dep-manager-log", format!("⚠️ {}", l));
             }
         }
     });

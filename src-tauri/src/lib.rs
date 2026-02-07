@@ -59,6 +59,9 @@ pub fn run() {
             list_projects,
             save_project,
             delete_project,
+            create_react_native_project,
+            create_expo_project,
+            get_package_versions,
 
             read_native_project_info,
             build_project,

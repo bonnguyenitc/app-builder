@@ -1,6 +1,6 @@
 use crate::models::project::{Project, IosPlatform, AndroidPlatform};
 use crate::DbState;
-use tauri::{command, State};
+use tauri::{command, Emitter, State};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -736,3 +736,345 @@ pub async fn open_terminal(project_path: String) -> Result<(), String> {
     }
 }
 
+#[derive(Clone, Serialize)]
+struct CreateProjectProgress {
+    stage: String,
+    message: String,
+    is_complete: bool,
+    is_error: bool,
+}
+
+fn emit_progress(window: &tauri::Window, stage: &str, message: &str, is_complete: bool, is_error: bool) {
+    let progress = CreateProjectProgress {
+        stage: stage.to_string(),
+        message: message.to_string(),
+        is_complete,
+        is_error,
+    };
+    let _ = window.emit("create-project-progress", progress);
+}
+
+#[command]
+pub async fn create_react_native_project(
+    window: tauri::Window,
+    project_name: String,
+    target_path: String,
+    package_name: Option<String>,
+    app_title: Option<String>,
+    version: Option<String>,
+    template: Option<String>,
+    package_manager: String, // "npm", "yarn", "bun"
+    skip_install: bool,
+    install_pods: Option<bool>,
+    skip_git_init: bool,
+) -> Result<String, String> {
+    use std::io::{BufRead, BufReader};
+    use std::process::Stdio;
+
+    // Validate inputs
+    if project_name.is_empty() {
+        return Err("Project name cannot be empty".to_string());
+    }
+
+    let target_dir = Path::new(&target_path);
+    if !target_dir.exists() {
+        return Err(format!("Target directory does not exist: {}", target_path));
+    }
+
+    let project_dir = target_dir.join(&project_name);
+    if project_dir.exists() {
+        return Err(format!("Project directory already exists: {}", project_dir.display()));
+    }
+
+    emit_progress(&window, "INIT", "Starting React Native CLI project creation...", false, false);
+
+    // Build the command
+    let mut args: Vec<String> = vec![
+        "-y".to_string(),
+        "@react-native-community/cli@latest".to_string(),
+        "init".to_string(),
+        project_name.clone(),
+    ];
+
+    if let Some(pkg) = &package_name {
+        if !pkg.is_empty() {
+            args.push("--package-name".to_string());
+            args.push(pkg.clone());
+        }
+    }
+
+    if let Some(title) = &app_title {
+        if !title.is_empty() {
+            args.push("--title".to_string());
+            args.push(title.clone());
+        }
+    }
+
+    if let Some(v) = &version {
+        if !v.is_empty() {
+            args.push("--version".to_string());
+            args.push(v.clone());
+        }
+    }
+
+    if let Some(t) = &template {
+        if !t.is_empty() {
+            args.push("--template".to_string());
+            args.push(t.clone());
+        }
+    }
+
+    // Package manager
+    args.push("--pm".to_string());
+    args.push(package_manager);
+
+    if skip_install {
+        args.push("--skip-install".to_string());
+    }
+
+    if let Some(pods) = install_pods {
+        args.push("--install-pods".to_string());
+        args.push(pods.to_string());
+    }
+
+    if skip_git_init {
+        args.push("--skip-git-init".to_string());
+    }
+
+    emit_progress(&window, "EXEC", &format!("Running: npx {}", args.join(" ")), false, false);
+
+    let mut child = Command::new("npx")
+        .args(&args)
+        .current_dir(&target_dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to start npx command: {}", e))?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let window_clone = window.clone();
+
+    if let Some(stdout) = stdout {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines().flatten() {
+            emit_progress(&window_clone, "OUTPUT", &line, false, false);
+        }
+    }
+
+    if let Some(stderr) = stderr {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines().flatten() {
+            emit_progress(&window_clone, "OUTPUT", &line, false, false);
+        }
+    }
+
+    let status = child.wait().map_err(|e| format!("Failed to wait for process: {}", e))?;
+
+    if status.success() {
+        emit_progress(&window, "COMPLETE", "React Native project created successfully!", true, false);
+        Ok(project_dir.to_string_lossy().to_string())
+    } else {
+        emit_progress(&window, "ERROR", "Failed to create React Native project", true, true);
+        Err("Failed to create React Native project".to_string())
+    }
+}
+
+#[command]
+pub async fn create_expo_project(
+    window: tauri::Window,
+    project_name: String,
+    target_path: String,
+    package_name: Option<String>,
+    app_title: Option<String>,
+    template: String,
+    version: Option<String>,
+    package_manager: String,
+    no_git: bool,
+    no_install: bool,
+) -> Result<String, String> {
+    use std::io::{BufRead, BufReader};
+    use std::process::Stdio;
+
+    // Validate inputs
+    if project_name.is_empty() {
+        return Err("Project name cannot be empty".to_string());
+    }
+
+    let target_dir = Path::new(&target_path);
+    if !target_dir.exists() {
+        return Err(format!("Target directory does not exist: {}", target_path));
+    }
+
+    let project_dir = target_dir.join(&project_name);
+    if project_dir.exists() {
+        return Err(format!("Project directory already exists: {}", project_dir.display()));
+    }
+
+    emit_progress(&window, "INIT", "Starting Expo project creation...", false, false);
+
+    // In 2026, many CLIs including create-expo-app use the package manager that invoked them.
+    let (cmd, mut args) = match package_manager.as_str() {
+        "yarn" => ("yarn", vec!["create".to_string(), "expo-app".to_string()]),
+        "pnpm" => ("pnpm", vec!["create".to_string(), "expo-app".to_string()]),
+        "bun" => ("bun", vec!["create".to_string(), "expo-app".to_string()]),
+        _ => ("npx", vec!["-y".to_string(), "create-expo-app@latest".to_string()]),
+    };
+
+    args.push(project_name.clone());
+    args.push("--yes".to_string());
+
+    let final_template = if let Some(v) = &version {
+        if !v.is_empty() { format!("{}@{}", template, v) } else { template }
+    } else {
+        template
+    };
+    args.push("--template".to_string());
+    args.push(final_template);
+
+    if no_install {
+        args.push("--no-install".to_string());
+    }
+
+    emit_progress(&window, "EXEC", &format!("Running: {} {}", cmd, args.join(" ")), false, false);
+
+    let mut child = Command::new(cmd)
+        .args(&args)
+        .current_dir(&target_dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to start {} command: {}", cmd, e))?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let window_clone = window.clone();
+
+    if let Some(stdout) = stdout {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines().flatten() {
+            emit_progress(&window_clone, "OUTPUT", &line, false, false);
+        }
+    }
+
+    if let Some(stderr) = stderr {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines().flatten() {
+            emit_progress(&window_clone, "OUTPUT", &line, false, false);
+        }
+    }
+
+    let status = child.wait().map_err(|e| format!("Failed to wait for process: {}", e))?;
+
+    if status.success() {
+        // Handle no_git manually as create-expo-app doesn't have a reliable flag
+        if no_git {
+            let git_dir = project_dir.join(".git");
+            if git_dir.exists() {
+                let _ = fs::remove_dir_all(git_dir);
+            }
+        }
+
+        // Handle package_name and app_title update in app.json
+        if package_name.is_some() || app_title.is_some() {
+            let app_json_path = project_dir.join("app.json");
+            if app_json_path.exists() {
+                if let Ok(content) = fs::read_to_string(&app_json_path) {
+                if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(&content) {
+                        if let Some(expo) = json.get_mut("expo") {
+                            if let Some(title) = &app_title {
+                                if !title.is_empty() {
+                                    expo["name"] = serde_json::Value::String(title.clone());
+                                }
+                            }
+                            if let Some(pkg) = &package_name {
+                                if !pkg.is_empty() {
+                                    if let Some(android) = expo.get_mut("android").and_then(|a| a.as_object_mut()) {
+                                        android.insert("package".to_string(), serde_json::Value::String(pkg.clone()));
+                                    } else {
+                                        expo["android"] = serde_json::json!({ "package": pkg });
+                                    }
+                                    if let Some(ios) = expo.get_mut("ios").and_then(|i| i.as_object_mut()) {
+                                        ios.insert("bundleIdentifier".to_string(), serde_json::Value::String(pkg.clone()));
+                                    } else {
+                                        expo["ios"] = serde_json::json!({ "bundleIdentifier": pkg });
+                                    }
+                                }
+                            }
+                            if let Ok(updated_content) = serde_json::to_string_pretty(&json) {
+                                let _ = fs::write(&app_json_path, updated_content);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Handle package.json version update and re-install if needed
+        if let Some(v) = &version {
+            if !v.is_empty() {
+                let pkg_json_path = project_dir.join("package.json");
+                if pkg_json_path.exists() {
+                    if let Ok(content) = fs::read_to_string(&pkg_json_path) {
+                        if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(&content) {
+                            let mut changed = false;
+                            if let Some(deps) = json.get_mut("dependencies").and_then(|d| d.as_object_mut()) {
+                                deps.insert("expo".to_string(), serde_json::Value::String(v.clone()));
+                                changed = true;
+                            }
+
+                            if changed {
+                                if let Ok(updated_content) = serde_json::to_string_pretty(&json) {
+                                    let _ = fs::write(&pkg_json_path, updated_content);
+
+                                    // If we were supposed to install, we should run it again to sync the specific version
+                                    if !no_install {
+                                        emit_progress(&window, "SYNC", &format!("Syncing expo version {}...", v), false, false);
+                                        let sync_args = vec!["install".to_string()];
+                                        // Simple heuristic: just run install, the PM will pick up the change
+                                        let _ = Command::new(cmd)
+                                            .args(&sync_args)
+                                            .current_dir(&project_dir)
+                                            .status();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        emit_progress(&window, "COMPLETE", "Expo project created successfully!", true, false);
+        Ok(project_dir.to_string_lossy().to_string())
+    } else {
+        emit_progress(&window, "ERROR", "Failed to create Expo project", true, true);
+        Err("Failed to create Expo project".to_string())
+    }
+}
+#[command]
+pub async fn get_package_versions(package: String) -> Result<Vec<String>, String> {
+    let output = Command::new("npm")
+        .args(&["view", &package, "versions", "--json"])
+        .output()
+        .map_err(|e| format!("Failed to execute npm command: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!("npm command failed: {}", String::from_utf8_lossy(&output.stderr)));
+    }
+
+    let versions: Vec<String> = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Failed to parse npm output: {}", e))?;
+
+    // Filter for stable versions (e.g., skip 0.85.0-nightly-..., 1000.0.0 for RN)
+    let filtered: Vec<String> = versions.into_iter()
+        .filter(|v| {
+            // Basic heuristic for stable versions: no hyphens (for alpha/beta/rc/nightly)
+            // and not 1000.0.0
+            !v.contains('-') && v != "1000.0.0"
+        })
+        .rev() // Newest first
+        .collect();
+
+    Ok(filtered)
+}
