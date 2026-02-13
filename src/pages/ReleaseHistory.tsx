@@ -156,14 +156,17 @@ const LogModal = ({ build, onClose }: { build: BuildHistory; onClose: () => void
 };
 
 export const ReleaseHistory: React.FC = () => {
-  const { buildHistory, currentPage, pageSize, totalItems, fetchHistory } = useBuildStore();
+  const { buildHistory, currentPage, pageSize, totalItems, fetchHistory, selectedProjectId } =
+    useBuildStore();
   const { projects } = useProjectStore();
+  const { fetchProjects } = useProjectStore();
   const [viewingBuild, setViewingBuild] = useState<BuildHistory | null>(null);
   const [analyzingBuild, setAnalyzingBuild] = useState<BuildHistory | null>(null);
 
   useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+    fetchProjects();
+  }, [fetchHistory, fetchProjects]);
 
   return (
     <div
@@ -189,7 +192,7 @@ export const ReleaseHistory: React.FC = () => {
           animation: 'fadeInDown 0.5s ease-out',
         }}
       >
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span
               style={{
@@ -220,27 +223,70 @@ export const ReleaseHistory: React.FC = () => {
             Trace back every release and monitor your deployment performance.
           </p>
         </div>
-        <div
-          style={{
-            background: 'var(--color-sidebar)',
-            padding: '12px 20px',
-            borderRadius: '16px',
-            border: '1px solid var(--color-border)',
-            textAlign: 'right',
-          }}
-        >
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Project Filter */}
           <div
             style={{
-              fontSize: '11px',
-              color: 'var(--color-text-tertiary)',
-              fontWeight: 700,
-              textTransform: 'uppercase',
+              background: 'var(--color-sidebar)',
+              padding: '6px 12px',
+              borderRadius: '12px',
+              border: '1px solid var(--color-border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
             }}
           >
-            Total Records
+            <span
+              style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-tertiary)' }}
+            >
+              PROJECT:
+            </span>
+            <select
+              title="Filter by Project"
+              value={selectedProjectId || ''}
+              onChange={(e) => fetchHistory(1, pageSize, e.target.value || null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-text)',
+                fontSize: '14px',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">All Projects</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)' }}>
-            {totalItems}
+
+          <div
+            style={{
+              background: 'var(--color-sidebar)',
+              padding: '12px 20px',
+              borderRadius: '16px',
+              border: '1px solid var(--color-border)',
+              textAlign: 'right',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--color-text-tertiary)',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+              }}
+            >
+              Total Records
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)' }}>
+              {totalItems}
+            </div>
           </div>
         </div>
       </header>
@@ -435,7 +481,7 @@ export const ReleaseHistory: React.FC = () => {
                               fontWeight: 700,
                             }}
                           >
-                            v{build.version}
+                            v{build.version} ({build.buildNumber})
                           </span>
                         </td>
                         <td

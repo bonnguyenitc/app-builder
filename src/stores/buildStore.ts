@@ -9,7 +9,8 @@ interface BuildState {
   currentPage: number;
   pageSize: number;
   totalItems: number;
-  fetchHistory: (page?: number, pageSize?: number) => Promise<void>;
+  selectedProjectId: string | null;
+  fetchHistory: (page?: number, pageSize?: number, projectId?: string | null) => Promise<void>;
   updateBuild: (projectId: string, updater: (prev: BuildHistory) => BuildHistory) => void;
   startBuild: (projectId: string, build: BuildHistory) => void;
   addToHistory: (build: BuildHistory) => void;
@@ -24,10 +25,12 @@ export const useBuildStore = create<BuildState>((set, get) => ({
   currentPage: 1,
   pageSize: 20,
   totalItems: 0,
+  selectedProjectId: null,
 
-  fetchHistory: async (page, pageSize) => {
+  fetchHistory: async (page, pageSize, projectId) => {
     const currentPage = page || get().currentPage;
     const currentPageSize = pageSize || get().pageSize;
+    const currentProjectId = projectId !== undefined ? projectId : get().selectedProjectId;
 
     set({ isLoading: true });
     try {
@@ -36,6 +39,7 @@ export const useBuildStore = create<BuildState>((set, get) => ({
         {
           page: currentPage,
           pageSize: currentPageSize,
+          projectId: currentProjectId,
         },
       );
       set({
@@ -43,6 +47,7 @@ export const useBuildStore = create<BuildState>((set, get) => ({
         totalItems: response.total,
         currentPage: currentPage,
         pageSize: currentPageSize,
+        selectedProjectId: currentProjectId,
         isLoading: false,
       });
     } catch (e) {
@@ -64,9 +69,16 @@ export const useBuildStore = create<BuildState>((set, get) => ({
       activeBuilds: { ...state.activeBuilds, [projectId]: build },
     })),
   addToHistory: (build) =>
-    set((state) => ({
-      buildHistory: [build, ...state.buildHistory],
-    })),
+    set((state) => {
+      const matchesFilter = !state.selectedProjectId || build.projectId === state.selectedProjectId;
+      if (!matchesFilter) {
+        return { totalItems: state.totalItems + 1 };
+      }
+      return {
+        buildHistory: [build, ...state.buildHistory],
+        totalItems: state.totalItems + 1,
+      };
+    }),
   clearActive: (projectId) =>
     set((state) => {
       const newActive = { ...state.activeBuilds };
