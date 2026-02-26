@@ -535,204 +535,90 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
 
-      {/* Utility Actions */}
+      {/* Utility Actions — icon grid with tooltips, large touch targets */}
       <div
         style={{
-          display: 'flex',
-          gap: 'var(--spacing-sm)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: '6px',
           marginTop: 'var(--spacing-md)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onPermissions}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+        {[
+          {
+            icon: <ShieldIcon size={14} />,
+            label: 'Permissions',
+            onClick: onPermissions,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <ShieldIcon size={12} />
-          <span>Permissions</span>
-        </button>
-        <button
-          onClick={onDeepClean}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <EraserIcon size={14} />,
+            label: 'Deep Clean',
+            onClick: onDeepClean,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <EraserIcon size={12} />
-          <span>Deep Clean</span>
-        </button>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 'var(--spacing-sm)',
-          marginTop: 'var(--spacing-sm)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onOpenXcode}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <AppleIcon size={14} />,
+            label: 'Open Xcode',
+            onClick: onOpenXcode,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <AppleIcon size={12} />
-          <span>Xcode</span>
-        </button>
-        <button
-          onClick={onOpenAndroidStudio}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <AndroidIcon size={14} />,
+            label: 'Android Studio',
+            onClick: onOpenAndroidStudio,
+            color: 'var(--color-success)',
+          },
+          {
+            icon: <CodeIcon size={14} />,
+            label: 'VS Code',
+            onClick: onOpenVSCode,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <AndroidIcon size={12} />
-          <span>Studio</span>
-        </button>
-        <button
-          onClick={onOpenVSCode}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
-            color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <CodeIcon size={12} />
-          <span>VS Code</span>
-        </button>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 'var(--spacing-sm)',
-          marginTop: 'var(--spacing-sm)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onStartMetro}
-          className="btn btn-ghost"
-          style={{
-            flex: 1.5,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <RocketIcon size={14} />,
+            label: 'Start Metro',
+            onClick: onStartMetro,
             color: 'var(--color-primary)',
-            background: 'rgba(0, 122, 255, 0.05)',
-            border: '1px solid rgba(0, 122, 255, 0.2)',
-            borderRadius: 'var(--radius-sm)',
-            fontWeight: 600,
-          }}
-        >
-          <RocketIcon size={12} />
-          <span>Start Metro</span>
-        </button>
-        <button
-          onClick={onOpenTerminal}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <TerminalIcon size={14} />,
+            label: 'Terminal',
+            onClick: onOpenTerminal,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <TerminalIcon size={12} />
-          <span>Terminal</span>
-        </button>
-        <button
-          onClick={onDependencies}
-          className="btn btn-ghost"
-          style={{
-            flex: 1,
-            fontSize: '11px',
-            padding: '4px var(--spacing-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            height: '28px',
+          },
+          {
+            icon: <PackageIcon size={14} />,
+            label: 'Packages',
+            onClick: onDependencies,
             color: 'var(--color-text-secondary)',
-            background: 'var(--color-sidebar)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <PackageIcon size={12} />
-          <span>Packages</span>
-        </button>
+          },
+        ].map(({ icon, label, onClick, color }) => (
+          <button
+            key={label}
+            title={label}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="btn btn-ghost"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '36px',
+              padding: 0,
+              borderRadius: 'var(--radius-sm)',
+              color,
+              background: 'var(--color-sidebar)',
+              border: '1px solid var(--color-border)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {icon}
+          </button>
+        ))}
       </div>
 
       {/* Last Build Status */}
