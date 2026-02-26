@@ -1,6 +1,9 @@
 pub mod commands;
 pub mod models;
 
+#[cfg(unix)]
+extern crate libc;
+
 
 use tauri::Manager;
 
@@ -36,6 +39,41 @@ pub struct RecordingProcess {
     pub destination_path: String,         // Final path on Mac
 }
 pub struct RecordingState(pub Arc<Mutex<HashMap<String, RecordingProcess>>>);
+
+/// Kill every active build process group when the app exits.
+/// Reuses the same killpg + pkill strategy as `cancel_build_process`.
+fn kill_all_active_builds(app_handle: &tauri::AppHandle) {
+    let Some(state) = app_handle.try_state::<BuildProcessState>() else {
+        return;
+    };
+
+    let mut processes = state.0.lock().unwrap();
+    for (project_id, arc) in processes.drain() {
+        let mut guard = arc.lock().unwrap();
+        if let Some(mut child) = guard.take() {
+            #[cfg(unix)]
+            {
+                let pid = child.id() as libc::pid_t;
+                let pgid = unsafe { libc::getpgid(pid) };
+                if pgid > 0 {
+                    unsafe { libc::killpg(pgid, libc::SIGKILL) };
+                }
+                // Fallback: any sub-group orphans
+                let _ = std::process::Command::new("pkill")
+                    .args(&["-KILL", "-P", &pid.to_string()])
+                    .output();
+                let _ = child.wait();
+            }
+            #[cfg(not(unix))]
+            {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+            println!("Killed build process for project '{}' on app exit", project_id);
+        }
+    }
+}
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -121,13 +159,26 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|app_handle, _event| {
-            #[cfg(target_os = "macos")]
-            if let tauri::RunEvent::Reopen { .. } = _event {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                    window.show().unwrap();
-                    window.set_focus().unwrap();
+        .run(|app_handle, event| {
+            match event {
+                // Restore window when clicking dock icon (macOS)
+                #[cfg(target_os = "macos")]
+                tauri::RunEvent::Reopen { .. } => {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        window.show().unwrap();
+                        window.set_focus().unwrap();
+                    }
                 }
+
+                // Kill all active build processes when the app is about to exit.
+                // Handles: Cmd+Q, Activity Monitor "Quit" (SIGTERM).
+                // NOTE: SIGKILL (kill -9) cannot be intercepted by any process —
+                //       in that case the OS will eventually clean up orphaned children.
+                tauri::RunEvent::Exit => {
+                    kill_all_active_builds(app_handle);
+                }
+
+                _ => {}
             }
         });
 }

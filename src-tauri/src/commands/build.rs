@@ -3,6 +3,8 @@ use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader, Write};
 use std::sync::Arc;
 use std::fs::File;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use crate::models::project::Project;
 use crate::BuildProcessState;
 use crate::commands::notification::send_all_notifications;
@@ -138,11 +140,12 @@ pub async fn build_project(
             window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": cmd_info })).map_err(|e| e.to_string())?;
             writeln!(log_file, "{}", cmd_info).map_err(|e| e.to_string())?;
 
-            let child = Command::new("/bin/sh")
+            let mut child = Command::new("/bin/sh")
                 .args(&["-c", &shell_command])
                 .current_dir(&android_dir)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
+                .process_group(0) // own process group so killpg kills gradle + all children
                 .spawn()
                 .map_err(|e| {
                     let err_msg = format!("❌ Failed to start build command: {}", e);
@@ -153,24 +156,20 @@ pub async fn build_project(
                     err_msg
                 })?;
 
-            // Store process for cancellation
+            // Take stdout/stderr BEFORE storing so cancel_build_process can still kill the child
+            let child_stdout = child.stdout.take();
+            let child_stderr = child.stderr.take();
+
+            // Store process for cancellation (child stays as Some so kill() works)
             let process_id = project.id.clone();
             {
                 let mut processes = process_state.0.lock().unwrap();
                 processes.insert(process_id.clone(), Arc::new(std::sync::Mutex::new(Some(child))));
             }
 
-            // Get process back for monitoring
-            let process_arc = {
-                let processes = process_state.0.lock().unwrap();
-                processes.get(&process_id).cloned()
-            };
-
-            if let Some(process_mutex) = process_arc {
-                let mut child = process_mutex.lock().unwrap().take().unwrap();
-
+            {
                 // Read stdout and write to log file
-                if let Some(stdout) = child.stdout.take() {
+                if let Some(stdout) = child_stdout {
                     let reader = BufReader::new(stdout);
                     for line in reader.lines() {
                         if let Ok(line_content) = line {
@@ -181,7 +180,7 @@ pub async fn build_project(
                 }
 
                 // Read stderr and write to log file
-                if let Some(stderr) = child.stderr.take() {
+                if let Some(stderr) = child_stderr {
                     let reader = BufReader::new(stderr);
                     for line in reader.lines() {
                         if let Ok(line_content) = line {
@@ -192,13 +191,28 @@ pub async fn build_project(
                     }
                 }
 
-                let status = child.wait().map_err(|e| e.to_string())?;
-
-                // Cleanup process from state
-                {
+                // Wait for completion — detect if build was cancelled
+                let status_opt = {
                     let mut processes = process_state.0.lock().unwrap();
-                    processes.remove(&process_id);
-                }
+                    if let Some(mutex) = processes.remove(&process_id) {
+                        let mut guard = mutex.lock().unwrap();
+                        match guard.take() {
+                            Some(mut c) => Some(c.wait().map_err(|e| e.to_string())?),
+                            None => None, // killed by cancel_build_process
+                        }
+                    } else {
+                        None // already removed by cancel
+                    }
+                };
+
+                let status = match status_opt {
+                    Some(s) => s,
+                    None => {
+                        window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                        window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                        return Ok(());
+                    }
+                };
 
                 // Emit log file path so frontend can save it
                 window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
@@ -331,13 +345,6 @@ pub async fn build_project(
                     window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
                     return Err(error_msg);
                 }
-            } else {
-                let err_msg = "Failed to get process handle";
-                window.emit("build-log", serde_json::json!({ "projectId": project.id, "payload": err_msg })).map_err(|e| e.to_string())?;
-                writeln!(log_file, "{}", err_msg).map_err(|e| e.to_string())?;
-                window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap() })).map_err(|e| e.to_string())?;
-                window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
-                return Err(err_msg.into());
             }
         },
         "ios" => {
@@ -423,6 +430,7 @@ pub async fn build_project(
                 .current_dir(&ios_dir)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
+                .process_group(0) // own process group so killpg kills xcodebuild + clang/swiftc
                 .spawn()
                 .map_err(|e| format!("Failed to start archive command: {}", e))?;
 
@@ -471,7 +479,9 @@ pub async fn build_project(
                      }
                  } else {
                      // If process is not in map, it was removed by cancel_build_process
-                     return Err("Build cancelled".into());
+                     window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                     window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                     return Ok(());
                  }
             };
 
@@ -578,6 +588,7 @@ pub async fn build_project(
                 .current_dir(&ios_dir)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
+                .process_group(0)
                 .spawn()
                 .map_err(|e| format!("Failed to start export command: {}", e))?;
 
@@ -619,7 +630,9 @@ pub async fn build_project(
                          return Err("Export process handle lost".into());
                      }
                  } else {
-                     return Err("Build cancelled".into());
+                     window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                     window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                     return Ok(());
                  }
             };
 
@@ -719,7 +732,9 @@ pub async fn build_project(
                                      return Err("Upload process handle lost".into());
                                  }
                              } else {
-                                 return Err("Build cancelled".into());
+                                 window.emit("build-log-file", serde_json::json!({ "projectId": project.id, "payload": log_file_path.to_str().unwrap_or_default() })).map_err(|e| e.to_string())?;
+                                 window.emit("build-status", serde_json::json!({ "status": "failed", "projectId": project.id })).map_err(|e| e.to_string())?;
+                                 return Ok(());
                              }
                          };
 
@@ -806,14 +821,34 @@ pub async fn cancel_build_process(
     if let Some(process_mutex) = process_arc {
         let mut child_opt = process_mutex.lock().unwrap();
         if let Some(mut child) = child_opt.take() {
-            match child.kill() {
-                Ok(_) => {
-                    println!("Successfully killed build process for project: {}", project_id);
-                    Ok(())
+            #[cfg(unix)]
+            {
+                let pid = child.id() as libc::pid_t;
+
+                // 1. Kill the entire process group created by process_group(0).
+                //    Covers: xcodebuild, clang, swiftc, ld, gradle, aapt, javac, etc.
+                let pgid = unsafe { libc::getpgid(pid) };
+                if pgid > 0 {
+                    unsafe { libc::killpg(pgid, libc::SIGKILL) };
+                    println!("Killed process group pgid={} for project: {}", pgid, project_id);
+                } else {
+                    let _ = child.kill();
                 }
-                Err(e) => {
-                    eprintln!("Failed to kill process: {}", e);
-                    Err(format!("Failed to kill process: {}", e))
+
+                // 2. Fallback via pkill: catches any child that created its own sub-group
+                let _ = std::process::Command::new("pkill")
+                    .args(&["-KILL", "-P", &pid.to_string()])
+                    .output();
+
+                // Reap zombie to free OS resources
+                let _ = child.wait();
+                Ok(())
+            }
+            #[cfg(not(unix))]
+            {
+                match child.kill() {
+                    Ok(_) => { let _ = child.wait(); Ok(()) }
+                    Err(e) => Err(format!("Failed to kill process: {}", e)),
                 }
             }
         } else {
@@ -823,6 +858,7 @@ pub async fn cancel_build_process(
         Err(format!("No active build found for project: {}", project_id))
     }
 }
+
 
 #[command]
 pub async fn open_build_folder(project: Project, platform: String, format: Option<String>) -> Result<(), String> {

@@ -96,6 +96,7 @@ dependencies = [
  "goblin",
  "image",
  "keyring",
+ "libc",
  "plist",
  "quick-xml 0.39.0",
  "regex",
