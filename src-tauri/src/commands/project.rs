@@ -320,7 +320,7 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
         info.name = Some(path.to_string_lossy().to_string());
     }
 
-    // Read iOS Info.plist
+    // Read iOS info from .xcodeproj/project.pbxproj (more reliable than Info.plist)
     let ios_dir = Path::new(&project_path).join("ios");
     if ios_dir.exists() {
         if let Ok(entries) = fs::read_dir(&ios_dir) {
@@ -328,23 +328,53 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
                 let file_name = entry.file_name();
                 let file_name_str = file_name.to_string_lossy();
                 if file_name_str.ends_with(".xcodeproj") {
+                    let pbxproj_path = ios_dir
+                        .join(file_name_str.as_ref())
+                        .join("project.pbxproj");
+
+                    if pbxproj_path.exists() {
+                        if let Ok(content) = fs::read_to_string(&pbxproj_path) {
+                            // Extract PRODUCT_BUNDLE_IDENTIFIER — the real bundle ID
+                            // Matches: PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+                            if info.ios_bundle_id.is_none() {
+                                if let Ok(re) = Regex::new(r"PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([A-Za-z0-9._\-]+)\s*;") {
+                                    if let Some(cap) = re.captures(&content) {
+                                        if let Some(bundle_id) = cap.get(1) {
+                                            let bid = bundle_id.as_str().to_string();
+                                            // Skip placeholder values
+                                            if !bid.contains("$(") && !bid.is_empty() {
+                                                info.ios_bundle_id = Some(bid);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback: read Info.plist for version/build info
                     let project_name = file_name_str.trim_end_matches(".xcodeproj");
                     let plist_path = ios_dir.join(project_name).join("Info.plist");
-
                     if plist_path.exists() {
                         if let Ok(value) = Value::from_file(&plist_path) {
                             if let Some(dict) = value.as_dictionary() {
-                                // Get bundle identifier
-                                if let Some(Value::String(bundle_id)) = dict.get("CFBundleIdentifier") {
-                                    info.ios_bundle_id = Some(bundle_id.clone());
+                                // Only use bundle ID from plist if it's a real value (not a variable)
+                                if info.ios_bundle_id.is_none() {
+                                    if let Some(Value::String(bundle_id)) = dict.get("CFBundleIdentifier") {
+                                        if !bundle_id.contains("$(") {
+                                            info.ios_bundle_id = Some(bundle_id.clone());
+                                        }
+                                    }
                                 }
-                                // Get version
                                 if let Some(Value::String(version)) = dict.get("CFBundleShortVersionString") {
-                                    info.ios_version = Some(version.clone());
+                                    if !version.contains("$(") {
+                                        info.ios_version = Some(version.clone());
+                                    }
                                 }
-                                // Get build number
                                 if let Some(Value::String(build_number)) = dict.get("CFBundleVersion") {
-                                    info.ios_build_number = Some(build_number.clone());
+                                    if !build_number.contains("$(") {
+                                        info.ios_build_number = Some(build_number.clone());
+                                    }
                                 }
                             }
                         }
@@ -355,35 +385,40 @@ pub async fn read_native_project_info(project_path: String) -> Result<AppJsonInf
         }
     }
 
-    // Read Android build.gradle
+    // Read Android build.gradle or build.gradle.kts
     let gradle_path = Path::new(&project_path).join("android/app/build.gradle");
-    if gradle_path.exists() {
-        if let Ok(content) = fs::read_to_string(&gradle_path) {
-            // Extract applicationId
-            if let Ok(app_id_regex) = Regex::new(r#"applicationId\s*=?\s*["']([^"']+)["']"#) {
-                if let Some(captures) = app_id_regex.captures(&content) {
-                    if let Some(app_id) = captures.get(1) {
-                        info.android_package = Some(app_id.as_str().to_string());
-                    }
+    let gradle_kts_path = Path::new(&project_path).join("android/app/build.gradle.kts");
+    let gradle_content = if gradle_path.exists() {
+        fs::read_to_string(&gradle_path).ok()
+    } else if gradle_kts_path.exists() {
+        fs::read_to_string(&gradle_kts_path).ok()
+    } else {
+        None
+    };
+
+    if let Some(content) = gradle_content {
+        // applicationId "com.example.app" or applicationId = "com.example.app" (kts)
+        if let Ok(re) = Regex::new(r#"applicationId\s*=?\s*["']([^"']+)["']"#) {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(m) = cap.get(1) {
+                    info.android_package = Some(m.as_str().to_string());
                 }
             }
-
-            // Extract versionName
-            if let Ok(version_name_regex) = Regex::new(r#"versionName\s*=?\s*["']([^"']+)["']"#) {
-                if let Some(captures) = version_name_regex.captures(&content) {
-                    if let Some(version) = captures.get(1) {
-                        info.android_version = Some(version.as_str().to_string());
-                    }
+        }
+        // versionName "1.0" or versionName = "1.0" (kts)
+        if let Ok(re) = Regex::new(r#"versionName\s*=?\s*["']([^"']+)["']"#) {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(m) = cap.get(1) {
+                    info.android_version = Some(m.as_str().to_string());
                 }
             }
-
-            // Extract versionCode
-            if let Ok(version_code_regex) = Regex::new(r"versionCode\s*=?\s*(\d+)") {
-                if let Some(captures) = version_code_regex.captures(&content) {
-                    if let Some(code) = captures.get(1) {
-                        if let Ok(code_num) = code.as_str().parse::<u32>() {
-                            info.android_version_code = Some(code_num);
-                        }
+        }
+        // versionCode 10 or versionCode = 10 (kts)
+        if let Ok(re) = Regex::new(r"versionCode\s*=?\s*(\d+)") {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(m) = cap.get(1) {
+                    if let Ok(code) = m.as_str().parse::<u32>() {
+                        info.android_version_code = Some(code);
                     }
                 }
             }
