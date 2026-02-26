@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
 import {
@@ -26,6 +27,155 @@ interface EmulatorCardProps {
   selectedPackageName?: string;
 }
 
+// ─── Dropdown Menu (Portal) ─────────────────────────────────────────────────
+interface DropdownMenuProps {
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  items: ToolMenuItem[];
+  toolLoading: string | null;
+  onAction: (id: string) => void;
+  onClose: () => void;
+}
+
+interface ToolMenuItem {
+  id: string;
+  icon?: React.ReactNode;
+  label?: string;
+  color?: string;
+}
+
+const DropdownMenu: React.FC<DropdownMenuProps> = ({
+  anchorRef,
+  items,
+  toolLoading,
+  onAction,
+  onClose,
+}) => {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{
+    top: number | undefined;
+    bottom: number | undefined;
+    left: number;
+  } | null>(null);
+
+  // Calculate position — flip upward if not enough space below
+  useEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const menuWidth = 220;
+    const estimatedMenuHeight = items.length * 44 + 12; // ~44px per item + padding
+    const spaceBelow = window.innerHeight - rect.bottom - 16;
+    let left = rect.right - menuWidth;
+    if (left < 8) left = 8;
+
+    if (spaceBelow >= estimatedMenuHeight) {
+      // Open downward
+      setPos({ top: rect.bottom + 8, bottom: undefined, left });
+    } else {
+      // Open upward
+      setPos({ top: undefined, bottom: window.innerHeight - rect.top + 8, left });
+    }
+  }, [anchorRef, items.length]);
+
+  // Close on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        anchorRef.current &&
+        !anchorRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose, anchorRef]);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  if (!pos) return null;
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      style={{
+        position: 'fixed',
+        top: pos.top,
+        bottom: pos.bottom,
+        left: pos.left,
+        background: '#15181E',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '18px',
+        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+        zIndex: 99999,
+        minWidth: '220px',
+        maxHeight: 'calc(100vh - 32px)',
+        overflowY: 'auto',
+        padding: '6px',
+        animation: pos.top !== undefined ? 'fadeInDown 0.2s ease-out' : 'fadeInUp 0.2s ease-out',
+      }}
+    >
+      {items.map((item, idx) =>
+        item.id === 'divider' ? (
+          <div key={idx} style={{ height: '1px', background: '#222', margin: '6px 12px' }} />
+        ) : (
+          <button
+            key={item.id}
+            onClick={() => onAction(item.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              width: '100%',
+              padding: '10px 14px',
+              border: 'none',
+              background: 'transparent',
+              color: item.color,
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              borderRadius: '12px',
+              textAlign: 'left',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                background: `${item.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {toolLoading === item.id ? (
+                <RefreshCwIcon size={14} className="animate-spin" />
+              ) : (
+                item.icon
+              )}
+            </div>
+            {item.label}
+          </button>
+        ),
+      )}
+    </div>,
+    document.body,
+  );
+};
+
+// ─── EmulatorCard ────────────────────────────────────────────────────────────
 export const EmulatorCard: React.FC<EmulatorCardProps> = ({
   emulator,
   onLaunch,
@@ -40,16 +190,16 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
   const [showToolsMenu, setShowToolsMenu] = useState(false);
   const [toolLoading, setToolLoading] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const checkRecordingStatus = async () => {
+  const checkRecordingStatus = useCallback(async () => {
     try {
       const recording = await invoke<boolean>('is_device_recording', { deviceId: emulator.id });
       setIsRecording(recording);
     } catch (e) {
       console.error('Failed to check recording status:', e);
     }
-  };
+  }, [emulator.id]);
 
   useEffect(() => {
     if (isBooted) {
@@ -57,17 +207,7 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
       const interval = setInterval(checkRecordingStatus, 3000);
       return () => clearInterval(interval);
     }
-  }, [isBooted, emulator.id]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowToolsMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isBooted, checkRecordingStatus]);
 
   const handleEmulatorAction = async (action: string) => {
     if (
@@ -129,18 +269,16 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
               packageName: selectedPackageName,
             });
             break;
-          case 'screenshot':
-            const f1 = await save({
+          case 'screenshot': {
+            const f = await save({
               defaultPath: `screenshot_${Date.now()}.png`,
               filters: [{ name: 'PNG Image', extensions: ['png'] }],
             });
-            if (f1) {
-              await invoke('adb_take_screenshot', { deviceId: emulator.id, savePath: f1 });
-            }
+            if (f) await invoke('adb_take_screenshot', { deviceId: emulator.id, savePath: f });
             break;
+          }
         }
       } else {
-        // iOS
         switch (action) {
           case 'uninstall':
             await invoke('simctl_uninstall_app', {
@@ -160,15 +298,14 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
               bundleId: selectedPackageName,
             });
             break;
-          case 'screenshot':
-            const f2 = await save({
+          case 'screenshot': {
+            const f = await save({
               defaultPath: `screenshot_ios_${Date.now()}.png`,
               filters: [{ name: 'PNG Image', extensions: ['png'] }],
             });
-            if (f2) {
-              await invoke('simctl_take_screenshot', { deviceId: emulator.id, savePath: f2 });
-            }
+            if (f) await invoke('simctl_take_screenshot', { deviceId: emulator.id, savePath: f });
             break;
+          }
           case 'erase':
             await invoke('simctl_erase_device', { deviceId: emulator.id });
             break;
@@ -182,7 +319,7 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
     }
   };
 
-  const toolsMenuItems = isAndroid
+  const toolsMenuItems: ToolMenuItem[] = isAndroid
     ? [
         {
           id: 'restart',
@@ -280,13 +417,13 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
         border: '1px solid var(--color-border)',
         overflow: 'visible',
         transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        zIndex: showToolsMenu ? 100 : 1,
         background: isBooted
           ? 'linear-gradient(135deg, var(--color-card) 0%, rgba(52, 199, 89, 0.03) 100%)'
           : 'var(--color-card)',
         boxShadow: isBooted ? '0 8px 32px rgba(0,0,0,0.1)' : 'none',
       }}
     >
+      {/* Left: name + status */}
       <div style={{ flex: 1, overflow: 'hidden', marginRight: '16px' }}>
         <div
           style={{
@@ -317,14 +454,7 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
             />
           )}
         </div>
-        <div
-          style={{
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}
-        >
+        <div style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
@@ -353,6 +483,7 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
         </div>
       </div>
 
+      {/* Right: action buttons */}
       <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
         {!isBooted ? (
           <button
@@ -399,92 +530,32 @@ export const EmulatorCard: React.FC<EmulatorCardProps> = ({
           </>
         )}
 
-        <div style={{ position: 'relative' }} ref={menuRef}>
-          <button
-            className="btn btn-ghost"
-            onClick={() => setShowToolsMenu(!showToolsMenu)}
-            style={{
-              height: '40px',
-              width: '40px',
-              padding: 0,
-              borderRadius: '12px',
-              background: showToolsMenu ? 'var(--color-sidebar)' : 'transparent',
-            }}
-          >
-            <MoreVerticalIcon size={20} />
-          </button>
+        {/* Menu trigger */}
+        <button
+          ref={triggerRef}
+          className="btn btn-ghost"
+          onClick={() => setShowToolsMenu((prev) => !prev)}
+          style={{
+            height: '40px',
+            width: '40px',
+            padding: 0,
+            borderRadius: '12px',
+            background: showToolsMenu ? 'var(--color-sidebar)' : 'transparent',
+          }}
+        >
+          <MoreVerticalIcon size={20} />
+        </button>
 
-          {showToolsMenu && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                background: '#15181E',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '18px',
-                boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
-                zIndex: 1000,
-                minWidth: '220px',
-                padding: '6px',
-                animation: 'fadeInDown 0.2s ease-out',
-              }}
-            >
-              {toolsMenuItems.map((item, idx) =>
-                item.id === 'divider' ? (
-                  <div
-                    key={idx}
-                    style={{ height: '1px', background: '#222', margin: '6px 12px' }}
-                  />
-                ) : (
-                  <button
-                    key={item.id}
-                    onClick={() => handleEmulatorAction(item.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: 'none',
-                      background: 'transparent',
-                      color: item.color,
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      borderRadius: '12px',
-                      textAlign: 'left',
-                      transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <div
-                      style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '8px',
-                        background: `${item.color}15`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {toolLoading === item.id ? (
-                        <RefreshCwIcon size={14} className="animate-spin" />
-                      ) : (
-                        item.icon
-                      )}
-                    </div>
-                    {item.label}
-                  </button>
-                ),
-              )}
-            </div>
-          )}
-        </div>
+        {/* Portal dropdown — renders at document.body, never clipped */}
+        {showToolsMenu && (
+          <DropdownMenu
+            anchorRef={triggerRef}
+            items={toolsMenuItems}
+            toolLoading={toolLoading}
+            onAction={handleEmulatorAction}
+            onClose={() => setShowToolsMenu(false)}
+          />
+        )}
       </div>
     </div>
   );
