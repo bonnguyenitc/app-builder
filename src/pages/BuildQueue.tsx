@@ -237,7 +237,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, project }) => {
   };
 
   const confirmStop = () => {
-    cancelBuild(build.projectId);
+    cancelBuild(build.projectId, build.platform);
     setShowConfirm(false);
   };
 

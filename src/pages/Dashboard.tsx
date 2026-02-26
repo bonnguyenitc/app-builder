@@ -160,10 +160,12 @@ export const Dashboard: React.FC = () => {
   };
 
   const getProjectWithStatus = (project: Project): Project => {
-    const active = activeBuilds[project.id];
+    const iosActive = activeBuilds[`${project.id}_ios`];
+    const androidActive = activeBuilds[`${project.id}_android`];
+    // Prefer whichever is currently building; if both, show iOS
+    const active = iosActive || androidActive;
     const lastHistory = buildHistory.find((h) => h.projectId === project.id);
 
-    // Create a merged project object that prioritizes active build info
     return {
       ...project,
       lastBuild: active || lastHistory || undefined,

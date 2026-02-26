@@ -14,6 +14,7 @@ import {
   PackageIcon,
 } from './Icons';
 import { Project } from '../types/project';
+import { useBuildStore, buildKey } from '../stores/buildStore';
 
 interface ProjectCardProps {
   project: Project;
@@ -74,6 +75,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   const [isHovered, setIsHovered] = useState(false);
 
+  // Per-platform building state
+  const iosBuild = useBuildStore((s) => s.activeBuilds[buildKey(project.id, 'ios')]);
+  const androidBuild = useBuildStore((s) => s.activeBuilds[buildKey(project.id, 'android')]);
+  const isBuildingIos = iosBuild?.status === 'building';
+  const isBuildingAndroid = androidBuild?.status === 'building';
+
   const handleAndroidFormatChange = (format: 'apk' | 'aab') => {
     setAndroidFormat(format);
     localStorage.setItem(`android_format_${project.id}`, format);
@@ -95,8 +102,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   const hasIosCredentials = !!project.ios.config?.apiKey && !!project.ios.config?.apiIssuer;
-  const isBuilding = project.lastBuild?.status === 'building';
-  const canBuild = releaseNote.trim() && !isBuilding;
+  const hasReleaseNote = !!releaseNote.trim();
+  const canBuildIos = hasReleaseNote && !isBuildingIos;
+  const canBuildAndroid = hasReleaseNote && !isBuildingAndroid;
 
   return (
     <div
@@ -409,24 +417,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           className="btn"
           onClick={(e) => {
             e.stopPropagation();
-            if (canBuild) {
+            if (canBuildIos) {
               onBuild('ios', { uploadToAppStore, releaseNote: releaseNote.trim() });
             }
           }}
-          disabled={!canBuild}
+          disabled={!canBuildIos}
           style={{
             flex: 1,
             padding: '10px var(--spacing-sm)',
             fontSize: '13px',
             fontWeight: 600,
-            background: canBuild ? 'var(--gradient-primary)' : 'var(--color-border)',
-            color: canBuild ? 'white' : 'var(--color-text-secondary)',
-            opacity: !canBuild ? 0.6 : 1,
-            cursor: !canBuild ? 'not-allowed' : 'pointer',
-            boxShadow: canBuild ? '0 4px 14px rgba(0, 122, 255, 0.3)' : 'none',
+            background: canBuildIos ? 'var(--gradient-primary)' : 'var(--color-border)',
+            color: canBuildIos ? 'white' : 'var(--color-text-secondary)',
+            opacity: !canBuildIos ? 0.6 : 1,
+            cursor: !canBuildIos ? 'not-allowed' : 'pointer',
+            boxShadow: canBuildIos ? '0 4px 14px rgba(0, 122, 255, 0.3)' : 'none',
           }}
         >
-          {isBuilding && project.lastBuild?.platform === 'ios' ? (
+          {isBuildingIos ? (
             <>
               <LoaderIcon size={14} className="animate-spin" />
               <span>Building...</span>
@@ -442,7 +450,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           className="btn"
           onClick={(e) => {
             e.stopPropagation();
-            if (canBuild) {
+            if (canBuildAndroid) {
               onBuild('android', {
                 releaseNote: releaseNote.trim(),
                 androidFormat,
@@ -450,20 +458,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               });
             }
           }}
-          disabled={!canBuild}
+          disabled={!canBuildAndroid}
           style={{
             flex: 1,
             padding: '10px var(--spacing-sm)',
             fontSize: '13px',
             fontWeight: 600,
-            background: canBuild ? 'var(--gradient-success)' : 'var(--color-border)',
-            color: canBuild ? 'white' : 'var(--color-text-secondary)',
-            opacity: !canBuild ? 0.6 : 1,
-            cursor: !canBuild ? 'not-allowed' : 'pointer',
-            boxShadow: canBuild ? '0 4px 14px rgba(52, 199, 89, 0.3)' : 'none',
+            background: canBuildAndroid ? 'var(--gradient-success)' : 'var(--color-border)',
+            color: canBuildAndroid ? 'white' : 'var(--color-text-secondary)',
+            opacity: !canBuildAndroid ? 0.6 : 1,
+            cursor: !canBuildAndroid ? 'not-allowed' : 'pointer',
+            boxShadow: canBuildAndroid ? '0 4px 14px rgba(52, 199, 89, 0.3)' : 'none',
           }}
         >
-          {isBuilding && project.lastBuild?.platform === 'android' ? (
+          {isBuildingAndroid ? (
             <>
               <LoaderIcon size={14} className="animate-spin" />
               <span>Building...</span>

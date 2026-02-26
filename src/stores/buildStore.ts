@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { BuildHistory } from '../types/project';
 
+// Composite key: "{projectId}_{platform}" allows iOS and Android builds to coexist
+const buildKey = (projectId: string, platform: string) => `${projectId}_${platform}`;
+
 interface BuildState {
-  activeBuilds: Record<string, BuildHistory>; // Key: projectId
+  activeBuilds: Record<string, BuildHistory>; // Key: "{projectId}_{platform}"
   buildHistory: BuildHistory[];
   isLoading: boolean;
   currentPage: number;
@@ -11,11 +14,13 @@ interface BuildState {
   totalItems: number;
   selectedProjectId: string | null;
   fetchHistory: (page?: number, pageSize?: number, projectId?: string | null) => Promise<void>;
-  updateBuild: (projectId: string, updater: (prev: BuildHistory) => BuildHistory) => void;
-  startBuild: (projectId: string, build: BuildHistory) => void;
+  updateBuild: (key: string, updater: (prev: BuildHistory) => BuildHistory) => void;
+  startBuild: (key: string, build: BuildHistory) => void;
   addToHistory: (build: BuildHistory) => void;
-  clearActive: (projectId: string) => void;
-  cancelBuild: (projectId: string) => Promise<void>;
+  clearActive: (key: string) => void;
+  cancelBuild: (projectId: string, platform: string) => Promise<void>;
+  getActiveBuildForPlatform: (projectId: string, platform: string) => BuildHistory | undefined;
+  hasActiveBuilds: (projectId: string) => boolean;
 }
 
 export const useBuildStore = create<BuildState>((set, get) => ({
@@ -56,17 +61,17 @@ export const useBuildStore = create<BuildState>((set, get) => ({
     }
   },
 
-  updateBuild: (projectId, updater) =>
+  updateBuild: (key, updater) =>
     set((state) => {
-      const current = state.activeBuilds[projectId];
+      const current = state.activeBuilds[key];
       if (!current) return state;
       return {
-        activeBuilds: { ...state.activeBuilds, [projectId]: updater(current) },
+        activeBuilds: { ...state.activeBuilds, [key]: updater(current) },
       };
     }),
-  startBuild: (projectId, build) =>
+  startBuild: (key, build) =>
     set((state) => ({
-      activeBuilds: { ...state.activeBuilds, [projectId]: build },
+      activeBuilds: { ...state.activeBuilds, [key]: build },
     })),
   addToHistory: (build) =>
     set((state) => {
@@ -79,31 +84,28 @@ export const useBuildStore = create<BuildState>((set, get) => ({
         totalItems: state.totalItems + 1,
       };
     }),
-  clearActive: (projectId) =>
+  clearActive: (key) =>
     set((state) => {
       const newActive = { ...state.activeBuilds };
-      delete newActive[projectId];
+      delete newActive[key];
       return { activeBuilds: newActive };
     }),
-  cancelBuild: async (projectId) => {
+  cancelBuild: async (projectId, platform) => {
+    const key = buildKey(projectId, platform);
     try {
-      // Kill the actual process
-      await invoke('cancel_build_process', { projectId });
+      await invoke('cancel_build_process', { projectId, platform });
 
-      // Update UI state ONLY if cancellation succeeds
       set((state) => {
-        const build = state.activeBuilds[projectId];
+        const build = state.activeBuilds[key];
         if (build) {
-          // Add to history with failed status
           const cancelledBuild: BuildHistory = {
             ...build,
             status: 'failed',
             logs: build.logs + '\n\n❌ Build cancelled by user',
           };
 
-          // Remove from active builds
           const newActive = { ...state.activeBuilds };
-          delete newActive[projectId];
+          delete newActive[key];
 
           return {
             activeBuilds: newActive,
@@ -114,8 +116,17 @@ export const useBuildStore = create<BuildState>((set, get) => ({
       });
     } catch (error) {
       console.error('Failed to cancel build process:', error);
-      // We do not remove it from active builds if cancellation fails
-      // This allows the user to see it's still running (or stuck) and try again
     }
   },
+
+  getActiveBuildForPlatform: (projectId, platform) => {
+    return get().activeBuilds[buildKey(projectId, platform)];
+  },
+
+  hasActiveBuilds: (projectId) => {
+    const active = get().activeBuilds;
+    return !!active[buildKey(projectId, 'ios')] || !!active[buildKey(projectId, 'android')];
+  },
 }));
+
+export { buildKey };

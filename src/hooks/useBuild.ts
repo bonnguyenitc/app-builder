@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useBuildStore } from '../stores/buildStore';
+import { useBuildStore, buildKey } from '../stores/buildStore';
 import { Project, BuildHistory } from '../types/project';
 
 export const useBuild = () => {
@@ -18,6 +18,7 @@ export const useBuild = () => {
         sendToAppDistribution?: boolean;
       },
     ) => {
+      const key = buildKey(project.id, platform);
       const buildId = Math.random().toString(36).substr(2, 9);
       const initialBuild: BuildHistory = {
         id: buildId,
@@ -32,15 +33,14 @@ export const useBuild = () => {
         format: platform === 'android' ? options?.androidFormat : undefined,
       };
 
-      // Use a temporary record in buildStore
-      startBuildStore(project.id, initialBuild);
+      startBuildStore(key, initialBuild);
 
-      // Initial log update in case the store update hasn't settled
+      // Listen for events, filtering by BOTH projectId AND platform
       const unlistenLogs = await listen<any>('build-log', (event) => {
         const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
-        if (data.projectId !== project.id) return;
+        if (data.projectId !== project.id || data.platform !== platform) return;
 
-        updateBuild(project.id, (prev) => ({
+        updateBuild(key, (prev) => ({
           ...prev,
           logs: prev.logs + (data.payload || '') + '\n',
         }));
@@ -48,9 +48,9 @@ export const useBuild = () => {
 
       const unlistenLogFile = await listen<any>('build-log-file', (event) => {
         const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
-        if (data.projectId !== project.id) return;
+        if (data.projectId !== project.id || data.platform !== platform) return;
 
-        updateBuild(project.id, (prev) => ({
+        updateBuild(key, (prev) => ({
           ...prev,
           logFilePath: data.payload,
         }));
@@ -58,9 +58,9 @@ export const useBuild = () => {
 
       const unlistenArtifactPath = await listen<any>('build-artifact-path', (event) => {
         const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
-        if (data.projectId !== project.id) return;
+        if (data.projectId !== project.id || data.platform !== platform) return;
 
-        updateBuild(project.id, (prev) => ({
+        updateBuild(key, (prev) => ({
           ...prev,
           artifactPath: data.payload,
         }));
@@ -68,10 +68,9 @@ export const useBuild = () => {
 
       const unlistenStatus = await listen<any>('build-status', async (event) => {
         const data = typeof event.payload === 'string' ? JSON.parse(event.payload) : event.payload;
-        if (data.projectId !== project.id) return;
+        if (data.projectId !== project.id || data.platform !== platform) return;
 
-        // Get the current build state from the store to ensure we have all logs
-        const currentBuild = useBuildStore.getState().activeBuilds[project.id];
+        const currentBuild = useBuildStore.getState().activeBuilds[key];
         if (!currentBuild) return;
 
         const finalBuild: BuildHistory = {
@@ -80,9 +79,7 @@ export const useBuild = () => {
           timestamp: Date.now(),
         };
 
-        // Firebase App Distribution upload is now handled in Rust backend
-
-        clearActive(project.id);
+        clearActive(key);
         addToHistory(finalBuild);
 
         try {
@@ -101,7 +98,7 @@ export const useBuild = () => {
         await invoke('build_project', { project, platform, options });
       } catch (e) {
         console.error('Build command failed', e);
-        const currentBuild = useBuildStore.getState().activeBuilds[project.id];
+        const currentBuild = useBuildStore.getState().activeBuilds[key];
         if (currentBuild) {
           const failedBuild: BuildHistory = {
             ...currentBuild,
@@ -109,7 +106,7 @@ export const useBuild = () => {
             logs: currentBuild.logs + `Error: ${e}\n`,
             timestamp: Date.now(),
           };
-          clearActive(project.id);
+          clearActive(key);
           addToHistory(failedBuild);
           try {
             await invoke('save_build_history', { history: failedBuild });
