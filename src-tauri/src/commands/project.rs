@@ -1089,26 +1089,42 @@ pub async fn create_expo_project(
 }
 #[command]
 pub async fn get_package_versions(package: String) -> Result<Vec<String>, String> {
-    let output = Command::new("npm")
-        .args(&["view", &package, "versions", "--json"])
-        .output()
-        .map_err(|e| format!("Failed to execute npm command: {}", e))?;
+    // Use NPM registry HTTP API directly instead of `npm view`
+    // This works in release builds where npm may not be in PATH
+    let url = format!("https://registry.npmjs.org/{}", package);
 
-    if !output.status.success() {
-        return Err(format!("npm command failed: {}", String::from_utf8_lossy(&output.stderr)));
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Failed to fetch package info: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Registry returned status {}", response.status()));
     }
 
-    let versions: Vec<String> = serde_json::from_slice(&output.stdout)
-        .map_err(|e| format!("Failed to parse npm output: {}", e))?;
+    let json: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse registry response: {}", e))?;
 
-    // Filter for stable versions (e.g., skip 0.85.0-nightly-..., 1000.0.0 for RN)
-    let filtered: Vec<String> = versions.into_iter()
-        .filter(|v| {
-            // Basic heuristic for stable versions: no hyphens (for alpha/beta/rc/nightly)
-            // and not 1000.0.0
-            !v.contains('-') && v != "1000.0.0"
-        })
-        .rev() // Newest first
+    // Use `time` object (chronologically ordered) for reliable newest-first ordering
+    // Fallback to `versions` object keys if `time` is missing
+    let versions: Vec<String> = if let Some(time_obj) = json.get("time").and_then(|t| t.as_object()) {
+        time_obj.keys()
+            .filter(|k| *k != "created" && *k != "modified")
+            .cloned()
+            .collect()
+    } else {
+        json.get("versions")
+            .and_then(|v| v.as_object())
+            .map(|obj| obj.keys().cloned().collect())
+            .unwrap_or_default()
+    };
+
+    // Filter for stable versions (skip alpha/beta/rc/nightly and placeholder 1000.0.0)
+    let filtered: Vec<String> = versions
+        .into_iter()
+        .filter(|v| !v.contains('-') && v != "1000.0.0")
+        .rev() // Newest first (reverse chronological)
         .collect();
 
     Ok(filtered)
