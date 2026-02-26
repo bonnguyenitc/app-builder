@@ -65,11 +65,13 @@ It requires **no special configuration**—you set up your project environment a
 
 ### 📱 Project Management
 
-- **Framework Support:** Manage React Native projects in one place.
+- **Framework Support:** Manage React Native (& Expo) projects in one place.
+- **Create Project:** Scaffold new React Native or Expo projects with version and template selection — all from a guided wizard.
 - **Deep Clean:** One-click maintenance to wipe `node_modules`, `Pods`, and artifacts.
 - **Auto-Discovery:** Automatically reads `Info.plist`, `build.gradle`.
+- **Dependency Manager:** View, add, remove, and update npm dependencies per project with a visual UI and NPM search.
 - **Notifications:** Real-time build status updates via Slack, Discord, and Telegram.
-- **Open IDE:** Launch Xcode or Android Studio directly from the dashboard.
+- **Open IDE:** Launch Xcode, Android Studio, VS Code, or Terminal directly from the dashboard.
 
 ### 🛠️ Essential Tools
 
@@ -77,7 +79,7 @@ It requires **no special configuration**—you set up your project environment a
 - **App Icon Generator:** Create all icon sizes for iOS/Android from a single image.
 - **Keystore Generator:** Distinct visual tool to create Android signing keys.
 - **App Size Analyzer:** Inspect APK/AAB size and check 16KB page support.
-- **Emulator Manager:** Boot and run apps on simulators/emulators.
+- **Emulator Manager:** Boot and run apps on simulators/emulators. Launch your app directly on a booted device.
 
 ### 🔨 iOS Automation
 
@@ -87,11 +89,12 @@ It requires **no special configuration**—you set up your project environment a
 ### 🤖 Android Automation
 
 - **Build AAB/APK:** Direct Gradle execution management.
+- **Parallel Builds:** Build iOS and Android simultaneously to cut release time in half.
 - **Firebase App Distribution:** Automatic upload to Firebase for beta testing after successful builds.
 
 ### 📊 Monitoring & History
 
-- **Real-time Queue:** Monitor build progress, view streaming logs, and cancel operations.
+- **Real-time Queue:** Monitor build progress for multiple parallel builds, view streaming logs, and cancel operations.
 - **History Log:** Keep track of every build with attached release notes.
 - **Secure Vault:** Encrypts and stores API Keys and Service Accounts using system Keychain/Keyring.
 
@@ -147,11 +150,20 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
 
 ## 📖 User Guide
 
-### 1. Add a New Project
+### 1. Add or Create a Project
+
+**Add an existing project:**
 
 1. Go to **Projects** → **Add Project**.
 2. Select your React Native root folder.
 3. The app auto-detects configuration. Review and Save.
+
+**Create a new project:**
+
+1. Go to **Projects** → **Create Project**.
+2. Choose project type: **React Native CLI** or **Expo**.
+3. Select version, template, and target directory.
+4. Click **Create** and watch the live progress log.
 
 <p align="center">
   <img src="screenshots/project.png" alt="Project Management" width="100%" style="border-radius: 8px" />
@@ -183,6 +195,7 @@ sudo xattr -rd com.apple.quarantine /Applications/App\ Builder.app
 2. View list of available Android Emulators and iOS Simulators.
 3. Click **Boot** to start a device.
 4. Select a project and click **Run** to launch the app directly on the device.
+5. You can also **Run App on Booted Device** directly from the project card on the Dashboard.
 
 <p align="center">
   <img src="screenshots/emulators.png" alt="Emulator Manager" width="100%" style="border-radius: 8px" />
@@ -317,6 +330,9 @@ Go to **Settings** → **Credentials** → **Add Android Credential**:
 4. Toggle **App Distribution** to auto-upload to Firebase after build.
 5. Toggle **Upload to Play Store** (Coming soon).
 
+> [!TIP]
+> **Parallel Builds:** You can start an iOS build and an Android build for the same project simultaneously. Each build runs independently with its own log stream and status tracking in the Build Queue.
+
 <p align="center">
   <img src="screenshots/build.png" alt="Build Process" width="100%" style="border-radius: 8px" />
 </p>
@@ -361,6 +377,16 @@ Track all your builds and releases in the History page.
   <img src="screenshots/history.png" alt="Build History" width="100%" style="border-radius: 8px" />
 </p>
 
+### 14. Dependency Manager
+
+Manage npm packages for any project without leaving the app.
+
+1. Select a Project → Click **Dependencies** (Package Icon).
+2. View all **production** and **dev** dependencies with current versions.
+3. **Search & Add** packages from the npm registry.
+4. **Remove** packages with one click.
+5. **Reinstall** all dependencies when needed.
+
 ---
 
 ## 🗺️ Roadmap
@@ -381,7 +407,12 @@ Track all your builds and releases in the History page.
 - [x] **Feature:** Discord/Slack/Telegram Notifications.
 - [x] **Feature:** Deep Clean maintenance.
 - [x] **Feature:** App Size Analyzer (16KB support).
-- [x] **Feature:** Open in IDE (Xcode / Android Studio).
+- [x] **Feature:** Open in IDE (Xcode / Android Studio / VS Code).
+- [x] **Feature:** Parallel iOS & Android Builds.
+- [x] **Feature:** Dependency Manager (view/add/remove npm packages).
+- [x] **Feature:** Create Project wizard (React Native CLI & Expo).
+- [x] **Feature:** Run App on Booted Device from Dashboard.
+- [x] **Feature:** Open Terminal from Dashboard.
 
 ---
 
@@ -391,14 +422,22 @@ Track all your builds and releases in the History page.
 app-builder/
 ├── src/                    # React Frontend (UI)
 │   ├── components/         # Reusable UI components
-│   ├── stores/             # Zustand state
-│   └── ...
+│   ├── hooks/              # Custom React hooks (useBuild, useCredentials, etc.)
+│   ├── pages/              # App pages (Dashboard, BuildQueue, History, etc.)
+│   ├── stores/             # Zustand state (projectStore, buildStore)
+│   ├── types/              # TypeScript types
+│   └── utils/              # Utility functions
 ├── src-tauri/              # Rust Backend (Core Logic)
 │   ├── src/
 │   │   ├── commands/       # Bridge between JS and Rust
 │   │   │   ├── build.rs    # xcodebuild/gradle logic
-│   │   │   └── ...
+│   │   │   ├── project.rs  # Project management & auto-discovery
+│   │   │   ├── emulator.rs # Emulator/Simulator management
+│   │   │   ├── dependencies.rs # npm dependency management
+│   │   │   └── ...         # credentials, doctor, notifications, etc.
+│   │   └── models/         # Rust data models
 │   └── tauri.conf.json     # App configuration
+├── templates/              # Project templates
 └── ...
 ```
 
